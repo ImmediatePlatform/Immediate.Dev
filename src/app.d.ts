@@ -12,6 +12,4 @@ declare global {
 	}
 }
 
-declare module 'typewriter-effect/dist/core';
-
 export {};

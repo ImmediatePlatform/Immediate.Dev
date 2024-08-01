@@ -10,4 +10,4 @@
 	{@html theme}
 </svelte:head>
 
-<Highlight language={csharp} {code} />
+<Highlight language={csharp} {code} class="text-sm sm:text-xs" />

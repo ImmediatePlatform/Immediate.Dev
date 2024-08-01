@@ -1,4 +1,1 @@
-export type Tab = {
-	title: string;
-	content: string;
-};
+declare module 'typewriter-effect/dist/core';

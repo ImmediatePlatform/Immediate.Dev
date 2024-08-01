@@ -3,10 +3,11 @@
 @tailwind utilities;
 
 .hljs {
-	min-height: 512px;
-	max-height: 512px;
+	min-height: 21.5rem;
+	max-height: 21.5rem;
 
-	@media (min-width: 767px) {
-		min-width: 600px;
+	@media (min-width: 639px) {
+		min-height: 26.5rem;
+		max-height: 26.5rem;
 	}
 }

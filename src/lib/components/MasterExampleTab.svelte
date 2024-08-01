@@ -1,18 +1,23 @@
 <script lang="ts">
-	import type { MasterExample } from '$lib/code-examples';
+	import type { MasterExampleType } from '$lib/code-examples';
+	import type { ClassValue } from 'clsx';
+	import { cn } from '$lib/utils';
 
-	export let type: MasterExample;
-	export let selected: MasterExample;
+	let className: ClassValue | undefined = undefined;
 
-	const activeClasses =
-		'flex-none bg-[#080b0f] justify-center gap-0.5 font-semibold text-md px-8 py-4 border-border rounded-t-md overflow-hidden';
-
-	const inactiveClasses =
-		'flex-none justify-center gap-0.5 font-semibold text-md px-8 py-3 overflow-hidden hover:bg-[#0d1117] rounded-t-md';
+	export let type: MasterExampleType;
+	export let selected: MasterExampleType;
+	export { className as class };
 </script>
 
 <button
-	class={type === selected ? activeClasses : inactiveClasses}
+	class={cn(
+		'flex-none justify-center gap-0.5 font-semibold text-md px-8 py-3 overflow-hidden hover:bg-background-lightest rounded-t-md',
+		{
+			'bg-background-lighter py-4 border-border rounded-t-md': selected === type
+		},
+		className
+	)}
 	on:click={() => (selected = type)}
 >
 	<div class="flex gap-2 select-none">

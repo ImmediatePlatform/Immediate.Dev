@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import ApexCharts, { type ApexOptions } from 'apexcharts';
 
-	var options: ApexOptions = {
+	const options: ApexOptions = {
 		series: [
 			{
 				data: [16.6023, 27.2993, 68.3384]
@@ -42,7 +42,7 @@
 			enabled: true,
 			style: {
 				colors: ['#f5f5f5'],
-				fontSize: '16px'
+				fontSize: '14px'
 			},
 			formatter: (val: number, _) => `${val.toFixed(2)}ns`,
 			offsetX: 70,
@@ -63,7 +63,7 @@
 		yaxis: {
 			labels: {
 				style: {
-					fontSize: '16px'
+					fontSize: '14px'
 				}
 			}
 		},
@@ -93,7 +93,7 @@
 	};
 
 	onMount(() => {
-		var chart = new ApexCharts(document.querySelector('#chart'), options);
+		const chart = new ApexCharts(document.querySelector('#chart'), options);
 		chart.render();
 	});
 </script>

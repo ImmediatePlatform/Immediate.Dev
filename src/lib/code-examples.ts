@@ -1,6 +1,9 @@
-import type { Tab } from './types';
+export type Tab = {
+	title: string;
+	content: string;
+};
 
-export enum MasterExample {
+export enum MasterExampleType {
 	WebApi,
 	Cli,
 	Blazor,

@@ -14,7 +14,6 @@ module.exports = {
 			1280: '1280px',
 			1440: '1440px',
 			1460: '1460px',
-			// Inverses TailwindCSS to be desktop-first
 			xl: { max: "1279px" },
 			lg: { max: "1023px" },
 			md: { max: "767px" },
@@ -33,7 +32,10 @@ module.exports = {
 				soft: 'rgb(var(--kd-color-soft) / <alpha-value>)',
 				inverse: 'rgb(var(--kd-color-inverse) / <alpha-value>)',
 				body: 'rgb(var(--kd-color-body) / <alpha-value>)',
-				elevate: 'rgb(var(--kd-color-elevate) / <alpha-value>)'
+				elevate: 'rgb(var(--kd-color-elevate) / <alpha-value>)',
+				background: '#000000',
+				'background-lighter': '#080b0f',
+				'background-lightest': '#0d1117'
 			},
 			typography: kitDocsTypography
 		}

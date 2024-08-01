@@ -13,7 +13,7 @@
 	} from 'lucide-svelte';
 	import Typewriter from '$lib/components/Typewriter.svelte';
 
-	import { apiSampleTabs, MasterExample, cliSampleTabs } from '$lib/code-examples';
+	import { apiSampleTabs, MasterExampleType, cliSampleTabs } from '$lib/code-examples';
 
 	import TabbedCodeSample from '$lib/components/TabbedCodeSample.svelte';
 	import MasterExampleTab from '$lib/components/MasterExampleTab.svelte';
@@ -26,7 +26,7 @@
 		'Validation.'
 	];
 
-	let selectedMasterExample = MasterExample.WebApi;
+	let selectedMasterExample = MasterExampleType.WebApi;
 </script>
 
 <div class="w-full flex flex-col justify-between items-center py-20">
@@ -69,32 +69,32 @@
 		</p>
 		<div class="md:w-screen md:px-4">
 			<div class="flex overflow-auto items-end">
-				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExample.WebApi}>
+				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExampleType.WebApi}>
 					<Server />
 					Web API
 				</MasterExampleTab>
-				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExample.Cli}>
+				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExampleType.Cli}>
 					<Console />
 					CLI
 				</MasterExampleTab>
-				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExample.Blazor}>
+				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExampleType.Blazor}>
 					<Globe />
 					Blazor
 				</MasterExampleTab>
-				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExample.DiscordBot}>
+				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExampleType.DiscordBot}>
 					<Bot />
 					Discord Bot
 				</MasterExampleTab>
 			</div>
 
-			{#if selectedMasterExample === MasterExample.WebApi}
-				<TabbedCodeSample tabs={apiSampleTabs} borderTop={false} />
-			{:else if selectedMasterExample === MasterExample.Cli}
-				<TabbedCodeSample tabs={cliSampleTabs} borderTop={false} />
+			{#if selectedMasterExample === MasterExampleType.WebApi}
+				<TabbedCodeSample class="rounded-tl-none rounded-tr-md" tabs={apiSampleTabs} />
+			{:else if selectedMasterExample === MasterExampleType.Cli}
+				<TabbedCodeSample class="rounded-tl-none rounded-tr-md" tabs={cliSampleTabs} />
 			{/if}
 
 			<div
-				class="flex gap-1 bg-[#080b0f] px-4 py-3 overflow-auto rounded-b-md text-sm text-balance"
+				class="flex gap-1 bg-background-lighter px-4 py-3 overflow-auto rounded-b-md text-sm sm:text-xs text-balance"
 			>
 				<span class="text-soft"> Like what you see? </span>
 				<a class="underline" href="/">See our full cookbook.</a>
@@ -123,7 +123,7 @@
 		<BenchmarkChart />
 	</div>
 	<div
-		class="flex sm:flex-col items-center justify-center gap-1 px-4 py-3 overflow-auto rounded-b-md text-sm text-balance"
+		class="flex sm:flex-col items-center justify-center gap-1 px-4 py-3 overflow-auto rounded-b-md text-sm sm:text-xs text-balance"
 	>
 		<p class="text-soft text-center">Single request/response handler benchmark.</p>
 		<a class="underline" href="/">See full benchmark suite.</a>

@@ -1,26 +1,20 @@
 <script lang="ts">
-	import type { Tab } from '$lib/types';
+	import type { Tab } from '$lib/code-examples';
+	import type { ClassValue } from 'clsx';
 
 	import { fade } from 'svelte/transition';
 	import { Copy } from 'lucide-svelte';
+	import { cn } from '$lib/utils';
+
 	import CodeSample from './CodeSample.svelte';
 
+	let className: ClassValue | undefined = undefined;
 	let activeTabIndex = 0;
 	let copied = false;
 	let timer: number;
 
 	export let tabs: Tab[];
-	export let borderTop: boolean = true;
-
-	const defaultContainerClasses = 'flex gap-1 bg-[#080b0f] px-2 pt-2 overflow-auto rounded-tr-md';
-	const containerClasses = borderTop
-		? defaultContainerClasses + ' rounded-t-md'
-		: defaultContainerClasses;
-
-	const activeClasses =
-		'flex-none items-center justify-center gap-0.5 font-semibold text-sm px-4 py-2 border-b-4 border-b-brand rounded-t-md overflow-hidden';
-	const inactiveClasses =
-		'flex-none items-center justify-center gap-0.5 text-sm px-4 py-2 rounded-t-md overflow-hidden hover:bg-[#0d1117]';
+	export { className as class };
 
 	const switchTab = (newIndex: number) => {
 		activeTabIndex = newIndex;
@@ -38,10 +32,16 @@
 	};
 </script>
 
-<div class={containerClasses}>
+<div class={cn('flex gap-1 bg-background-lighter px-2 pt-2 overflow-auto rounded-t-md', className)}>
 	{#each tabs as tab, i}
 		<button
-			class={i === activeTabIndex ? activeClasses : inactiveClasses}
+			class={cn(
+				'flex-none items-center justify-center gap-0.5 text-sm px-4 py-2 rounded-t-md overflow-hidden hover:bg-background-lightest',
+				{
+					'font-semibold border-b-4 border-b-brand hover:bg-background-lighter':
+						i === activeTabIndex
+				}
+			)}
 			on:click={() => switchTab(i)}
 		>
 			<span class="select-none">{tab.title}</span>
