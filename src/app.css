@@ -7,7 +7,7 @@
 	max-height: 21.5rem;
 
 	@media (min-width: 639px) {
-		min-height: 26.5rem;
-		max-height: 26.5rem;
+		min-height: 26.75rem;
+		max-height: 26.75rem;
 	}
 }
