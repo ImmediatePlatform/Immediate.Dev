@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.hljs {
+	min-height: 512px;
+	max-height: 512px;
+
+	@media (min-width: 767px) {
+		min-width: 600px;
+	}
+}
