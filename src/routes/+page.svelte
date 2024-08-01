@@ -13,11 +13,12 @@
 	} from 'lucide-svelte';
 	import Typewriter from '$lib/components/Typewriter.svelte';
 
-	import { apiSampleTabs, MasterExampleType, cliSampleTabs } from '$lib/code-examples';
+	import { apiSampleTabs, ExampleType, cliSampleTabs } from '$lib/code-examples';
 
 	import TabbedCodeSample from '$lib/components/TabbedCodeSample.svelte';
-	import MasterExampleTab from '$lib/components/MasterExampleTab.svelte';
+	import ExampleSelectorTab from '$lib/components/ExampleSelectorTab.svelte';
 	import BenchmarkChart from '$lib/components/BenchmarkChart.svelte';
+	import ExampleSelector from '$lib/components/ExampleSelector.svelte';
 
 	const typewriterStrings = [
 		'Vertical Slice Architecture.',
@@ -26,7 +27,7 @@
 		'Validation.'
 	];
 
-	let selectedMasterExample = MasterExampleType.WebApi;
+	let selectedMasterExample = ExampleType.WebApi;
 </script>
 
 <div class="w-full flex flex-col justify-between items-center py-20">
@@ -68,28 +69,28 @@
 			types of .NET applications.
 		</p>
 		<div class="md:w-screen md:px-4">
-			<div class="flex overflow-auto items-end">
-				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExampleType.WebApi}>
+			<ExampleSelector>
+				<ExampleSelectorTab bind:selected={selectedMasterExample} type={ExampleType.WebApi}>
 					<Server />
 					Web API
-				</MasterExampleTab>
-				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExampleType.Cli}>
+				</ExampleSelectorTab>
+				<ExampleSelectorTab bind:selected={selectedMasterExample} type={ExampleType.Cli}>
 					<Console />
 					CLI
-				</MasterExampleTab>
-				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExampleType.Blazor}>
+				</ExampleSelectorTab>
+				<ExampleSelectorTab bind:selected={selectedMasterExample} type={ExampleType.Blazor}>
 					<Globe />
 					Blazor
-				</MasterExampleTab>
-				<MasterExampleTab bind:selected={selectedMasterExample} type={MasterExampleType.DiscordBot}>
+				</ExampleSelectorTab>
+				<ExampleSelectorTab bind:selected={selectedMasterExample} type={ExampleType.DiscordBot}>
 					<Bot />
 					Discord Bot
-				</MasterExampleTab>
-			</div>
+				</ExampleSelectorTab>
+			</ExampleSelector>
 
-			{#if selectedMasterExample === MasterExampleType.WebApi}
+			{#if selectedMasterExample === ExampleType.WebApi}
 				<TabbedCodeSample class="rounded-tl-none rounded-tr-md" tabs={apiSampleTabs} />
-			{:else if selectedMasterExample === MasterExampleType.Cli}
+			{:else if selectedMasterExample === ExampleType.Cli}
 				<TabbedCodeSample class="rounded-tl-none rounded-tr-md" tabs={cliSampleTabs} />
 			{/if}
 

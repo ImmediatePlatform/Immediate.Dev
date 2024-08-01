@@ -3,7 +3,7 @@ export type Tab = {
 	content: string;
 };
 
-export enum MasterExampleType {
+export enum ExampleType {
 	WebApi,
 	Cli,
 	Blazor,

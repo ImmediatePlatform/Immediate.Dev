@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { MasterExampleType } from '$lib/code-examples';
+	import type { ExampleType } from '$lib/code-examples';
 	import type { ClassValue } from 'clsx';
 	import { cn } from '$lib/utils';
 
 	let className: ClassValue | undefined = undefined;
 
-	export let type: MasterExampleType;
-	export let selected: MasterExampleType;
+	export let type: ExampleType;
+	export let selected: ExampleType;
 	export { className as class };
 </script>
 
