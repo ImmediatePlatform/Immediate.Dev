@@ -7,6 +7,6 @@
 	export { className as class };
 </script>
 
-<div class={cn('flex overflow-auto items-end', className)}>
+<div class={cn('flex items-end overflow-auto', className)}>
 	<slot></slot>
 </div>

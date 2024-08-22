@@ -99,7 +99,7 @@
 </script>
 
 <div class="chart-container">
-	<div class="w-[100vw] flex justify-center items-center">
+	<div class="flex w-[100vw] items-center justify-center">
 		<div class="w-5/12 md:w-8/12 sm:w-10/12">
 			<div id="chart"></div>
 		</div>

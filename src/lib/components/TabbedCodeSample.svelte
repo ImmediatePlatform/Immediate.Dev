@@ -32,13 +32,13 @@
 	};
 </script>
 
-<div class={cn('flex gap-1 bg-background-lighter px-2 pt-2 overflow-auto rounded-t-md', className)}>
+<div class={cn('flex gap-1 overflow-auto rounded-t-md bg-background-lighter px-2 pt-2', className)}>
 	{#each tabs as tab, i}
 		<button
 			class={cn(
-				'flex-none items-center justify-center gap-0.5 text-sm px-4 py-2 rounded-t-md overflow-hidden hover:bg-background-lightest',
+				'flex-none items-center justify-center gap-0.5 overflow-hidden rounded-t-md px-4 py-2 text-sm hover:bg-background-lightest',
 				{
-					'font-semibold border-b-4 border-b-brand hover:bg-background-lighter':
+					'border-b-4 border-b-brand font-semibold hover:bg-background-lighter':
 						i === activeTabIndex
 				}
 			)}
@@ -48,13 +48,13 @@
 		</button>
 	{/each}
 
-	<div class="sm:hidden flex-none items-center ml-auto my-auto mr-2 text-soft hover:text-white">
+	<div class="my-auto ml-auto mr-2 flex-none items-center text-soft hover:text-white sm:hidden">
 		{#if copied}
 			<div
-				class="flex py-1 px-3 bg-brand font-mono text-black text-xs rounded"
+				class="flex rounded bg-brand px-3 py-1 font-mono text-xs text-black"
 				in:fade={{ duration: 400 }}
 			>
-				<span class="text-center select-none">Copied!</span>
+				<span class="select-none text-center text-inverse">Copied!</span>
 			</div>
 		{:else}
 			<button on:click={onCopyClick} in:fade={{ duration: 400 }}>

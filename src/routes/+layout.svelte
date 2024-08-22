@@ -6,7 +6,6 @@
 	import '../vars.css';
 
 	import { page } from '$app/stores';
-	import SvelteLogo from '$img/svelte-horizontal.svg?raw';
 
 	import { Button, KitDocs, KitDocsLayout, createSidebarContext } from '@svelteness/kit-docs';
 
@@ -23,7 +22,7 @@
 	const { activeCategory } = createSidebarContext(sidebar);
 
 	$: category = $activeCategory ? `${$activeCategory}: ` : '';
-	$: title = meta ? `${category}${meta.title} | KitDocs` : null;
+	$: title = meta ? `${category}${meta.title} | ImmediatePlatform` : null;
 	$: description = meta?.description;
 </script>
 
@@ -39,15 +38,21 @@
 </svelte:head>
 
 <KitDocs {meta}>
-	<KitDocsLayout {navbar} {sidebar}>
-		<div class="logo" slot="navbar-left">
-			<Button href="/">
-				{@html SvelteLogo}
-			</Button>
-		</div>
+	<div id="mainLayout">
+		<KitDocsLayout {navbar} {sidebar}>
+			<div class="logo" slot="navbar-left">
+				<Button href="/">
+					<span
+						class="pb-4 text-2xl font-semibold tracking-wider text-inverse md:text-5xl sm:flex sm:flex-col sm:text-center"
+					>
+						ImmediatePlatform
+					</span>
+				</Button>
+			</div>
 
-		<slot />
-	</KitDocsLayout>
+			<slot />
+		</KitDocsLayout>
+	</div>
 </KitDocs>
 
 <style>
@@ -68,5 +73,29 @@
 	.logo :global(svg) {
 		height: 36px;
 		overflow: hidden;
+	}
+
+	:global(#mainLayout > div > div > div:first-child) {
+		@apply backdrop-blur-md;
+	}
+
+	:global(#mainLayout > div > div:first-child > div > div > div:last-child > div:last-child) {
+		display: none;
+	}
+
+	:global(
+			#mainLayout > div > div:first-child > div > div > div > div > div:last-child > div hr,
+			#mainLayout
+				> div
+				> div:first-child
+				> div
+				> div
+				> div
+				> div
+				> div:last-child
+				> div
+				section:last-child
+		) {
+		display: none;
 	}
 </style>

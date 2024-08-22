@@ -9,12 +9,12 @@
 </script>
 
 <div>
-	<div class={cn('flex-none border border-border bg-[#3f4044] rounded-t-md', className)}>
-		<div class="flex items-center justify-center h-8 space-x-1.5 px-3">
-			<div class="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
-			<div class="w-2.5 h-2.5 bg-yellow-500 rounded-full"></div>
-			<div class="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-			<div class="flex w-full pr-[1.875rem] justify-center items-center">
+	<div class={cn('flex-none rounded-t-md border border-border bg-[#3f4044]', className)}>
+		<div class="flex h-8 items-center justify-center space-x-1.5 px-3">
+			<div class="h-2.5 w-2.5 rounded-full bg-red-500"></div>
+			<div class="h-2.5 w-2.5 rounded-full bg-yellow-500"></div>
+			<div class="h-2.5 w-2.5 rounded-full bg-green-500"></div>
+			<div class="flex w-full items-center justify-center pr-[1.875rem]">
 				<span class="text-center">{title}</span>
 			</div>
 		</div>

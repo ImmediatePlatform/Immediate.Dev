@@ -14,10 +14,10 @@ module.exports = {
 			1280: '1280px',
 			1440: '1440px',
 			1460: '1460px',
-			xl: { max: "1279px" },
-			lg: { max: "1023px" },
-			md: { max: "767px" },
-			sm: { max: "639px" }
+			xl: { max: '1279px' },
+			lg: { max: '1023px' },
+			md: { max: '767px' },
+			sm: { max: '639px' }
 		},
 		extend: {
 			colors: {
@@ -34,7 +34,7 @@ module.exports = {
 				body: 'rgb(var(--kd-color-body) / <alpha-value>)',
 				elevate: 'rgb(var(--kd-color-elevate) / <alpha-value>)',
 				background: '#000000',
-				'background-lighter': '#080b0f',
+				'background-lighter': '#0a0d11',
 				'background-lightest': '#0d1117'
 			},
 			typography: kitDocsTypography

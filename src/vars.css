@@ -1,6 +1,6 @@
 :root,
 .prefers-light-scheme {
-	--kd-color-brand: 255 64 0;
+	--kd-color-brand: 139 92 246;
 	--kd-color-focus: 79 70 229;
 	--kd-color-soft: 68 78 94;
 	--kd-color-body: 250 250 250;
@@ -10,7 +10,6 @@
 }
 
 :root {
-	font-size: 16px;
 	scroll-padding-top: 6rem;
 
 	--kd-font-family-sans: Inter VF, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
@@ -69,14 +68,14 @@
 	--kd-color-inverse: 245 245 245;
 	--kd-color-border: 31 31 31;
 	--kd-color-elevate: 10 19 33;
-	--kd-color-body: 0 0 0;
-	--kd-color-focus: 129 140 248;
+	--kd-color-body: 4 5 7;
+	--kd-color-focus: 79 70 229;
 }
 
 .code-fence {
 	--kd-code-fence-bg: rgb(19, 26, 36);
 	--kd-code-fence-top-bar-bg: rgba(2, 13, 27, 0.3);
-	--kd-code-copied-bg-color: rgba(var(--kd-color-brand-rgb), 0.8);
+	--kd-code-copied-bg-color: rgba(139, 92, 246, 1);
 	--kd-terminal-line-pointer: var(--kd-color-brand);
 	--kd-code-highlight-border: var(--kd-color-brand);
 	--kd-code-highlight-color: rgba(var(--kd-color-brand-rgb), 0.05);

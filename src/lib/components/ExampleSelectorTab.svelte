@@ -12,15 +12,15 @@
 
 <button
 	class={cn(
-		'flex-none justify-center gap-0.5 font-semibold text-md px-8 py-3 overflow-hidden hover:bg-background-lightest rounded-t-md',
+		'text-md flex-none justify-center gap-0.5 overflow-hidden rounded-t-md px-8 py-3 font-semibold hover:bg-background-lightest',
 		{
-			'bg-background-lighter py-4 border-border rounded-t-md': selected === type
+			'rounded-t-md border-border bg-background-lighter py-4': selected === type
 		},
 		className
 	)}
 	on:click={() => (selected = type)}
 >
-	<div class="flex gap-2 select-none">
+	<div class="flex select-none gap-2">
 		<slot></slot>
 	</div>
 </button>

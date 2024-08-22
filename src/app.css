@@ -11,3 +11,8 @@
 		max-height: 26.75rem;
 	}
 }
+
+pre:has(> code) {
+	@apply !my-0;
+	@apply !text-sm;
+}
