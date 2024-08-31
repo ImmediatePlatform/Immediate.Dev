@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Tab } from '$lib/code-examples';
+	import type { CodeFile } from '$lib/types';
 	import type { ClassValue } from 'clsx';
 
 	import { fade } from 'svelte/transition';
@@ -11,9 +11,9 @@
 	let className: ClassValue | undefined = undefined;
 	let activeTabIndex = 0;
 	let copied = false;
-	let timer: number;
+	let timer: NodeJS.Timeout;
 
-	export let tabs: Tab[];
+	export let tabs: CodeFile[];
 	export { className as class };
 
 	const switchTab = (newIndex: number) => {
@@ -21,7 +21,7 @@
 	};
 
 	const onCopyClick = () => {
-		navigator.clipboard.writeText(tabs[activeTabIndex].content);
+		navigator.clipboard.writeText(content);
 		copied = true;
 
 		clearTimeout(timer);
@@ -30,6 +30,11 @@
 			copied = false;
 		}, 2000);
 	};
+
+	$: {
+		tabs, (activeTabIndex = 0);
+	}
+	$: content = tabs[activeTabIndex].content;
 </script>
 
 <div class={cn('flex gap-1 overflow-auto rounded-t-md bg-background-lighter px-2 pt-2', className)}>
@@ -44,7 +49,7 @@
 			)}
 			on:click={() => switchTab(i)}
 		>
-			<span class="select-none">{tab.title}</span>
+			<span class="select-none">{tab.name}</span>
 		</button>
 	{/each}
 
@@ -63,4 +68,4 @@
 		{/if}
 	</div>
 </div>
-<CodeSample code={tabs[activeTabIndex].content} />
+<CodeSample code={content} />

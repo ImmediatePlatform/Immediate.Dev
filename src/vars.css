@@ -76,7 +76,7 @@
 	--kd-code-fence-bg: rgb(19, 26, 36);
 	--kd-code-fence-top-bar-bg: rgba(2, 13, 27, 0.3);
 	--kd-code-copied-bg-color: rgba(139, 92, 246, 1);
-	--kd-terminal-line-pointer: var(--kd-color-brand);
-	--kd-code-highlight-border: var(--kd-color-brand);
-	--kd-code-highlight-color: rgba(var(--kd-color-brand-rgb), 0.05);
+	--kd-terminal-line-pointer: rgba(139, 92, 246, 1);
+	--kd-code-highlight-border: rgba(139, 92, 246, 1);
+	--kd-code-highlight-color: rgba(139, 92, 246, 0.10);
 }

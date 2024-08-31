@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ExampleType } from '$lib/code-examples';
+	import type { ExampleType } from '$lib/types';
 	import type { ClassValue } from 'clsx';
 	import { cn } from '$lib/utils';
 
@@ -12,7 +12,7 @@
 
 <button
 	class={cn(
-		'text-md flex-none justify-center gap-0.5 overflow-hidden rounded-t-md px-8 py-3 font-semibold hover:bg-background-lightest',
+		'text-md flex-none justify-center gap-0.5 overflow-hidden rounded-t-md px-8 py-3 font-semibold hover:bg-background-lightest sm:px-6',
 		{
 			'rounded-t-md border-border bg-background-lighter py-4': selected === type
 		},

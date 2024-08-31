@@ -2,7 +2,11 @@
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-	content: ['./src/**/*.{html,svelte}', './node_modules/@svelteness/kit-docs/client/**/*.svelte'],
+	content: [
+		'./src/**/*.{html,svelte}',
+		'./node_modules/@svelteness/kit-docs/client/**/*.svelte',
+		'./node_modules/layerchart/**/*.{svelte,js}'
+	],
 	darkMode: 'class',
 	theme: {
 		screens: {
@@ -34,8 +38,10 @@ module.exports = {
 				body: 'rgb(var(--kd-color-body) / <alpha-value>)',
 				elevate: 'rgb(var(--kd-color-elevate) / <alpha-value>)',
 				background: '#000000',
-				'background-lighter': '#0a0d11',
-				'background-lightest': '#0d1117'
+				'background-lighter': '#161b22',
+				'background-lightest': '#21262d',
+				// layerchart
+				'surface-content': 'rgb(var(--kd-color-soft) / <alpha-value>)'
 			},
 			typography: kitDocsTypography
 		}
@@ -57,7 +63,7 @@ function kitDocsTypography(theme) {
 				'--tw-prose-counters': 'rgb(var(--kd-color-inverse))',
 				'--tw-prose-invert-counters': 'rgb(var(--kd-color-inverse))',
 				color: 'rgb(var(--kd-color-soft))',
-				fontSize: '18px',
+				fontSize: '14px',
 				maxWidth: 'none',
 				hr: {
 					borderColor: 'rgb(var(--kd-color-border))',

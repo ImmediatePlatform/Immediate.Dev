@@ -1,107 +1,51 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import ApexCharts, { type ApexOptions } from 'apexcharts';
+	import { Chart, Svg, Axis, Bar, Bars, Labels, LinearGradient } from 'layerchart';
+	import { scaleBand } from 'd3-scale';
 
-	const options: ApexOptions = {
-		series: [
-			{
-				data: [16.6023, 27.2993, 68.3384]
-			}
-		],
-		colors: ['#8b5cf6', '#2662d9', '#e88c30'],
-		chart: {
-			type: 'bar',
-			height: 350,
-			toolbar: {
-				show: false
-			},
-			fontFamily: 'Inter VF',
-			foreColor: '#a1a1a1',
-			selection: {
-				enabled: false
-			}
+	const data = [
+		{
+			lib: 'Immediate.Handlers',
+			value: 16.6023
 		},
-		plotOptions: {
-			bar: {
-				borderRadius: 10,
-				borderRadiusApplication: 'around',
-				horizontal: true,
-				dataLabels: {
-					position: 'top'
-				},
-				distributed: true
-			}
+		{
+			lib: 'Mediator',
+			value: 27.2993
 		},
-		tooltip: {
-			enabled: false
-		},
-		grid: {
-			show: false
-		},
-		dataLabels: {
-			enabled: true,
-			style: {
-				colors: ['#f5f5f5'],
-				fontSize: '14px'
-			},
-			formatter: (val: number, _) => `${val.toFixed(2)}ns`,
-			offsetX: 70,
-			textAnchor: 'middle'
-		},
-		xaxis: {
-			categories: ['Immediate.Handlers', 'Mediator', 'MediatR'],
-			axisBorder: {
-				show: false
-			},
-			axisTicks: {
-				show: false
-			},
-			labels: {
-				show: false
-			}
-		},
-		yaxis: {
-			labels: {
-				style: {
-					fontSize: '14px'
-				}
-			}
-		},
-		legend: {
-			show: false
-		},
-		responsive: [
-			{
-				breakpoint: 639,
-				options: {
-					dataLabels: {
-						style: {
-							fontSize: '12px'
-						},
-						offsetX: 50
-					},
-					yaxis: {
-						labels: {
-							style: {
-								fontSize: '14px'
-							}
-						}
-					}
-				} as ApexOptions
-			}
-		]
-	};
+		{
+			lib: 'MediatR',
+			value: 68.3384
+		}
+	];
 
-	onMount(() => {
-		const chart = new ApexCharts(document.querySelector('#chart'), options);
-		chart.render();
-	});
+	const labelFormatter = (x: number): string => `${x.toFixed(2)}ns`;
 </script>
 
-<div class="chart-container">
-	<div class="flex w-[100vw] items-center justify-center">
-		<div class="w-5/12 md:w-8/12 sm:w-10/12">
-			<div id="chart"></div>
-		</div>
-	</div>
+<div class="h-[300px] w-[500px] p-4 sm:w-[200px]">
+	<Chart
+		{data}
+		x="value"
+		xDomain={[0, null]}
+		y="lib"
+		yScale={scaleBand().padding(0.4)}
+		padding={{ left: 20, bottom: 20 }}
+	>
+		<Svg>
+			<Axis
+				placement="left"
+				rule={{ class: 'stroke-none' }}
+				tickLabelProps={{
+					textAnchor: 'end',
+					class: 'text-xs fill-soft'
+				}}
+			/>
+			<LinearGradient class="from-violet-500 to-fuchsia-500" units="userSpaceOnUse" let:url>
+				<Bars class="border-0">
+					{#each data as bar, i}
+						<Bar {bar} radius={4} strokeWidth={1} fill={i === 0 ? url : undefined} />
+					{/each}
+				</Bars>
+			</LinearGradient>
+			<Labels format={labelFormatter} placement="inside" class="fill-inverse text-xs" />
+		</Svg>
+	</Chart>
 </div>

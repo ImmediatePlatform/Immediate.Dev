@@ -1,36 +1,37 @@
 <script lang="ts">
+	import { ExampleType, type CodeExample } from '$lib/types';
+
 	import { Button } from '@svelteness/kit-docs';
-	import {
-		Blocks,
-		Github,
-		Server,
-		Bot,
-		SquareChevronRight as Console,
-		Globe,
-		Rocket
-	} from 'lucide-svelte';
-	import { apiSampleTabs, ExampleType, cliSampleTabs } from '$lib/code-examples';
+	import { Blocks, Github, Rocket } from 'lucide-svelte';
+	import apiExample from '$lib/code-examples/api';
+	import cliExample from '$lib/code-examples/cli';
+	import blazorExample from '$lib/code-examples/blazor';
+	import botExample from '$lib/code-examples/bot';
 
 	import Typewriter from '$lib/components/Typewriter.svelte';
 	import TabbedCodeSample from '$lib/components/TabbedCodeSample.svelte';
 	import ExampleSelectorTab from '$lib/components/ExampleSelectorTab.svelte';
 	import BenchmarkChart from '$lib/components/BenchmarkChart.svelte';
 	import ExampleSelector from '$lib/components/ExampleSelector.svelte';
-	import { onMount } from 'svelte';
 
 	const typewriterStrings = [
 		'Vertical Slice Architecture.',
 		'Web Development.',
 		'Mediator Pattern.',
+		'CQRS.',
 		'Validation.'
 	];
 
 	let selectedMasterExample = ExampleType.WebApi;
 
-	onMount(() => {
-		const onThisPage = document.getElementsByClassName('on-this-page')[0];
-		onThisPage.remove();
-	});
+	const examples = new Map<ExampleType, CodeExample>([
+		[ExampleType.WebApi, apiExample],
+		[ExampleType.Cli, cliExample],
+		[ExampleType.Blazor, blazorExample],
+		[ExampleType.DiscordBot, botExample]
+	]);
+
+	$: exampleContents = examples.get(selectedMasterExample)?.contents;
 </script>
 
 <svelte:head>
@@ -38,16 +39,14 @@
 </svelte:head>
 
 <div class="flex w-full flex-col items-center justify-between py-20">
-	<span
-		class="pb-4 text-left text-6xl font-bold leading-tight tracking-wider md:text-5xl sm:flex sm:flex-col sm:text-center sm:tracking-widest"
-	>
-		<span>Immediate</span><span class="sm:hidden"></span><span>Platform</span>
-	</span>
 	<div
 		class="flex pb-4 text-center text-4xl font-bold leading-tight tracking-tighter md:flex-col md:gap-y-2 sm:gap-y-0 sm:text-2xl"
 	>
 		<Typewriter strings={typewriterStrings} pauseFor={2500} delay={100} />
-		<span class="text-center text-brand">Simplified.</span>
+		<span
+			class="bg-gradient-to-r from-violet-500 to-fuchsia-500 bg-clip-text text-center text-transparent"
+			>Simplified.</span
+		>
 	</div>
 	<p class="max-w-[760px] text-balance pb-4 text-center text-lg text-soft sm:text-base">
 		Libraries for building modern, maintainable .NET applications leveraging the Vertical Slice
@@ -56,7 +55,7 @@
 	</p>
 
 	<div class="flex gap-4">
-		<Button href="/docs/first-category/first-page" primary type="raised">Get started</Button>
+		<Button href="/docs/getting-started/introduction" primary type="raised">Get started</Button>
 		<Button type="raised">
 			<div class="flex gap-2">
 				<Github />
@@ -78,28 +77,19 @@
 		</p>
 		<div class="md:w-screen md:px-4">
 			<ExampleSelector>
-				<ExampleSelectorTab bind:selected={selectedMasterExample} type={ExampleType.WebApi}>
-					<Server />
-					Web API
-				</ExampleSelectorTab>
-				<ExampleSelectorTab bind:selected={selectedMasterExample} type={ExampleType.Cli}>
-					<Console />
-					CLI
-				</ExampleSelectorTab>
-				<ExampleSelectorTab bind:selected={selectedMasterExample} type={ExampleType.Blazor}>
-					<Globe />
-					Blazor
-				</ExampleSelectorTab>
-				<ExampleSelectorTab bind:selected={selectedMasterExample} type={ExampleType.DiscordBot}>
-					<Bot />
-					Discord Bot
-				</ExampleSelectorTab>
+				{#each examples as example}
+					<ExampleSelectorTab bind:selected={selectedMasterExample} type={example[1].type}>
+						<svelte:component this={example[1].icon} class="h-6 sm:h-5" />
+						<span class="sm:hidden">{example[1].label}</span>
+					</ExampleSelectorTab>
+				{/each}
 			</ExampleSelector>
 
-			{#if selectedMasterExample === ExampleType.WebApi}
-				<TabbedCodeSample class="rounded-tl-none rounded-tr-md" tabs={apiSampleTabs} />
-			{:else if selectedMasterExample === ExampleType.Cli}
-				<TabbedCodeSample class="rounded-tl-none rounded-tr-md" tabs={cliSampleTabs} />
+			{#if exampleContents}
+				<TabbedCodeSample
+					class="rounded-tl-none rounded-tr-md sm:rounded-tr-none"
+					tabs={exampleContents}
+				/>
 			{/if}
 
 			<div
@@ -128,7 +118,7 @@
 		</div>
 	</div>
 
-	<div>
+	<div class="flex w-full justify-center">
 		<BenchmarkChart />
 	</div>
 	<div
@@ -138,3 +128,9 @@
 		<a class="underline" href="/">See full benchmark suite.</a>
 	</div>
 </div>
+
+<style>
+	:global(.on-this-page) {
+		@apply hidden;
+	}
+</style>
