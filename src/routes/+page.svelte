@@ -123,7 +123,7 @@
 	</div>
 
 	<div class="flex w-full justify-center">
-		<BenchmarkChart />
+		<BenchmarkChart class="h-[300px] w-[500px] p-4 sm:w-[200px]" />
 	</div>
 	<div
 		class="flex items-center justify-center gap-1 overflow-auto text-balance rounded-b-md px-4 py-3 text-sm sm:flex-col sm:text-xs"

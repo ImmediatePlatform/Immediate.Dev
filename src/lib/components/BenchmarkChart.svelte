@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { Chart, Svg, Axis, Bar, Bars, Labels, LinearGradient } from 'layerchart';
 	import { scaleBand } from 'd3-scale';
+	import type { ClassValue } from 'clsx';
+	import { cn } from '$lib/utils';
+
+	let className: ClassValue | undefined = undefined;
+	export { className as class };
+
+	let innerWidth: number;
 
 	const data = [
 		{
@@ -18,9 +25,14 @@
 	];
 
 	const labelFormatter = (x: number): string => `${x.toFixed(2)}ns`;
+
+	let labelPlacement: 'outside' | 'inside' | undefined;
+	$: labelPlacement = innerWidth < 1000 ? 'outside' : 'inside';
 </script>
 
-<div class="h-[300px] w-[500px] p-4 sm:w-[200px]">
+<svelte:window bind:innerWidth />
+
+<div class={cn(className)}>
 	<Chart
 		{data}
 		x="value"
@@ -35,7 +47,7 @@
 				rule={{ class: 'stroke-none' }}
 				tickLabelProps={{
 					textAnchor: 'end',
-					class: 'text-xs fill-soft'
+					class: 'sm:text-xs text-sm fill-soft'
 				}}
 			/>
 			<LinearGradient class="from-violet-500 to-fuchsia-500" units="userSpaceOnUse" let:url>
@@ -45,7 +57,11 @@
 					{/each}
 				</Bars>
 			</LinearGradient>
-			<Labels format={labelFormatter} placement="inside" class="fill-inverse text-xs" />
+			<Labels
+				format={labelFormatter}
+				placement={labelPlacement}
+				class="fill-inverse text-sm sm:text-xs"
+			/>
 		</Svg>
 	</Chart>
 </div>
