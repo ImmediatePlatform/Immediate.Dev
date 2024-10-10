@@ -2,17 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-.hljs {
-	min-height: 21.5rem;
-	max-height: 21.5rem;
-
-	@media (min-width: 639px) {
-		min-height: 26.75rem;
-		max-height: 26.75rem;
-	}
+code:before {
+	@apply !content-none;
 }
 
-pre:has(> code) {
-	@apply !my-0;
+code:after {
+	@apply !content-none;
+}
+
+.code-fence > .code > div > pre {
+	@apply !my-2;
+}
+
+.admonition > div {
 	@apply !text-sm;
+}
+
+.step > div > .description > p {
+	@apply !text-base;
 }

@@ -17,8 +17,6 @@
 		type NavbarConfig
 	} from '@svelteness/kit-docs';
 
-	import Footer from '$lib/components/Footer.svelte';
-
 	export let data: LayoutData;
 
 	$: ({ meta, sidebar } = data);
@@ -28,7 +26,7 @@
 			{ title: 'GitHub', slug: 'https://github.com/ImmediatePlatform' },
 			{ title: 'Documentation', slug: '/docs', match: /\/docs/ }
 		]
-	} as NavbarConfig;
+	} satisfies NavbarConfig;
 
 	const { activeCategory } = createSidebarContext(sidebar);
 
@@ -49,63 +47,34 @@
 </svelte:head>
 
 <KitDocs {meta}>
-	<div id="mainLayout">
-		<KitDocsLayout {navbar} {sidebar}>
-			<div class="logo" slot="navbar-left">
-				<Button href="/">
-					<span
-						class="bg-gradient-to-r from-violet-500 to-fuchsia-500 bg-clip-text text-2xl font-semibold text-transparent md:text-lg sm:flex sm:flex-col sm:text-center"
-					>
-						ImmediatePlatform
-					</span>
-				</Button>
-			</div>
+	<KitDocsLayout {navbar} {sidebar}>
+		<div class="flex items-center justify-center" slot="navbar-left">
+			<Button class="" href="/">
+				<span
+					class="bg-gradient-to-r from-violet-500 to-fuchsia-500 bg-clip-text text-2xl font-semibold text-transparent md:text-lg sm:flex sm:flex-col sm:text-center"
+				>
+					ImmediatePlatform
+				</span>
+			</Button>
+		</div>
 
-			<slot />
-
-			<div slot="main-bottom">
-				<Footer />
-			</div>
-		</KitDocsLayout>
-	</div>
+		<slot />
+	</KitDocsLayout>
 </KitDocs>
 
 <style>
-	:global(:root.dark) {
-		--kd-color-brand-rgb: 213, 149, 76;
+	:global(.kit-docs > div > div:first-child) {
+		@apply backdrop-blur-md md:backdrop-blur-lg;
 	}
 
-	.logo :global(a) {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.logo :global(svg) {
-		height: 36px;
-		overflow: hidden;
-	}
-
-	:global(#mainLayout > div > div > div:first-child) {
-		@apply backdrop-blur-sm md:backdrop-blur-md;
-	}
-
-	:global(#mainLayout > div > div:first-child > div > div > div:last-child > div:last-child) {
+	/* Cursed selectors to hide the KitDocs theme switcher, there's no cleanway to disable it */
+	:global(.kit-docs > div:first-child > div > div > div:last-child > div:last-child) {
 		@apply hidden;
 	}
 
 	:global(
-			#mainLayout > div > div:first-child > div > div > div > div > div:last-child > div hr,
-			#mainLayout
-				> div
-				> div:first-child
-				> div
-				> div
-				> div
-				> div
-				> div:last-child
-				> div
-				section:last-child
+			.kit-docs > div > div:first-child > div > div > div > div > div:last-child > div hr,
+			.kit-docs > div:first-child > div > div > div > div > div:last-child > div section:last-child
 		) {
 		@apply hidden;
 	}
