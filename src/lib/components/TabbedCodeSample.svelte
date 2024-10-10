@@ -15,6 +15,7 @@
 
 	export let tabs: CodeFile[];
 	export { className as class };
+	export let codeSampleClass: ClassValue;
 
 	const switchTab = (newIndex: number) => {
 		activeTabIndex = newIndex;
@@ -68,4 +69,4 @@
 		{/if}
 	</div>
 </div>
-<CodeSample code={content} />
+<CodeSample code={content} class={codeSampleClass} />

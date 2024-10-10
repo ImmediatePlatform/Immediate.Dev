@@ -12,7 +12,7 @@
 	let typewriterDiv: HTMLDivElement;
 
 	onMount(() => {
-		const _ = new Typewriter(typewriterDiv, {
+		new Typewriter(typewriterDiv, {
 			loop: loop,
 			autoStart: autoStart,
 			delay: delay,

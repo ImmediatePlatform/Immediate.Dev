@@ -9,11 +9,11 @@
 </script>
 
 <div>
-	<div class={cn('flex-none rounded-t-md border border-border bg-[#3f4044]', className)}>
-		<div class="flex h-8 items-center justify-center space-x-1.5 px-3">
-			<div class="h-2.5 w-2.5 rounded-full bg-red-500"></div>
-			<div class="h-2.5 w-2.5 rounded-full bg-yellow-500"></div>
-			<div class="h-2.5 w-2.5 rounded-full bg-green-500"></div>
+	<div class={cn('flex-none rounded-t-md border border-b-0 border-border bg-[#3f4044]', className)}>
+		<div class="flex h-8 items-center justify-center space-x-1.5 px-3 sm:h-6">
+			<div class="h-2.5 w-2.5 rounded-full bg-red-500 sm:h-1.5 sm:w-1.5"></div>
+			<div class="h-2.5 w-2.5 rounded-full bg-yellow-500 sm:h-1.5 sm:w-1.5"></div>
+			<div class="h-2.5 w-2.5 rounded-full bg-green-500 sm:h-1.5 sm:w-1.5"></div>
 			<div class="flex w-full items-center justify-center pr-[1.875rem]">
 				<span class="text-center">{title}</span>
 			</div>

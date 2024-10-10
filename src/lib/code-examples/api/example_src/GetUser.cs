@@ -1,10 +1,4 @@
-import { type CodeFile, type CodeExample, ExampleType } from '$lib/types';
-import { validationAssemblyAttributes, userModel } from './common';
-import { Server } from 'lucide-svelte';
-
-const getUser: CodeFile = {
-	name: 'GetUser.cs',
-	content: `[Handler]
+[Handler]
 [MapGet("/api/users/{UserId}")]
 public static partial class GetUser
 {
@@ -23,12 +17,4 @@ public static partial class GetUser
 			.Where(u => u.UserId == query.UserId)
 			.SelectDto()
 			.SingleOrDefaultAsync(token);
-}`
-};
-
-export default {
-	type: ExampleType.WebApi,
-	label: 'Web API',
-	icon: Server,
-	contents: [getUser, userModel, validationAssemblyAttributes]
-} as CodeExample;
+}
