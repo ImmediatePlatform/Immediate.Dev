@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -6,11 +6,14 @@ const config = {
 	extensions: ['.svelte', '.md'],
 
 	kit: {
-		adapter: adapter(),
-
+		adapter: adapter({
+			strict: false
+		}),
 		prerender: {
-			entries: ['*'],
 			handleMissingId: 'warn'
+		},
+		alias: {
+			img: './src/img'
 		}
 	},
 	preprocess: vitePreprocess()
