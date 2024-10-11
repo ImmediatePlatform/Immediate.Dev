@@ -10,7 +10,7 @@ title: Blazor Server
 
 This example is hosted on GitHub and demonstrates an example Vertical Slice Architecture Blazor Server application for CRUD operations on Todo items that makes use of ImmediatePlatform libraries.
 
-<GitHubButton link="https://github.com" text="View example on GitHub" />
+<GitHubButton link="https://github.com/ImmediatePlatform/Immediate.Dev/tree/main/cookbook/BlazorServerExample" text="View example on GitHub" />
 
 ## Stack
 

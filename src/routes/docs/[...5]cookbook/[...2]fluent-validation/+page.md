@@ -15,7 +15,7 @@ The example is structured in a tutorial form that will teach you how to add Flue
 
 If you prefer to skip the tutorial and just view the source code for this example, it is hosted on GitHub and can be viewed at any time.
 
-<GitHubButton link="https://github.com/" text="View example's source code on GitHub" />
+<GitHubButton link="https://github.com/ImmediatePlatform/Immediate.Dev/tree/main/cookbook/FluentValidationExample" text="View example's source code on GitHub" />
 
 <Divider />
 

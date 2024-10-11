@@ -10,7 +10,7 @@ title: CLI App
 
 This example is hosted on GitHub and demonstrates an example command line application for generating random numbers that makes use of ImmediatePlatform libraries.
 
-<GitHubButton link="https://github.com" text="View example on GitHub" />
+<GitHubButton link="https://github.com/ImmediatePlatform/Immediate.Dev/tree/main/cookbook/CliExample" text="View example on GitHub" />
 
 ## Stack
 

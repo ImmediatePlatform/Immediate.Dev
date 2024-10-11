@@ -10,7 +10,7 @@ title: Web API
 
 This example is hosted on GitHub and demonstrates an example Vertical Slice Architecture style Web API for CRUD operations on Todo items that makes use of ImmediatePlatform libraries.
 
-<GitHubButton link="https://github.com" text="View example on GitHub" />
+<GitHubButton link="https://github.com/ImmediatePlatform/Immediate.Dev/tree/main/cookbook/WebApiExample" text="View example on GitHub" />
 
 ## Stack
 
