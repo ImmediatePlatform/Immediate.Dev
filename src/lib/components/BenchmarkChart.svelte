@@ -60,7 +60,9 @@
             <Labels
                 format={labelFormatter}
                 placement={labelPlacement}
-                class="fill-gray-200 text-sm dark:fill-inverse sm:text-xs"
+                class={cn('fill-gray-200 text-sm dark:fill-inverse sm:text-xs', {
+                    'fill-inverse': labelPlacement === 'outside'
+                })}
             />
         </Svg>
     </Chart>
