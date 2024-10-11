@@ -67,25 +67,3 @@
         <slot />
     </KitDocsLayout>
 </KitDocs>
-
-<style>
-    /* Cursed selectors to hide the KitDocs theme switcher, there's no clean way to disable it */
-    :global(.kit-docs > div:first-child > div > div > div:last-child > div:last-child) {
-        @apply hidden;
-    }
-
-    :global(
-            .kit-docs > div > div:first-child > div > div > div > div > div:last-child > div hr,
-            .kit-docs
-                > div:first-child
-                > div
-                > div
-                > div
-                > div
-                > div:last-child
-                > div
-                section:last-child
-        ) {
-        @apply hidden;
-    }
-</style>
