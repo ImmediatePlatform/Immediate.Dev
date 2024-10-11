@@ -73,10 +73,10 @@
 }
 
 .code-fence {
-	--kd-code-fence-bg: rgb(19, 26, 36);
-	--kd-code-fence-top-bar-bg: rgba(2, 13, 27, 0.3);
+	--kd-code-fence-bg: rgb(13, 17, 23);
+	--kd-code-fence-top-bar-bg: rgb(22, 27, 34);
 	--kd-code-copied-bg-color: rgba(139, 92, 246, 1);
 	--kd-terminal-line-pointer: rgba(139, 92, 246, 1);
 	--kd-code-highlight-border: rgba(139, 92, 246, 1);
-	--kd-code-highlight-color: rgba(139, 92, 246, 0.10);
+	--kd-code-highlight-color: rgba(139, 92, 246, 0.1);
 }

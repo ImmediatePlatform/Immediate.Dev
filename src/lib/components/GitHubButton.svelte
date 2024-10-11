@@ -7,7 +7,7 @@
 </script>
 
 <Button type="raised" href={link} target="_blank">
-	<div class="flex gap-2">
+	<div class="flex items-center justify-center gap-2">
 		<Github />
 		{text}
 	</div>
