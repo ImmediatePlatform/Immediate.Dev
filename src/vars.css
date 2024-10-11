@@ -7,6 +7,9 @@
     --kd-color-elevate: 243 244 246;
     --kd-color-inverse: 5 11 23;
     --kd-color-border: 209 213 219;
+
+    --gh-background-lighter: 246 248 250;
+    --gh-background-lightest: 220 223 228;
 }
 
 :root {
@@ -70,6 +73,9 @@
     --kd-color-elevate: 4 5 7;
     --kd-color-body: 4 5 7;
     --kd-color-focus: 79 70 229;
+
+    --gh-background-lighter: 22 27 34;
+    --gh-background-lightest: 33 38 45;
 }
 
 .code-fence {

@@ -12,7 +12,7 @@
     import ExampleSelectorTab from '$lib/components/ExampleSelectorTab.svelte';
     import BenchmarkChart from '$lib/components/BenchmarkChart.svelte';
     import ExampleSelector from '$lib/components/ExampleSelector.svelte';
-    import { scrollIntoView } from '$lib/utils';
+    import { cn, scrollIntoView } from '$lib/utils';
     import Window from '$lib/components/Window.svelte';
 
     import TypeSafetyExampleScreenshot from '$img/compile-time.png';
@@ -93,14 +93,17 @@
 
             {#if exampleContents}
                 <TabbedCodeSample
-                    class="rounded-tl-none rounded-tr-md sm:rounded-tr-none"
-                    codeSampleClass="[&_code]:max-h-[28rem] [&_code]:min-h-[28rem] sm:[&_code]:max-h-[22.5rem] sm:[&_code]:min-h-[22.5rem]"
+                    class={[
+                        'border border-border dark:rounded-tr-md dark:border-0',
+                        { 'rounded-tl-none': selectedMasterExample === 0 }
+                    ]}
+                    codeSampleClass="rounded-t-none rounded-b-none border-t-0 [&_code]:max-h-[28rem] [&_code]:min-h-[28rem] sm:[&_code]:max-h-[22.5rem] sm:[&_code]:min-h-[22.5rem]"
                     tabs={exampleContents}
                 />
             {/if}
 
             <div
-                class="flex gap-1 overflow-auto text-balance rounded-b-md bg-background-lighter px-4 py-3 text-sm sm:text-xs"
+                class="flex gap-1 overflow-auto text-balance rounded-b-md border border-t-0 border-border bg-background-lighter px-4 py-3 text-sm dark:border-0 sm:text-xs"
             >
                 <span class="text-soft"> Like what you see? </span>
                 <a class="underline" href="/docs/cookbook/the-cookbook">See our full cookbook.</a>
