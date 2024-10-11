@@ -84,7 +84,7 @@ public sealed class Consumer(GetUserQuery.Handler handler)
 
 First modify your `Program.cs` to register the Immediate.Apis endpoints, like so:
 
-```cs |copy|title=Program.cs {3,4,5}
+```cs |copy|title=Program.cs {5-6}
 var builder = WebApplication.CreateBuilder();
 builder.Services.AddHandlers();
 
