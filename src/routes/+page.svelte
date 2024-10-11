@@ -160,6 +160,7 @@
                 <picture>
                     <source srcset={TypeSafetyExampleScreenshotSmall} media="(max-width: 639px)" />
                     <img
+                        class="hue-rotate-180 invert saturate-[1.3] sepia-[0.1] dark:filter-none"
                         src={TypeSafetyExampleScreenshot}
                         alt="Screenshot of Immediate.Handlers Roslyn analyzer showing a warning about a missing concrete handler implementation."
                     />
