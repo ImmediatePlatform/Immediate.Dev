@@ -100,7 +100,7 @@
 				class="flex gap-1 overflow-auto text-balance rounded-b-md bg-background-lighter px-4 py-3 text-sm sm:text-xs"
 			>
 				<span class="text-soft"> Like what you see? </span>
-				<a class="underline" href="/">See our full cookbook.</a>
+				<a class="underline" href="/docs/cookbook/the-cookbook">See our full cookbook.</a>
 			</div>
 		</div>
 	</div>
