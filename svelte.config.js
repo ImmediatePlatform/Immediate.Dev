@@ -3,20 +3,20 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	extensions: ['.svelte', '.md'],
+    extensions: ['.svelte', '.md'],
 
-	kit: {
-		adapter: adapter({
-			strict: false
-		}),
-		prerender: {
-			handleMissingId: 'warn'
-		},
-		alias: {
-			img: './src/img'
-		}
-	},
-	preprocess: vitePreprocess()
+    kit: {
+        adapter: adapter({
+            strict: false
+        }),
+        prerender: {
+            handleMissingId: 'warn'
+        },
+        alias: {
+            img: './src/img'
+        }
+    },
+    preprocess: vitePreprocess()
 };
 
 export default config;

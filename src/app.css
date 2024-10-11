@@ -3,25 +3,25 @@
 @tailwind utilities;
 
 .kit-docs > div > div:first-child {
-	@apply backdrop-blur-md md:backdrop-blur-lg;
+    @apply backdrop-blur-md md:backdrop-blur-lg;
 }
 
 code:before {
-	@apply !content-none;
+    @apply !content-none;
 }
 
 code:after {
-	@apply !content-none;
+    @apply !content-none;
 }
 
 .code-fence > .code > div > pre {
-	@apply !my-2;
+    @apply !my-2;
 }
 
 .admonition > div {
-	@apply !text-sm;
+    @apply !text-sm;
 }
 
 .step > div > .description > p {
-	@apply !text-base;
+    @apply !text-base;
 }

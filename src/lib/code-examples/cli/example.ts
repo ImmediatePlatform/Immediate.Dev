@@ -6,12 +6,12 @@ import RootCommand from './example_src/RootCommand.cs?raw';
 import Query from './example_src/Queries/GetRandomNumber.cs?raw';
 
 export default {
-	type: ExampleType.Cli,
-	label: 'CLI',
-	icon: SquareChevronRight,
-	contents: [
-		{ name: 'Queries/GetRandomNumber.cs', content: Query },
-		{ name: 'RootCommand.cs', content: RootCommand },
-		{ name: 'Program.cs', content: Program }
-	]
+    type: ExampleType.Cli,
+    label: 'CLI',
+    icon: SquareChevronRight,
+    contents: [
+        { name: 'Queries/GetRandomNumber.cs', content: Query },
+        { name: 'RootCommand.cs', content: RootCommand },
+        { name: 'Program.cs', content: Program }
+    ]
 } as CodeExample;
