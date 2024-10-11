@@ -22,7 +22,7 @@ cd MyApp
 dotnet add package Immediate.Handlers
 
 # Optional:
-dotnet add package Immediate.Validation
+dotnet add package Immediate.Validations
 dotnet add package Immediate.Apis
 ```
 
@@ -110,4 +110,4 @@ public static partial class GetUserQuery
 
 :::
 
-Keep reading the docs to learn about addressing cross-cutting concerns like logging with behaviors, validating the queries and commands with Immediate.Validation and more! You can also check out our cookbook for complete, ready-made examples.
+Keep reading the docs to learn about addressing cross-cutting concerns like logging with behaviors, validating the queries and commands with Immediate.Validations and more! You can also check out our cookbook for complete, ready-made examples.

@@ -4,7 +4,7 @@ title: Creating behaviors
 
 # {$frontmatter.title}
 
-Pipeline behaviors allow you to inject your own logic around the handling of requests, which lets you build a pipeline to address common cross-cutting concerns such as logging, validation etc. In fact, `Immediate.Validation` performs its validation of your queries and commands by using a behavior.
+Pipeline behaviors allow you to inject your own logic around the handling of requests, which lets you build a pipeline to address common cross-cutting concerns such as logging, validation etc. In fact, `Immediate.Validations` performs its validation of your queries and commands by using a behavior.
 
 You can think of behaviors as akin to filters known from ASP.NET Core.
 

@@ -18,6 +18,6 @@ The example uses the following stack:
 
 - Microsoft.Extensions.DependencyInjection
 - CliFx*
-- Immediate.Handlers + Immediate.Apis + Immediate.Validation
+- Immediate.Handlers + Immediate.Apis + Immediate.Validations
 
 * - `CliFx` can be easily replaced with BCL or another CLI library (e.g. `System.CommandLine`.)

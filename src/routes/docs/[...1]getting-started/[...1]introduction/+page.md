@@ -23,7 +23,7 @@ Here is a full list of what each library has to offer:
 - Source generator for Minimal APIs for Immediate.Handlers
 - Allows for easily mapping handlers to endpoints
 
-## Immediate.Validation
+## Immediate.Validations
 
 - Source generator for validating Immediate.Handlers handlers parameters
 - Built for maximum performance and minimal boilerplate validation

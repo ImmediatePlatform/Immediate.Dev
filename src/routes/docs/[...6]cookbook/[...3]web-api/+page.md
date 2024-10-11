@@ -19,4 +19,4 @@ The example uses the following stack:
 - ASP.NET Core 8
 - EFCore 8
 - PostgreSQL
-- Immediate.Handlers + Immediate.Apis + Immediate.Validation
+- Immediate.Handlers + Immediate.Apis + Immediate.Validations

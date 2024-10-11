@@ -20,4 +20,4 @@ The example uses the following stack:
 - Blazor Server
 - EFCore 8
 - PostgreSQL
-- Immediate.Handlers + Immediate.Apis + Immediate.Validation
+- Immediate.Handlers + Immediate.Apis + Immediate.Validations
