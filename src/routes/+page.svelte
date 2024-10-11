@@ -156,7 +156,10 @@
             <Window>
                 <picture>
                     <source srcset={TypeSafetyExampleScreenshotSmall} media="(max-width: 639px)" />
-                    <img src={TypeSafetyExampleScreenshot} alt="" />
+                    <img
+                        src={TypeSafetyExampleScreenshot}
+                        alt="Screenshot of Immediate.Handlers Roslyn analyzer showing a warning about a missing concrete handler implementation."
+                    />
                 </picture>
             </Window>
         </div>
