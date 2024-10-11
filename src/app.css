@@ -14,18 +14,6 @@ code:after {
     @apply !content-none;
 }
 
-.code-fence code {
-    @apply hue-rotate-180 invert saturate-150;
-}
-
-:root.dark .code-fence code {
-    @apply filter-none;
-}
-
-.code-fence > .code > div > pre {
-    @apply !my-2;
-}
-
 .admonition > div {
     @apply !text-sm;
 }
