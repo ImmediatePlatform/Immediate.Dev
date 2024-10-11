@@ -85,11 +85,3 @@
     --kd-code-fence-bg: rgba(13, 17, 23, 1);
     --kd-code-highlight-color: rgba(139, 92, 246, 0.1);
 }
-
-.code-fence code {
-    @apply hue-rotate-180 invert saturate-150;
-}
-
-:root.dark .code-fence code {
-    @apply filter-none;
-}
