@@ -53,14 +53,14 @@
             <LinearGradient class="from-violet-500 to-fuchsia-500" units="userSpaceOnUse" let:url>
                 <Bars class="border-0">
                     {#each data as bar, i}
-                        <Bar {bar} radius={4} strokeWidth={1} fill={i === 0 ? url : undefined} />
+                        <Bar {bar} radius={4} strokeWidth={0} fill={i === 0 ? url : undefined} />
                     {/each}
                 </Bars>
             </LinearGradient>
             <Labels
                 format={labelFormatter}
                 placement={labelPlacement}
-                class="fill-inverse text-sm sm:text-xs"
+                class="fill-gray-200 text-sm dark:fill-inverse sm:text-xs"
             />
         </Svg>
     </Chart>
