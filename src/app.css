@@ -14,10 +14,6 @@ code:after {
     @apply !content-none;
 }
 
-.code-fence > .code > div > pre {
-    @apply !my-2;
-}
-
 .admonition > div {
     @apply !text-sm;
 }

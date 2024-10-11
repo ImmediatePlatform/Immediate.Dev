@@ -4,6 +4,7 @@
 
     import '../app.css';
     import '../vars.css';
+    import '../codefence.css';
 
     import type { LayoutData } from './$types';
 
@@ -16,6 +17,8 @@
         createSidebarContext,
         type NavbarConfig
     } from '@svelteness/kit-docs';
+    import { onMount } from 'svelte';
+    import { initializeTheme } from '$lib/stores/theme-store';
 
     export let data: LayoutData;
 
@@ -39,6 +42,11 @@
     $: category = $activeCategory ? `${$activeCategory}: ` : '';
     $: title = meta ? `${category}${meta.title} | ImmediatePlatform` : null;
     $: description = meta?.description;
+
+    onMount(() => {
+        const cleanup = initializeTheme();
+        return cleanup;
+    });
 </script>
 
 <svelte:head>
@@ -67,25 +75,3 @@
         <slot />
     </KitDocsLayout>
 </KitDocs>
-
-<style>
-    /* Cursed selectors to hide the KitDocs theme switcher, there's no clean way to disable it */
-    :global(.kit-docs > div:first-child > div > div > div:last-child > div:last-child) {
-        @apply hidden;
-    }
-
-    :global(
-            .kit-docs > div > div:first-child > div > div > div > div > div:last-child > div hr,
-            .kit-docs
-                > div:first-child
-                > div
-                > div
-                > div
-                > div
-                > div:last-child
-                > div
-                section:last-child
-        ) {
-        @apply hidden;
-    }
-</style>

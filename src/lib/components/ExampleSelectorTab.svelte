@@ -14,7 +14,8 @@
     class={cn(
         'text-md flex-none justify-center gap-0.5 overflow-hidden rounded-t-md px-8 py-3 font-semibold hover:bg-background-lightest sm:px-6',
         {
-            'rounded-t-md border-border bg-background-lighter py-4': selected === type
+            'rounded-t-md border border-b-0 border-border bg-background-lighter py-4 hover:bg-background-lighter dark:border-0':
+                selected === type
         },
         className
     )}

@@ -10,7 +10,10 @@
 
 <div>
     <div
-        class={cn('flex-none rounded-t-md border border-b-0 border-border bg-[#3f4044]', className)}
+        class={cn(
+            'flex-none rounded-t-md border border-b-0 border-border bg-[#d8d8d8] dark:bg-[#3f4044]',
+            className
+        )}
     >
         <div class="flex h-8 items-center justify-center space-x-1.5 px-3 sm:h-6">
             <div class="h-2.5 w-2.5 rounded-full bg-red-500 sm:h-1.5 sm:w-1.5"></div>
@@ -21,5 +24,7 @@
             </div>
         </div>
     </div>
-    <slot />
+    <div class="overflow-hidden rounded-b-md border border-border dark:border-none">
+        <slot />
+    </div>
 </div>

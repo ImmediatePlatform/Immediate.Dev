@@ -37,9 +37,8 @@ module.exports = {
                 inverse: 'rgb(var(--kd-color-inverse) / <alpha-value>)',
                 body: 'rgb(var(--kd-color-body) / <alpha-value>)',
                 elevate: 'rgb(var(--kd-color-elevate) / <alpha-value>)',
-                background: '#000000',
-                'background-lighter': '#161b22',
-                'background-lightest': '#21262d',
+                'background-lighter': 'rgb(var(--gh-background-lighter) / <alpha-value>)',
+                'background-lightest': 'rgb(var(--gh-background-lightest) / <alpha-value>)',
                 // layerchart
                 'surface-content': 'rgb(var(--kd-color-soft) / <alpha-value>)'
             },

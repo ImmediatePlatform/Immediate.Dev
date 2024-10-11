@@ -54,13 +54,16 @@
         </button>
     {/each}
 
-    <div class="my-auto ml-auto mr-2 flex-none items-center text-soft hover:text-white sm:hidden">
+    <div
+        class="my-auto ml-auto mr-2 flex-none items-center text-soft hover:text-gray-900 dark:hover:text-white sm:hidden"
+    >
         {#if copied}
             <div
-                class="flex rounded bg-brand px-3 py-1 font-mono text-xs text-black"
+                class="flex rounded bg-brand px-3 py-1 font-mono text-xs dark:text-gray-900"
                 in:fade={{ duration: 400 }}
             >
-                <span class="select-none text-center text-inverse">Copied!</span>
+                <span class="select-none text-center text-gray-200 dark:text-gray-900">Copied!</span
+                >
             </div>
         {:else}
             <button on:click={onCopyClick} in:fade={{ duration: 400 }}>
@@ -69,4 +72,7 @@
         {/if}
     </div>
 </div>
-<CodeSample code={content} class={codeSampleClass} />
+<CodeSample
+    code={content}
+    class={cn('rounded-md border border-border dark:rounded-none dark:border-0', codeSampleClass)}
+/>

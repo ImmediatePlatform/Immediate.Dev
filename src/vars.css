@@ -7,6 +7,9 @@
     --kd-color-elevate: 243 244 246;
     --kd-color-inverse: 5 11 23;
     --kd-color-border: 209 213 219;
+
+    --gh-background-lighter: 246 248 250;
+    --gh-background-lightest: 220 223 228;
 }
 
 :root {
@@ -70,13 +73,22 @@
     --kd-color-elevate: 4 5 7;
     --kd-color-body: 4 5 7;
     --kd-color-focus: 79 70 229;
+
+    --gh-background-lighter: 22 27 34;
+    --gh-background-lightest: 33 38 45;
 }
 
 .code-fence {
-    --kd-code-fence-bg: rgb(13, 17, 23);
-    --kd-code-fence-top-bar-bg: rgb(22, 27, 34);
+    --kd-code-fence-bg: rgba(246, 248, 250, 1);
+    --kd-code-fence-top-bar-bg: rgba(246, 248, 250, 1);
     --kd-code-copied-bg-color: rgba(139, 92, 246, 1);
     --kd-terminal-line-pointer: rgba(139, 92, 246, 1);
     --kd-code-highlight-border: rgba(139, 92, 246, 1);
+    --kd-code-highlight-color: rgba(139, 92, 246, 0.2);
+}
+
+:root.dark .code-fence {
+    --kd-code-fence-bg: rgba(13, 17, 23, 1);
+    --kd-code-fence-top-bar-bg: rgba(22, 27, 34, 1);
     --kd-code-highlight-color: rgba(139, 92, 246, 0.1);
 }

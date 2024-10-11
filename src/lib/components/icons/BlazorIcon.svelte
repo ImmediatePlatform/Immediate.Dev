@@ -7,4 +7,8 @@
     export { className as class };
 </script>
 
-<img src="blazor.png" class={cn('brightness-0 invert filter', className)} alt="Blazor logo" />
+<img
+    src="blazor.png"
+    class={cn('opacity-90 brightness-0 filter dark:opacity-100 dark:invert', className)}
+    alt="Blazor logo"
+/>

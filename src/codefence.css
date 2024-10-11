@@ -1,0 +1,43 @@
+.code-fence {
+    @apply border-opacity-20;
+}
+
+:root.dark .code-fence {
+    @apply border-opacity-100;
+}
+
+.code-fence-top-bar {
+    @apply border-b border-border border-opacity-20;
+}
+
+:root.dark .code-fence-top-bar {
+    @apply border-b-0;
+}
+
+.code-fence-top-bar span {
+    @apply text-gray-500;
+}
+
+:root.dark .code-fence-top-bar span {
+    @apply text-soft;
+}
+
+.code-fence-top-bar button {
+    @apply text-gray-500 hover:text-gray-900;
+}
+
+:root.dark .code-fence-top-bar button {
+    @apply text-soft hover:text-inverse;
+}
+
+.code-fence code {
+    @apply hue-rotate-180 invert saturate-150;
+}
+
+:root.dark .code-fence code {
+    @apply filter-none;
+}
+
+.code-fence > .code > div > pre {
+    @apply !my-2;
+}

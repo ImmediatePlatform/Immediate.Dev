@@ -4,7 +4,9 @@
 
     import Highlight from 'svelte-highlight';
     import csharp from 'svelte-highlight/languages/csharp';
-    import theme from 'svelte-highlight/styles/github-dark';
+    import darkTheme from 'svelte-highlight/styles/github-dark';
+    import lightTheme from 'svelte-highlight/styles/github';
+    import { isDarkMode } from '$lib/stores/theme-store';
 
     let className: ClassValue | undefined = undefined;
     export { className as class };
@@ -13,7 +15,11 @@
 </script>
 
 <svelte:head>
-    {@html theme}
+    {#if $isDarkMode}
+        {@html darkTheme}
+    {:else}
+        {@html lightTheme}
+    {/if}
 </svelte:head>
 
 <Highlight language={csharp} {code} class={cn('text-sm sm:text-xs', className)} />
