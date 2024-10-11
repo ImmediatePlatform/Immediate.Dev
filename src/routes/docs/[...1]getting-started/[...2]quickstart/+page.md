@@ -88,10 +88,11 @@ First modify your `Program.cs` to register the Immediate.Apis endpoints, like so
 var builder = WebApplication.CreateBuilder();
 builder.Services.AddHandlers();
 
+var app = builder.Build();
+
 // <MyApp> here will be the name of your project
 app.MapMyAppEndpoints();
 
-var app = builder.Build();
 app.Run();
 ````
 
