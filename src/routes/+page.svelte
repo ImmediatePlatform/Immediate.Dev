@@ -2,7 +2,7 @@
 	import { ExampleType, type CodeExample } from '$lib/types';
 
 	import { Button } from '@svelteness/kit-docs';
-	import { Blocks, Github, Rocket, ShieldCheck } from 'lucide-svelte';
+	import { Blocks, Rocket, ShieldCheck } from 'lucide-svelte';
 	import apiExample from '$lib/code-examples/api/example';
 	import cliExample from '$lib/code-examples/cli/example';
 	import blazorExample from '$lib/code-examples/blazor/example';
@@ -120,18 +120,18 @@
 				come with classic reflection-based solutions.
 			</p>
 		</div>
-	</div>
 
-	<div class="flex w-full justify-center">
-		<BenchmarkChart class="h-[300px] w-[500px] p-4 sm:w-[200px]" />
-	</div>
-	<div
-		class="flex items-center justify-center gap-1 overflow-auto text-balance rounded-b-md px-4 py-3 text-sm sm:flex-col sm:text-xs"
-	>
-		<p class="text-center text-soft">Single request/response handler benchmark.</p>
-		<a class="underline" href="/docs/benchmarks/performance-comparisons"
-			>See full benchmark suite.</a
+		<div class="flex w-full justify-center">
+			<BenchmarkChart class="h-[300px] w-[500px] p-4 sm:w-[200px]" />
+		</div>
+		<div
+			class="flex items-center justify-center gap-1 overflow-auto text-balance rounded-b-md px-4 py-3 text-sm sm:flex-col sm:text-xs"
 		>
+			<p class="text-center text-soft">Single request/response handler benchmark.</p>
+			<a class="underline" href="/docs/benchmarks/performance-comparisons"
+				>See full benchmark suite.</a
+			>
+		</div>
 	</div>
 
 	<div class="mt-36 sm:mt-24">
@@ -148,9 +148,7 @@
 				you about issues ahead of time, during compilation.
 			</p>
 		</div>
-	</div>
 
-	<div>
 		<div class="flex max-w-[50rem] justify-center lg:px-4 md:w-screen">
 			<Window>
 				<picture>

@@ -24,7 +24,13 @@
 	const navbar = {
 		links: [
 			{ title: 'GitHub', slug: 'https://github.com/ImmediatePlatform' },
-			{ title: 'Documentation', slug: '/docs', match: /\/docs/ }
+			{ title: 'Documentation', slug: '/docs', match: /\/docs/ },
+			{ title: 'Cookbook', slug: '/docs/cookbook/the-cookbook', match: /\/docs\/cookbook/ },
+			{
+				title: 'Benchmarks',
+				slug: '/docs/benchmarks/performance-comparisons',
+				match: /\/docs\/benchmarks/
+			}
 		]
 	} satisfies NavbarConfig;
 

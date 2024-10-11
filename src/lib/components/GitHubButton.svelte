@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { Button } from '@svelteness/kit-docs';
 	import { Github } from 'lucide-svelte';
 
