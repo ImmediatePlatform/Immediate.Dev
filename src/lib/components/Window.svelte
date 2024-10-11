@@ -21,5 +21,7 @@
             </div>
         </div>
     </div>
-    <slot />
+    <div class="overflow-hidden rounded-b-md px-[1px] dark:px-0">
+        <slot />
+    </div>
 </div>
