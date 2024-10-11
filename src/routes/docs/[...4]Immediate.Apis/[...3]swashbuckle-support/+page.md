@@ -16,7 +16,7 @@ This error indicates Swashbuckle is trying to use two classes named `Command` fr
 To fix this, the following options must be defined in your SwaggerGen configuration:
 
 ```cs |copy|title=Program.cs
-builder.Services.AddSwaggerGen( options =>
+builder.Services.AddSwaggerGen(options =>
 {
     options.CustomSchemaIds(x => x.FullName?.Replace("+", ".", StringComparison.Ordinal));
 });
