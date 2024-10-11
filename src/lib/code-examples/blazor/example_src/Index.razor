@@ -1,6 +1,6 @@
-@using My.Endpoints
-@using VsaTemplate.Web.Features.Todos.Models
-@inherits BlazorComponentBase
+@page "/todo"
+@using BlazorServerExample.Features.Todos.Endpoints
+@using BlazorServerExample.Features.Todos.Models
 @rendermode InteractiveServer
 
 @if (_todos is null)
@@ -37,7 +37,7 @@
     [Inject]
     private GetTodos.Handler GetTodos { get; init; } = null!;
 
-    private IReadOnlyList<Todo> _todos = null!;
+    private IReadOnlyList<Todo>? _todos;
     private bool _showCompleted;
 
     protected override Task OnAfterRenderAsync(bool firstRender)
@@ -52,7 +52,7 @@
     {
         _showCompleted = newState;
 
-        _todos = await GetTodos.HandleAsync(new() { ShowCompleted = _showCompleted, });
+        _todos = await GetTodos.HandleAsync(new(_showCompleted));
 
         StateHasChanged();
     }

@@ -91,7 +91,7 @@
 			{#if exampleContents}
 				<TabbedCodeSample
 					class="rounded-tl-none rounded-tr-md sm:rounded-tr-none"
-					codeSampleClass="[&_code]:max-h-[26.75rem] [&_code]:min-h-[26.75rem] sm:[&_code]:max-h-[21.5rem] sm:[&_code]:min-h-[21.5rem]"
+					codeSampleClass="[&_code]:max-h-[28rem] [&_code]:min-h-[28rem] sm:[&_code]:max-h-[22.5rem] sm:[&_code]:min-h-[22.5rem]"
 					tabs={exampleContents}
 				/>
 			{/if}
