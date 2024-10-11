@@ -1,7 +1,7 @@
+using BlazorServerExample.Database.Models;
 using Microsoft.EntityFrameworkCore;
-using WebApiExample.Database.Models;
 
-namespace WebApiExample.Database;
+namespace BlazorServerExample.Database;
 
 public sealed class ExampleDbContext(IConfiguration configuration) : DbContext
 {

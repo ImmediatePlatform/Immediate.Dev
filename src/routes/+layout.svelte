@@ -69,11 +69,7 @@
 </KitDocs>
 
 <style>
-	:global(.kit-docs > div > div:first-child) {
-		@apply backdrop-blur-md md:backdrop-blur-lg;
-	}
-
-	/* Cursed selectors to hide the KitDocs theme switcher, there's no cleanway to disable it */
+	/* Cursed selectors to hide the KitDocs theme switcher, there's no clean way to disable it */
 	:global(.kit-docs > div:first-child > div > div > div:last-child > div:last-child) {
 		@apply hidden;
 	}

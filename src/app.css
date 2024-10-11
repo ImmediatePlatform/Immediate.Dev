@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.kit-docs > div > div:first-child {
+	@apply backdrop-blur-md md:backdrop-blur-lg;
+}
+
 code:before {
 	@apply !content-none;
 }
