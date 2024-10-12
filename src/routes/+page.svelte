@@ -131,7 +131,7 @@
         <div class="flex w-full justify-center">
             <BenchmarkChart
                 data={oneBehaviorOneServiceData}
-                class="h-[300px] w-[500px] p-4 sm:w-[200px]"
+                class="h-[300px] w-[500px] p-4 md:w-[250px] sm:w-[200px]"
             />
         </div>
         <div
