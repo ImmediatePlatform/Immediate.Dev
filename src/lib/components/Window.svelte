@@ -11,7 +11,7 @@
 <div>
     <div
         class={cn(
-            'flex-none rounded-t-md border border-b-0 border-border bg-[#d8d8d8] dark:bg-[#3f4044]',
+            'flex-none rounded-t-md border border-b-0 border-border bg-[#e8e8e8] dark:bg-[#3f4044]',
             className
         )}
     >
