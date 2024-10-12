@@ -19,6 +19,7 @@
     import TypeSafetyExampleScreenshotSmall from '$img/compile-time-sm.png';
     import Footer from '$lib/components/Footer.svelte';
     import GitHubButton from '$lib/components/GitHubButton.svelte';
+    import { oneBehaviorOneServiceData } from '$lib/benchmark-data';
 
     const typewriterStrings = [
         'Vertical Slice Architecture.',
@@ -128,12 +129,15 @@
         </div>
 
         <div class="flex w-full justify-center">
-            <BenchmarkChart class="h-[300px] w-[500px] p-4 sm:w-[200px]" />
+            <BenchmarkChart
+                data={oneBehaviorOneServiceData}
+                class="h-[300px] w-[500px] p-4 sm:w-[200px]"
+            />
         </div>
         <div
             class="flex items-center justify-center gap-1 overflow-auto text-balance rounded-b-md px-4 py-3 text-sm sm:flex-col sm:text-xs"
         >
-            <p class="text-center text-soft">Single request/response handler benchmark.</p>
+            <p class="text-center text-soft">Benchmark using 1 behavior and 1 service.</p>
             <a class="underline" href="/docs/benchmarks/performance-comparisons"
                 >See full benchmark suite.</a
             >
@@ -160,7 +164,7 @@
                 <picture>
                     <source srcset={TypeSafetyExampleScreenshotSmall} media="(max-width: 639px)" />
                     <img
-                        class="hue-rotate-180 invert saturate-[1.3] sepia-[0.1] dark:filter-none"
+                        class="hue-rotate-180 invert saturate-[3] sepia-[0.28] dark:filter-none"
                         src={TypeSafetyExampleScreenshot}
                         alt="Screenshot of Immediate.Handlers Roslyn analyzer showing a warning about a missing concrete handler implementation."
                     />

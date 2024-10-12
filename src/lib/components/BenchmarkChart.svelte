@@ -3,26 +3,14 @@
     import { scaleBand } from 'd3-scale';
     import type { ClassValue } from 'clsx';
     import { cn } from '$lib/utils';
+    import type { BenchmarkData } from '$lib/benchmark-data';
 
     let className: ClassValue | undefined = undefined;
     export { className as class };
 
-    let innerWidth: number;
+    export let data: BenchmarkData;
 
-    const data = [
-        {
-            lib: 'Immediate.Handlers',
-            value: 16.6023
-        },
-        {
-            lib: 'Mediator',
-            value: 27.2993
-        },
-        {
-            lib: 'MediatR',
-            value: 68.3384
-        }
-    ];
+    let innerWidth: number;
 
     const labelFormatter = (x: number): string => `${x.toFixed(2)}ns`;
 
@@ -61,7 +49,7 @@
                 format={labelFormatter}
                 placement={labelPlacement}
                 class={cn('fill-gray-200 text-sm dark:fill-inverse sm:text-xs', {
-                    'fill-inverse': labelPlacement === 'outside'
+                    'fill-soft dark:fill-soft': labelPlacement === 'outside'
                 })}
             />
         </Svg>
