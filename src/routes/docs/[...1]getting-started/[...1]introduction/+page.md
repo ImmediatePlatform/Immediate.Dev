@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: FastEndpoints supports both property injection and constructor injection to make your life easier.
+description: ImmediatePlatform offers libraries that make implementing the Vertical Slice Architecture, CQRS pattern and Validation in .NET easier. You can think of the ImmediatePlatform suite as an alternative to MediatR/Mediator, FluentValidation and ASP.NET Core Minimal APIs/Controllers.
 ---
 
 # {$frontmatter.title}
