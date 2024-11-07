@@ -12,7 +12,7 @@
     import ExampleSelectorTab from '$lib/components/ExampleSelectorTab.svelte';
     import BenchmarkChart from '$lib/components/BenchmarkChart.svelte';
     import ExampleSelector from '$lib/components/ExampleSelector.svelte';
-    import { cn, scrollIntoView } from '$lib/utils';
+    import { scrollIntoView } from '$lib/utils';
     import Window from '$lib/components/Window.svelte';
 
     import TypeSafetyExampleScreenshot from '$img/compile-time.png';
@@ -43,21 +43,6 @@
 
 <svelte:head>
     <title>ImmediatePlatform</title>
-
-    <!-- Basic Meta Tags -->
-    <meta property="og:title" content="ImmediatePlatform" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://immediateplatform.dev" />
-    <meta
-        property="og:description"
-        content="Libraries for building modern, maintainable .NET applications leveraging the Vertical Slice Architecture and Mediator pattern with no boilerplate."
-    />
-
-    <!-- Optional but Recommended Meta Tags -->
-    <meta property="og:site_name" content="ImmediatePlatform" />
-
-    <!-- Discord-specific Meta Tags -->
-    <meta name="theme-color" content="#d946ef" />
 </svelte:head>
 
 <div id="home-page" class="flex w-full flex-col items-center justify-between py-36 sm:py-24">

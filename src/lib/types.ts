@@ -1,5 +1,14 @@
 import type { SvelteComponent } from 'svelte';
 
+export type SEOData = {
+    title: string;
+    description?: string;
+    image?: string;
+    type: 'website' | string;
+    canonical: string;
+};
+export type SEODataOverride = Pick<SEOData, 'title' | 'description' | 'image'>;
+
 export type CodeFile = {
     name: string;
     content: string;

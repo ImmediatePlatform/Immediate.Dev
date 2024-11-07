@@ -6,9 +6,9 @@
     import '../vars.css';
     import '../codefence.css';
 
-    import type { LayoutData } from './$types';
+    import SEO from '$lib/components/SEO.svelte';
 
-    import { page } from '$app/stores';
+    import type { LayoutData } from './$types';
 
     import {
         Button,
@@ -37,11 +37,7 @@
         ]
     } satisfies NavbarConfig;
 
-    const { activeCategory } = createSidebarContext(sidebar);
-
-    $: category = $activeCategory ? `${$activeCategory}: ` : '';
-    $: title = meta ? `${category}${meta.title} | ImmediatePlatform` : null;
-    $: description = meta?.description;
+    createSidebarContext(sidebar);
 
     onMount(() => {
         const cleanup = initializeTheme();
@@ -49,16 +45,7 @@
     });
 </script>
 
-<svelte:head>
-    {#key $page.url.pathname}
-        {#if title}
-            <title>{title}</title>
-        {/if}
-        {#if description}
-            <meta name="description" content={description} />
-        {/if}
-    {/key}
-</svelte:head>
+<SEO />
 
 <KitDocs {meta}>
     <KitDocsLayout {navbar} {sidebar}>
