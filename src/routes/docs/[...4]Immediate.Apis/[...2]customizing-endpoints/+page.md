@@ -87,3 +87,30 @@ public static partial class GetUsersQuery
     }
 }
 ```
+
+## Transforming the handler result into a different status code
+
+You can transform the result of your handler into a different statuscode by adding a `TransformResult` method, like so:
+
+```cs |copy|title=GetUsersQuery.cs {5-8}
+[Handler]
+[MapGet("/users")]
+[Authorize(Policies.UserManagement)]
+public static partial class GetUsersQuery
+{
+    internal static Results<Ok<IEnumerable<User>>, NotFound> TransformResult(IEnumerable<User> result)
+	{
+		return TypedResults.Ok(result);
+	}
+
+    public record Query;
+
+    private static ValueTask<IEnumerable<User>> HandleAsync(
+        Query _,
+        UsersService usersService,
+        CancellationToken token)
+    {
+        return usersService.GetUsers();
+    }
+}
+```
