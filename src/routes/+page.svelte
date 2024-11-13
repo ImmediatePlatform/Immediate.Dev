@@ -60,7 +60,7 @@
         Architecture and Mediator pattern with <button
             class="select-text text-inverse underline"
             on:click={() => scrollIntoView(examplesDiv)}>no boilerplate</button
-        >.<br />Extensible. Fast. Source Generated. Open Source.
+        >.<br />Extensible. Modular. Fast. Source Generated. Open Source.
     </p>
 
     <div class="flex gap-4">
