@@ -3,14 +3,14 @@ export type BenchmarkData = { lib: string; value: number }[];
 export const oneBehaviorOneServiceData = [
     {
         lib: 'Immediate.Handlers',
-        value: 80.02
+        value: 62.67
     },
     {
         lib: 'Mediator',
-        value: 101.23
+        value: 91.53
     },
     {
         lib: 'MediatR',
-        value: 201.27
+        value: 188.54
     }
 ];

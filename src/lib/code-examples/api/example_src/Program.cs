@@ -1,7 +1,7 @@
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHandlers();
-builder.Services.AddBehaviors();
+builder.Services.AddWebHandlers();
+builder.Services.AddWebBehaviors();
 
 builder.Services.AddEntityFrameworkNpgsql()
     .AddDbContext<ExampleDbContext>();

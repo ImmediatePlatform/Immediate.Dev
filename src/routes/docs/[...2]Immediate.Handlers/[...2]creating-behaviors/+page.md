@@ -72,8 +72,8 @@ either type does not match a given constraint, the behavior is not added to the 
 
 Immediate.Handlers supports `Microsoft.Extensions.DependencyInjection.Abstractions` directly. To register behaviors with DI, simply add the following to your `Program.cs`:
 
-```cs
-services.AddBehaviors();
-```
+In your `Program.cs`, add a call to `services.AddXxxBehaviors()`, where `Xxx` is the shortened form of the project name.
+* For a project named `Web`, it will be `services.AddWebBehaviors()`
+* For a project named `Application.Web`, it will be `services.AddApplicationWebBehaviors()`
 
 This registers all behaviors referenced in any `[Behaviors]` attribute.

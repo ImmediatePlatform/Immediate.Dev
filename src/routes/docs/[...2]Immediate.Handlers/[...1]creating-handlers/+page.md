@@ -79,8 +79,8 @@ public class Consumer(IHandler<Query, IEnumerable<User>> handler)
 
 Immediate.Handlers supports `Microsoft.Extensions.DependencyInjection.Abstractions` directly. To register handlers with DI, simply add the following to your `Program.cs`:
 
-```cs
-services.AddHandlers();
-```
+In your `Program.cs`, add a call to `services.AddXxxHandlers()`, where `Xxx` is the shortened form of the project name.
+* For a project named `Web`, it will be `services.AddWebHandlers()`
+* For a project named `Application.Web`, it will be `services.AddApplicationWebHandlers()`
 
 This registers all classes in the assembly marked with `[Handler]`.

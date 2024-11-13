@@ -9,7 +9,7 @@ await new CliApplicationBuilder()
         var services = new ServiceCollection();
 
         // Register services
-        services.AddHandlers();
+        services.AddCliHandlers();
 
         // Register commands
         foreach (var commandType in commandTypes)
