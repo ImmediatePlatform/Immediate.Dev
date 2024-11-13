@@ -26,7 +26,8 @@
         'Web Development.',
         'Mediator Pattern.',
         'CQRS.',
-        'Validation.'
+        'Validation.',
+        'Caching.'
     ];
 
     const examples = new Map<ExampleType, CodeExample>([
