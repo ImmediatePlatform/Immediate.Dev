@@ -1,3 +1,4 @@
+import type { SEODataOverride } from '$lib/types';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = () => {
@@ -6,6 +7,6 @@ export const load: PageLoad = () => {
             title: 'ImmediatePlatform',
             description:
                 'Libraries for building modern, maintainable .NET applications leveraging the Vertical Slice Architecture and Mediator pattern with no boilerplate. Extensible. Fast. Source Generated. Open Source.'
-        }
+        } satisfies SEODataOverride
     };
 };
