@@ -10,7 +10,6 @@ export const config = Object.freeze<Config>({
     announcement: {
         text: 'Introducing',
         highlightedText: 'Immediate.Cache',
-        // TODO: change
         href: '/docs/getting-started/introduction#immediate-cache'
     }
 });
