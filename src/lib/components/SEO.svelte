@@ -1,5 +1,7 @@
 <script lang="ts">
     import { page } from '$app/stores';
+    import { browser } from '$app/environment';
+    import { config } from '../../config';
     import type { SEOData, SEODataOverride } from '$lib/types';
     import { type MarkdownFrontmatter } from '@svelteness/kit-docs';
 
@@ -7,6 +9,10 @@
         title?: string;
         description?: string;
     } & MarkdownFrontmatter;
+
+    $: url = browser
+        ? $page.url.href
+        : new URL($page.url.pathname, config.siteUrl || $page.url.origin).href;
 
     $: pageSeoOverride = $page.data?.seo as SEODataOverride | undefined;
     $: frontmatter = $page.data?.meta?.frontmatter as FrontmatterMeta | undefined;
@@ -18,8 +24,7 @@
         description: pageSeoOverride?.description ?? frontmatter?.description,
         image: pageSeoOverride?.image,
         type: 'website',
-        canonical: new URL($page.url.pathname, import.meta.env.VITE_SITE_URL || $page.url.origin)
-            .href
+        canonical: url
     } satisfies SEOData;
 </script>
 

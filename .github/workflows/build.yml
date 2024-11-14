@@ -29,6 +29,8 @@ jobs:
     - name: Restore dependencies
       run: npm install
     - name: Build
+      env:
+        VITE_SITE_URL: ${{ vars.SITE_URL }}
       run: npm run build
 
     - name: Setup Pages
