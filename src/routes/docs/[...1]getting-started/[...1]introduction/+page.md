@@ -50,3 +50,13 @@ Here is a full list of what each library has to offer:
 
 - Source generator for validating Immediate.Handlers handlers parameters
 - Built for maximum performance and minimal boilerplate validation
+
+## Immediate.Cache
+
+<GitHubBadgeCollection>
+    <GitHubBadge src="https://img.shields.io/nuget/v/Immediate.Cache.svg" href="https://www.nuget.org/packages/Immediate.Cache/" alt="Immediate.Cache NuGet badge" />
+    <GitHubBadge src="https://img.shields.io/github/release/ImmediatePlatform/Immediate.Cache.svg" href="https://GitHub.com/ImmediatePlatform/Immediate.Cache/releases/" alt="Immediate.Cache GitHub Release badge" />
+    <GitHubBadge src="https://img.shields.io/github/license/ImmediatePlatform/Immediate.Cache.svg" href="https://github.com/ImmediatePlatform/Immediate.Cache/blob/master/license.txt" alt="Immediate.Cache MIT license badge" />
+</GitHubBadgeCollection>
+
+- Collection of classes that simplify caching responses from Immediate.Handlers handlers.

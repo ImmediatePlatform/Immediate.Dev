@@ -1,5 +1,11 @@
 import type { SvelteComponent } from 'svelte';
 
+export type Announcement = {
+    text: string;
+    highlightedText?: string;
+    href: string;
+};
+
 export type SEOData = {
     title: string;
     description?: string;

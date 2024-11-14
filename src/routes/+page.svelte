@@ -20,6 +20,8 @@
     import Footer from '$lib/components/Footer.svelte';
     import GitHubButton from '$lib/components/GitHubButton.svelte';
     import { oneBehaviorOneServiceData } from '$lib/benchmark-data';
+    import Announcement from '$lib/components/Announcement.svelte';
+    import { config } from '../config';
 
     const typewriterStrings = [
         'Vertical Slice Architecture.',
@@ -47,6 +49,9 @@
 </svelte:head>
 
 <div id="home-page" class="flex w-full flex-col items-center justify-between py-36 sm:py-24">
+    {#if config.announcement}
+        <Announcement class="mb-8" value={config.announcement} />
+    {/if}
     <div
         class="flex pb-4 text-center text-4xl font-bold leading-tight tracking-tighter md:flex-col md:gap-y-2 sm:gap-y-0 sm:text-2xl"
     >

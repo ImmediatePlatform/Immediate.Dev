@@ -24,6 +24,7 @@ dotnet add package Immediate.Handlers
 # Optional:
 dotnet add package Immediate.Validations
 dotnet add package Immediate.Apis
+dotnet add package Immediate.Cache
 ```
 
 !!!
