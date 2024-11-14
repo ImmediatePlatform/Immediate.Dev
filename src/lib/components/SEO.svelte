@@ -1,16 +1,21 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import type { SEOData, SEODataOverride } from '$lib/types';
-    import { kitDocs } from '@svelteness/kit-docs';
+    import { type MarkdownFrontmatter } from '@svelteness/kit-docs';
 
-    $: pageSeoOverride = $page.data?.seo as SEODataOverride | undefined | null;
+    type FrontmatterMeta = {
+        title?: string;
+        description?: string;
+    } & MarkdownFrontmatter;
+
+    $: pageSeoOverride = $page.data?.seo as SEODataOverride | undefined;
+    $: frontmatter = $page.data?.meta?.frontmatter as FrontmatterMeta | undefined;
+
     $: seo = {
         title:
             pageSeoOverride?.title ??
-            ($kitDocs?.meta?.title
-                ? `${$kitDocs.meta.title} | ImmediatePlatform`
-                : 'ImmediatePlatform'),
-        description: pageSeoOverride?.description ?? $kitDocs?.meta?.description,
+            (frontmatter?.title ? `${frontmatter.title} | ImmediatePlatform` : 'ImmediatePlatform'),
+        description: pageSeoOverride?.description ?? frontmatter?.description,
         image: pageSeoOverride?.image,
         type: 'website',
         canonical: new URL($page.url.pathname, import.meta.env.VITE_SITE_URL || $page.url.origin)
