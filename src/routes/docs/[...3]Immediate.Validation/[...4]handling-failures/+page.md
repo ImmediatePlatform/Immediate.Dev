@@ -1,5 +1,6 @@
 ---
-title: Handling failures
+title: Handling validation failures
+description: Learn how to handle validation failures
 ---
 
 # {$frontmatter.title}

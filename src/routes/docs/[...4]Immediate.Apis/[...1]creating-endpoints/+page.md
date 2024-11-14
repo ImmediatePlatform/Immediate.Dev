@@ -1,5 +1,6 @@
 ---
 title: Creating endpoints
+description: Learn how to create endpoints
 ---
 
 # {$frontmatter.title}

@@ -1,5 +1,6 @@
 ---
 title: FluentValidation Integration
+description: Learn how to integrate Immediate.Handlers and Immediate.Apis with FluentValidation
 ---
 
 # {$frontmatter.title}

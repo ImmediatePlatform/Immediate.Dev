@@ -1,5 +1,6 @@
 ---
 title: Blazor Server
+description: Blazor Server cookbook example
 ---
 
 # {$frontmatter.title}

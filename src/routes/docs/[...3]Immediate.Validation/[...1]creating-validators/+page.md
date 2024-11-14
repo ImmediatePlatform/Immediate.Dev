@@ -1,5 +1,6 @@
 ---
 title: Creating validators
+description: Learn how to create validators
 ---
 
 # {$frontmatter.title}

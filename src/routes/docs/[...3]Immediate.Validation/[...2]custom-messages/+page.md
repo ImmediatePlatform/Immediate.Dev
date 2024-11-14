@@ -1,5 +1,6 @@
 ---
 title: Custom validation messages
+description: Learn how to add custom validation messages to your validations
 ---
 
 # {$frontmatter.title}

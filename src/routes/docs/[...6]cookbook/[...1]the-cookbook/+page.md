@@ -1,5 +1,6 @@
 ---
 title: The Cookbook
+description: Ready to use examples showcasing common use cases for ImmediatePlatform libraries
 ---
 
 # {$frontmatter.title}

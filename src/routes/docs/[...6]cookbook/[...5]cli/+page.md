@@ -1,5 +1,6 @@
 ---
 title: CLI App
+description: CLI App cookbook example
 ---
 
 # {$frontmatter.title}

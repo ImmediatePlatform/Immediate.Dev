@@ -1,5 +1,6 @@
 ---
 title: Extending validation classes
+description: Learn how to extend validation classes with custom validation logic
 ---
 
 # {$frontmatter.title}

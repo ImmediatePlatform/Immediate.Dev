@@ -1,5 +1,6 @@
 ---
 title: Full-Stack VSA App
+description: Full-Stack VSA App cookbook example
 ---
 
 # {$frontmatter.title}
