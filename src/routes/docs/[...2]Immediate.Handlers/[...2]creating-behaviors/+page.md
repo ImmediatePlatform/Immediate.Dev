@@ -1,5 +1,6 @@
 ---
 title: Creating behaviors
+description: Learn how to create behaviors
 ---
 
 # {$frontmatter.title}

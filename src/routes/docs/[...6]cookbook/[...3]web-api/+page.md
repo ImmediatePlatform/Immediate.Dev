@@ -1,5 +1,6 @@
 ---
 title: Web API
+description: Web API cookbook example
 ---
 
 # {$frontmatter.title}

@@ -1,5 +1,6 @@
 ---
 title: Creating a cache
+description: Learn how to create a cache to use with your handler
 ---
 
 # {$frontmatter.title}

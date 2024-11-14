@@ -1,5 +1,6 @@
 ---
 title: Customizing endpoints
+description: Learn how to customize endpoints to add authorization, OpenAPI metadata and more
 ---
 
 # {$frontmatter.title}
