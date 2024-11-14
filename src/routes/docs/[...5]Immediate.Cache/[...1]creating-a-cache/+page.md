@@ -63,9 +63,10 @@ var response = await cache.GetValue(request, token);
 If there is a cached value, it will be returned; otherwise a temporary scope will be used to create the handler and
 execute it; and the returned value will be stored.
 
-> [!NOTE]
-> If simultaneous requests are made while the handler is executing, they will wait for the first handler to
+:::admonition type="note"
+If simultaneous requests are made while the handler is executing, they will wait for the first handler to
 complete, rather than executing the handler a second/simultaenous time.
+:::
 
 ## Removing Data From the Cache
 
@@ -74,9 +75,9 @@ Using an instance of the `GetValueCache` class that you have created above, you 
 await cache.RemoveValue(request);
 ```
 
-> [!NOTE]
-> If a handler is running based on this request, it will be cancelled, and any callers waiting on the results from 
-> this handler will experience a `CancellationToken` cancellation.
+:::admonition type="note"
+If a handler is running based on this request, it will be cancelled, and any callers waiting on the results from this handler will experience a `CancellationToken` cancellation.
+:::
 
 ## Updating Data In the Cache
 
@@ -85,6 +86,6 @@ Using an instance of the `GetValueCache` class that you have created above, you 
 await cache.SetValue(request, response);
 ```
 
-> [!NOTE]
-> If a handler is running based on this request, it will be cancelled, and any callers waiting on the results from 
-> this handler will immediately receive the updated response.
+:::admonition type="note"
+If a handler is running based on this request, it will be cancelled, and any callers waiting on the results from this handler will immediately receive the updated response.
+:::
