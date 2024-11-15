@@ -4,10 +4,10 @@
     import { cn } from '$lib/utils';
 
     let className: ClassValue | undefined = undefined;
+    export { className as class };
 
     export let type: ExampleType;
     export let selected: ExampleType;
-    export { className as class };
 </script>
 
 <button

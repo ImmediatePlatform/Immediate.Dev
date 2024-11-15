@@ -3,9 +3,9 @@
     import type { ClassValue } from 'clsx';
 
     let className: ClassValue | undefined = undefined;
+    export { className as class };
 
     export let title: string = '';
-    export { className as class };
 </script>
 
 <div>

@@ -2,7 +2,7 @@
     import { cn } from '$lib/utils';
     import type { ClassValue } from 'clsx';
 
-    let className: ClassValue;
+    let className: ClassValue | undefined = undefined;
     export { className as class };
 
     export let src: string;

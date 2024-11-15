@@ -9,12 +9,13 @@
     import CodeSample from './CodeSample.svelte';
 
     let className: ClassValue | undefined = undefined;
+    export { className as class };
+
     let activeTabIndex = 0;
     let copied = false;
     let timer: NodeJS.Timeout;
 
     export let tabs: CodeFile[];
-    export { className as class };
     export let codeSampleClass: ClassValue;
 
     const switchTab = (newIndex: number) => {
