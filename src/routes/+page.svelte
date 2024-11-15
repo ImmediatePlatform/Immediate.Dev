@@ -1,27 +1,28 @@
 <script lang="ts">
+    import apiExample from '$lib/code-examples/api/example';
+    import blazorExample from '$lib/code-examples/blazor/example';
+    import cliExample from '$lib/code-examples/cli/example';
     import { ExampleType, type CodeExample } from '$lib/types';
+
+    import { oneBehaviorOneServiceData } from '$lib/benchmark-data';
+    import { scrollIntoView } from '$lib/utils';
+    import { config } from '../config';
 
     import { Button } from '@svelteness/kit-docs';
     import { Blocks, Rocket, ShieldCheck } from 'lucide-svelte';
-    import apiExample from '$lib/code-examples/api/example';
-    import cliExample from '$lib/code-examples/cli/example';
-    import blazorExample from '$lib/code-examples/blazor/example';
 
-    import Typewriter from '$lib/components/Typewriter.svelte';
-    import TabbedCodeSample from '$lib/components/TabbedCodeSample.svelte';
-    import ExampleSelectorTab from '$lib/components/ExampleSelectorTab.svelte';
+    import Announcement from '$lib/components/Announcement.svelte';
     import BenchmarkChart from '$lib/components/BenchmarkChart.svelte';
     import ExampleSelector from '$lib/components/ExampleSelector.svelte';
-    import { scrollIntoView } from '$lib/utils';
-    import Window from '$lib/components/Window.svelte';
-
-    import TypeSafetyExampleScreenshot from '$img/compile-time.png';
-    import TypeSafetyExampleScreenshotSmall from '$img/compile-time-sm.png';
+    import ExampleSelectorTab from '$lib/components/ExampleSelectorTab.svelte';
     import Footer from '$lib/components/Footer.svelte';
     import GitHubButton from '$lib/components/GitHubButton.svelte';
-    import { oneBehaviorOneServiceData } from '$lib/benchmark-data';
-    import Announcement from '$lib/components/Announcement.svelte';
-    import { config } from '../config';
+    import TabbedCodeSample from '$lib/components/TabbedCodeSample.svelte';
+    import Typewriter from '$lib/components/Typewriter.svelte';
+    import Window from '$lib/components/Window.svelte';
+
+    import TypeSafetyExampleScreenshotSmall from '$img/compile-time-sm.png';
+    import TypeSafetyExampleScreenshot from '$img/compile-time.png';
 
     const typewriterStrings = [
         'Vertical Slice Architecture.',
