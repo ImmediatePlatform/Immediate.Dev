@@ -76,6 +76,21 @@ public class Consumer(IHandler<Query, IEnumerable<User>> handler)
 }
 ```
 
+Your handlers don't need to be asynchronous, and the `CancellationToken` is optional. They still need to return a `ValueTask`, however.
+
+```cs {5}
+[Handler]
+public static partial class GetHelloResponse
+{
+    public record Query(string Name);
+
+    private static ValueTask<string> Handle(Query query)
+    {
+        return ValueTask.FromResult($"Hello {query.Name}!");
+    }
+}
+```
+
 ## Registering with `IServiceCollection`
 
 Immediate.Handlers supports `Microsoft.Extensions.DependencyInjection.Abstractions` directly. To register handlers with DI, simply add the following to your `Program.cs`:
