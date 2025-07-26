@@ -26,10 +26,10 @@ public static partial class GetUsersQuery
 
 This will automatically generate a new class, `GetUsersQuery.Handler`, which encapsulates the following:
 
-- attaching any behaviors defined for all queries in the assembly
+- attaching any behaviors which may be relevant for the query
 - using a class to receive any DI services, such as `UsersService`
 
-Any consumer can now do the following:
+Consuming code can now do the following:
 
 ```cs
 public class Consumer(GetUsersQuery.Handler handler)
@@ -60,13 +60,36 @@ public static partial class CreateUserCommand
         await usersService.CreateUser(command.Email);
     }
 }
+
+public class Consumer(CreateUserCommand.Handler handler)
+{
+	public async Task Consumer(CancellationToken token)
+	{
+		await handler.HandleAsync(new(), token);
+		// do something with response
+	}
+}
 ```
 
-In case your project layout does not allow direct for references between consumer and handler, the handler will also be
-registered as an `IHandler<TRequest, Response>`.
+`CancellationTokens` are also optional, and may be omitted if unnecessary. 
 
 ```cs
-public class Consumer(IHandler<Query, IEnumerable<User>> handler)
+[Handler]
+public static partial class GetHelloResponse
+{
+    public record Query(string Name);
+
+    private static ValueTask<string> Handle(Query query)
+    {
+        return ValueTask.FromResult($"Hello {query.Name}!");
+    }
+}
+```
+
+In case your project layout does not allow direct for references between consumer and handler, the handler will implement the `IHandler<TRequest, Response>` interface.
+
+```cs
+public class Consumer(IHandler<GetUsersQuery.Query, IEnumerable<User>> handler)
 {
 	public async Task Consumer(CancellationToken token)
 	{
@@ -84,4 +107,4 @@ In your `Program.cs`, add a call to `services.AddXxxHandlers()`, where `Xxx` is 
 * For a project named `Web`, it will be `services.AddWebHandlers()`
 * For a project named `Application.Web`, it will be `services.AddApplicationWebHandlers()`
 
-This registers all classes in the assembly marked with `[Handler]`.
+This registers all handlers in the assembly marked with `[Handler]`, along with their `IHandler<TRequest, TResponse>` interface.
