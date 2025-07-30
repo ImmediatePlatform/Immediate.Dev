@@ -48,3 +48,29 @@ public partial record Query : IValidationTarget<Query>
 	public required string Id { get; init; }
 }
 ```
+
+## Collections
+
+Properties of type `ICollection<>` and `IReadOnlyCollection<>` are validated. In order to avoid multiple enumerations of non-collection sequences, properties of type `IEnumerable<>` are not. For example:
+
+```cs |copy|title=Query.cs
+[Validate]
+public partial record Query : IValidationTarget<Query>
+{
+	[Validate]
+	public partial record Person : IValidationTarget<Person>
+	{
+		[MaxLength(50)]
+		public required string FirstName { get; init; }
+
+		[MaxLength(50)]
+		public required string LastName { get; init; }
+	}
+
+	// not validated
+	public required IEnumerable<Person> People { get; init; }
+
+	// validated
+	public required ICollection<Person> CollectionPeople { get; init; }
+}
+```
