@@ -8,9 +8,9 @@ namespace CliExample.Features.Rng.CliCommands;
 [Command]
 public class RngCliCommand(Get.Handler getQuery) : ICommand
 {
-    public ValueTask ExecuteAsync(IConsole console)
+    public async ValueTask ExecuteAsync(IConsole console)
     {
-        var randomNumber = getQuery.HandleAsync(new());
+        var randomNumber = await getQuery.HandleAsync(new());
 
         console.Output.WriteLine(randomNumber);
 

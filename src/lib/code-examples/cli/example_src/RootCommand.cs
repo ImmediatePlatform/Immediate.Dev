@@ -1,9 +1,9 @@
 [Command]
 public class RootCommand(GetRandomNumber.Handler getRandomNumberQuery) : ICommand
 {
-    public ValueTask ExecuteAsync(IConsole console)
+    public async ValueTask ExecuteAsync(IConsole console)
     {
-        var randomNumber = getRandomNumberQuery.HandleAsync(new());
+        var randomNumber = await getRandomNumberQuery.HandleAsync(new());
         
         console.Output.WriteLine(randomNumber);
         
