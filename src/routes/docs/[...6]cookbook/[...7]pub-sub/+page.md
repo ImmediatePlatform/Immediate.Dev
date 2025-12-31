@@ -33,5 +33,5 @@ public sealed class Publisher<TNotification>(
 
 Finally, this implementation can simply be registered as singleton service:
 ```cs
-services.AddSingleton<Publisher<>>();W
+services.AddSingleton<Publisher<>>();
 ```
