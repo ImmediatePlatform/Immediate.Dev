@@ -9,6 +9,10 @@ description: Ready to use examples showcasing common use cases for ImmediatePlat
 
 - [FluentValidation Integration](/docs/cookbook/fluent-validation)
 
+## Pattern examples
+
+- [Pub-Sub Pattern](/docs/cookbook/pub-sub)
+
 ## Application examples
 
 - [Web API](/docs/cookbook/web-api)
