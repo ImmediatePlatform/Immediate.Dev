@@ -14,10 +14,14 @@ You can think of behaviors as akin to filters known from ASP.NET Core.
 Behaviors can be created by implementing the `Immediate.Handlers.Shared.Behaviors<,>` class, as so:
 
 ```cs
-public sealed class LoggingBehavior<TRequest, TResponse>(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
-	: Behavior<TRequest, TResponse>
+public sealed class LoggingBehavior<TRequest, TResponse>(
+	ILogger<LoggingBehavior<TRequest, TResponse>> logger
+) : Behavior<TRequest, TResponse>
 {
-	public override async ValueTask<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken)
+	public override async ValueTask<TResponse> HandleAsync(
+		TRequest request,
+		CancellationToken cancellationToken
+	)
 	{
 		logger.LogInformation("LoggingBehavior.Enter");
 		var response = await Next(request, cancellationToken);
