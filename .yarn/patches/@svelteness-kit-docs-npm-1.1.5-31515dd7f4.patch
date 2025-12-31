@@ -1,0 +1,74 @@
+diff --git a/client/components/layout/KitDocsLayout.svelte b/client/components/layout/KitDocsLayout.svelte
+index 273f8f7a8865dfdbda7caec7e45592e7406acecc..e9c8921d52fb7cb2a4f773c0639f6d05c37ba325 100644
+--- a/client/components/layout/KitDocsLayout.svelte
++++ b/client/components/layout/KitDocsLayout.svelte
+@@ -37,6 +37,8 @@ const { activeCategory, allLinks: sidebarLinks, activeLink, nextLink, previousLi
+ $: collapseNavbar = $isLargeScreen ? false : $scrollTop > 60 && $scrollDirection === 'down';
+ $: showSidebar = $sidebarLinks.length > 0;
+ $: showBottomNav = showSidebar || $activeLink;
++$: filteredHeaders = ($kitDocs.meta?.headers ?? []).filter(({ level }) => level > 1);
++$: hasOnThisPageContent = filteredHeaders.length > 1 || filteredHeaders[0]?.children?.length > 0;
+ </script>
+ 
+ <div
+@@ -196,7 +198,7 @@ $: showBottomNav = showSidebar || $activeLink;
+       )}
+       style={clsx(
+         `max-width: ${
+-          $kitDocs.meta
++          hasOnThisPageContent && $kitDocs.meta
+             ? 'var(--kd-main-max-width, var(--kd-article-max-width))'
+             : 'var(--kd-main-max-width)'
+         };`,
+@@ -205,7 +207,10 @@ $: showBottomNav = showSidebar || $activeLink;
+       <slot name="main-top" />
+ 
+       {#if $kitDocs.meta}
+-        <article class="markdown prose dark:prose-invert z-10 max-w-[var(--kd-article-max-width)]">
++        <article class={clsx(
++          'markdown prose dark:prose-invert z-10',
++          hasOnThisPageContent && 'max-w-[var(--kd-article-max-width)]',
++        )}>
+           {#if $activeCategory && $activeCategory !== '.'}
+             <p class="text-brand mb-3.5 text-[15px] font-semibold leading-6">
+               {$activeCategory}
+@@ -255,15 +260,17 @@ $: showBottomNav = showSidebar || $activeLink;
+       <slot name="main-bottom" />
+     </main>
+ 
+-    <div class="992:flex-1" />
++    {#if hasOnThisPageContent}
++      <div class="992:flex-1" />
+ 
+-    <OnThisPage
+-      class={clsx(
+-        'pt-8 pb-8 hidden overflow-auto min-w-[160px] sticky right-4 pr-4 1440:right-6 1440:pr-2 1280:block pl-0.5',
+-        navbar
+-          ? 'top-[var(--kd--navbar-height)] max-h-[calc(100vh-var(--kd--navbar-height))]'
+-          : 'top-0 max-h-screen',
+-      )}
+-    />
++      <OnThisPage
++        class={clsx(
++          'pt-8 pb-8 hidden overflow-auto min-w-[160px] sticky right-4 pr-4 1440:right-6 1440:pr-2 1280:block pl-0.5',
++          navbar
++            ? 'top-[var(--kd--navbar-height)] max-h-[calc(100vh-var(--kd--navbar-height))]'
++            : 'top-0 max-h-screen',
++        )}
++      />
++    {/if}
+   </div>
+ </div>
+diff --git a/client/kit-docs/block/CodeFence.svelte b/client/kit-docs/block/CodeFence.svelte
+index a4c662003d01d57e937e0a6a8b996bd195f61afb..5d7bb0b8a7607cc1a7279fc9805a6c966294a40e 100644
+--- a/client/kit-docs/block/CodeFence.svelte
++++ b/client/kit-docs/block/CodeFence.svelte
+@@ -109,7 +109,7 @@ $: topbarTitle = title ?? (ext === 'sh' ? 'terminal' : ext);
+     <div class={clsx(showLineNumbers && '992:pl-10')}>
+       <pre
+         class={clsx(
+-          'relative scrollbar overflow-scroll',
++          'relative scrollbar !overflow-auto',
+           showLineNumbers && lines.length >= 100 ? 'pl-6' : 'pl-3',
+         )}>
+         {@html code

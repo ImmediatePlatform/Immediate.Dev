@@ -18,7 +18,7 @@
         "@sveltejs/adapter-static": "^3.0.4",
         "@sveltejs/kit": "^2.0.0",
         "@sveltejs/vite-plugin-svelte": "^3.0.0",
-        "@svelteness/kit-docs": "^1.1.5",
+        "@svelteness/kit-docs": "patch:@svelteness/kit-docs@npm%3A1.1.5#~/.yarn/patches/@svelteness-kit-docs-npm-1.1.5-31515dd7f4.patch",
         "@types/d3": "^7.4.3",
         "@types/eslint": "^8.56.7",
         "autoprefixer": "^10.4.19",
@@ -50,5 +50,6 @@
         "lucide-svelte": "^0.407.0",
         "tailwind-merge": "^2.4.0",
         "typewriter-effect": "^2.21.0"
-    }
+    },
+    "packageManager": "yarn@4.12.0+sha512.f45ab632439a67f8bc759bf32ead036a1f413287b9042726b7cc4818b7b49e14e9423ba49b18f9e06ea4941c1ad062385b1d8760a8d5091a1a31e5f6219afca8"
 }
