@@ -24,14 +24,17 @@ jobs:
     - name: Setup node
       uses: actions/setup-node@v4
       with:
-        node-version: latest
+        node-version: '23'
+        cache: 'yarn'
+    - name: Enable corepack
+      run: corepack enable
 
     - name: Restore dependencies
-      run: npm install
+      run: yarn install --immutable
     - name: Build
       env:
         VITE_SITE_URL: ${{ vars.SITE_URL }}
-      run: npm run build
+      run: yarn build
 
     - name: Setup Pages
       uses: actions/configure-pages@v5
