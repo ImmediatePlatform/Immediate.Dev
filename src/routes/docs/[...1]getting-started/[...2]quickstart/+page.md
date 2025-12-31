@@ -87,7 +87,7 @@ First modify your `Program.cs` to register the Immediate.Apis endpoints, like so
 
 ```cs |copy|title=Program.cs {5-6}
 var builder = WebApplication.CreateBuilder();
-builder.Services.AddHandlers();
+builder.Services.AddMyAppHandlers();
 
 var app = builder.Build();
 
