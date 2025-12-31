@@ -182,9 +182,3 @@
 </div>
 
 <Footer />
-
-<style>
-    :global(body:has(#home-page) .on-this-page) {
-        @apply !hidden;
-    }
-</style>
