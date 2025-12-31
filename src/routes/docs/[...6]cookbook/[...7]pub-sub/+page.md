@@ -13,8 +13,7 @@ Immediate.Handlers fully supports this pattern, but it intentionally does not pr
 abstraction. Maintaining an opinionated publish-subscribe implementation is out of scope and would limit
 the flexibility required by different projects.
 
-To save you time, the example below is the implementation that is typically recommended when you need simple
-publish-subscribe behavior.
+An example is provided here of a simple `Publisher` which works for many cases.
 
 ```cs
 public sealed class Publisher<TNotification>(
@@ -33,5 +32,5 @@ public sealed class Publisher<TNotification>(
 
 Finally, this implementation can simply be registered as singleton service:
 ```cs
-services.AddSingleton<Publisher<>>();
+services.AddSingleton(typeof(Publisher<>));
 ```
