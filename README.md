@@ -4,13 +4,15 @@ Public website for the ImmediatePlatform, powered by [`create-svelte`](https://g
 
 ## Developing
 
-Once you've installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+After installing node.js (version 23 is recommended), enable `yarn` by running `corepack enable`.
+
+Once you've installed dependencies with `yarn install`, start a development server:
 
 ```bash
-npm run dev
+yarn dev
 
 # or start the server and open the app in a new browser tab
-npm run dev -- --open
+yarn dev -- --open
 ```
 
 ## Building
@@ -18,9 +20,9 @@ npm run dev -- --open
 To create a production build run:
 
 ```bash
-npm run build
+yarn build
 ```
 
-You can preview the production build with `npm run preview`.
+You can preview the production build with `yarn preview`.
 
 > Deployment uses [@sveltejs/adapter-static](https://kit.svelte.dev/docs/adapters).
