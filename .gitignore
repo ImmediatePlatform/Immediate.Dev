@@ -28,3 +28,6 @@ vite.config.ts.timestamp-*
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+
+# Visual Studio
+.vs/
