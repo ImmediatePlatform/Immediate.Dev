@@ -14,7 +14,7 @@ Immediate.Injections provides attributes to mark classes for registration and op
 - `RegisterTransient`: registers the type as transient.
 
 
-## Properties:
+## Attribute Properties
 
 - `ServiceKey`: optional key for keyed registrations.
 - `Factory`: name of static factory method on the type.

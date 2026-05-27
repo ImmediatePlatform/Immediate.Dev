@@ -1,5 +1,5 @@
 ---
-title: DuplicateStrategy
+title: Defaults & DuplicateStrategy
 description: Assembly defaults and how duplicate registration strategies behave.
 ---
 
