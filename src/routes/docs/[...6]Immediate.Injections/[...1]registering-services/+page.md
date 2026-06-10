@@ -5,7 +5,9 @@ description: Annotate classes and call the generated registration extension to r
 
 # {$frontmatter.title}
 
-Services can be marked for registration using the `RegisterScoped`, `RegisterSingleton`, or `RegisterTransient` attributes. These attributes support various options to control how the service is registered (e.g. which interfaces, duplicate handling, factories, tags).
+Services can be marked for registration using the `RegisterScoped`, `RegisterSingleton`, or `RegisterTransient`
+attributes. These attributes support various options to control how the service is registered (e.g. which interfaces,
+duplicate handling, factories, tags).
 
 ```cs |copy|title=Service.cs
 using Immediate.Injections.Shared;
@@ -18,10 +20,12 @@ public class Service : IService
 }
 ```
 
-## Add Generated Extension
+### Adding declared registrations to the `IServiceCollection` collection
 
-In your `Program.cs` file:
+In your `Program.cs`, add a call to `services.AddXxxServices()`, where Xxx is the application identifier. By default,
+this is the short form of the assembly name. For example:
 
-```cs
-services.AddXxxServices();
-```
+* For a project named `Web`, it will be `services.AddWebHandlers()`
+* For a project named `Application.Web`, it will be `services.AddApplicationWebHandlers()`
+
+However, this name can be overridden using `[assembly: ImmediateAssemblyIdentifierAttribute("SomeIdentifier")]`.
