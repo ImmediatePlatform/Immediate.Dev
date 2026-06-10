@@ -1,5 +1,5 @@
 ---
-title: `[RegisterServices]` attribute
+title: RegisterServices attribute
 description: Add services that require additional configuration.
 ---
 
