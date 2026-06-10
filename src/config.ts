@@ -9,7 +9,7 @@ export const config = Object.freeze<Config>({
     siteUrl: import.meta.env.VITE_SITE_URL as string | undefined,
     announcement: {
         text: 'Introducing',
-        highlightedText: 'Immediate.Cache',
-        href: '/docs/getting-started/introduction#immediate-cache'
+        highlightedText: 'Immediate.Injections',
+        href: '/docs/getting-started/introduction#immediate-injections'
     }
 });
