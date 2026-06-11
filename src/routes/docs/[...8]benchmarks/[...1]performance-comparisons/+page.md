@@ -61,6 +61,7 @@ This benchmark tests the various mediator implementations with a query that incl
 | Axent              | InvokeAsyncTWithDI | .NET 11.0 |     84.3546 ns |   0.3107 ns | 0.0076 |      - |      96 B |
 | MediatR            | InvokeAsyncTWithDI | .NET 11.0 |    143.0193 ns |   0.8873 ns | 0.0439 |      - |     552 B |
 
-## Code
+## Code and Full Results
 
-The code can be found at: https://github.com/ImmediatePlatform/MediatorBenchmarks
+* The code can be found at: [https://github.com/ImmediatePlatform/MediatorBenchmarks](https://github.com/ImmediatePlatform/MediatorBenchmarks)
+* The full results of the latest benchmark can be found at: [https://github.com/ImmediatePlatform/MediatorBenchmarks/blob/main/Results/Benchmark-2026-06-11-report.csv](https://github.com/ImmediatePlatform/MediatorBenchmarks/blob/main/Results/Benchmark-2026-06-11-report.csv)
