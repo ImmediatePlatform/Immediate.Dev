@@ -9,48 +9,58 @@ All performance benchmarks reported use the following environment:
 ```
 // * Summary *
 
-BenchmarkDotNet v0.14.0, Windows 11 (10.0.22631.4317/23H2/2023Update/SunValley3)
-12th Gen Intel Core i7-12700H, 1 CPU, 20 logical and 14 physical cores
-.NET SDK 9.0.100
-  [Host]     : .NET 9.0.0 (9.0.24.52809), X64 RyuJIT AVX2
-  DefaultJob : .NET 9.0.0 (9.0.24.52809), X64 RyuJIT AVX2
+BenchmarkDotNet v0.16.0-nightly.20260608.560, Windows 11 (10.0.26200.8655/25H2/2025Update/HudsonValley2)
+12th Gen Intel Core i7-12700H 2.30GHz, 1 CPU, 20 logical and 14 physical cores
+Memory: 31.69 GB Total, 21.22 GB Available
+.NET SDK 11.0.100-preview.5.26302.115
+  [Host]     : .NET 11.0.0 (11.0.0-preview.5.26302.115, 11.0.26.30315), X64 RyuJIT x86-64-v3
+  Job-GVKUBM : .NET 10.0.9 (10.0.9, 10.0.926.27113), X64 RyuJIT x86-64-v3
+  Job-IHFIKV : .NET 11.0.0 (11.0.0-preview.5.26302.115, 11.0.26.30315), X64 RyuJIT x86-64-v3
+  Job-AZESIF : .NET 8.0.28 (8.0.28, 8.0.2826.26413), X64 RyuJIT x86-64-v3
 ```
 
-### [Benchmarks.Simple](https://github.com/ImmediatePlatform/Immediate.Handlers/tree/master/benchmarks/Benchmark.Simple)
+### InvokeAsync (aka Command)
 
-This benchmark tests the various mediator implementations with a single request/response handler.
+This benchmark tests the various mediator implementations with a single command (no/`Unit` return value).
 
-| Method                       | Mean       | Error     | Ratio | Rank | Allocated |
-|----------------------------- |-----------:|----------:|------:|-----:|----------:|
-| SendRequest_Baseline         |  0.6618 ns | 0.0127 ns |  1.00 |    1 |         - |
-| SendRequest_IHandler         | 14.0497 ns | 0.0753 ns | 21.23 |    2 |         - |
-| SendRequest_ImmediateHandler | 14.9493 ns | 0.0818 ns | 22.59 |    3 |         - |
-| SendRequest_Mediator         | 22.0218 ns | 0.0684 ns | 33.28 |    4 |         - |
-| SendRequest_IMediator        | 26.8625 ns | 0.1428 ns | 40.60 |    5 |         - |
-| SendRequest_MediatR          | 47.5135 ns | 0.4161 ns | 71.81 |    6 |     192 B |
+| Implementation     | Scenario           | Runtime   | Mean           | Error       | Gen0   | Gen1   | Allocated |
+|------------------- |------------------- |---------- |---------------:|------------:|-------:|-------:|----------:|
+| Direct             | InvokeAsync        | .NET 11.0 |      0.9767 ns |   0.0065 ns |      - |      - |         - |
+| Immediate.Handlers | InvokeAsync        | .NET 11.0 |      2.3605 ns |   0.0022 ns |      - |      - |         - |
+| MediatorNet        | InvokeAsync        | .NET 11.0 |     12.5804 ns |   0.0454 ns |      - |      - |         - |
+| Foundatio.Mediator | InvokeAsync        | .NET 11.0 |     14.0770 ns |   0.0608 ns | 0.0019 |      - |      24 B |
+| DispatchR          | InvokeAsync        | .NET 11.0 |     20.6877 ns |   0.0292 ns |      - |      - |         - |
+| Axent              | InvokeAsync        | .NET 11.0 |     44.2312 ns |   0.1712 ns | 0.0063 |      - |      80 B |
+| MediatR            | InvokeAsync        | .NET 11.0 |     49.6130 ns |   0.2401 ns | 0.0102 |      - |     128 B |
 
-### [Benchmarks.Large](https://github.com/ImmediatePlatform/Immediate.Handlers/tree/master/benchmarks/Benchmark.Large)
+### InvokeAsyncT (aka Query)
 
-This benchmark tests the various mediator implementations in the face of 999 request/response handlers.
+This benchmark tests the various mediator implementations with a simple query with value response.
 
-| Method                       | Mean        | Error     | Ratio  | Rank | Allocated |
-|----------------------------- |------------:|----------:|-------:|-----:|----------:|
-| SendRequest_Baseline         |   0.6257 ns | 0.0202 ns |   1.00 |    1 |         - |
-| SendRequest_ImmediateHandler |  11.2358 ns | 0.0395 ns |  17.97 |    2 |         - |
-| SendRequest_IHandler         |  14.0575 ns | 0.0652 ns |  22.49 |    3 |         - |
-| SendRequest_Mediator         |  22.0874 ns | 0.0534 ns |  35.33 |    4 |         - |
-| SendRequest_MediatR          |  48.3577 ns | 0.2402 ns |  77.35 |    5 |     192 B |
-| SendRequest_IMediator        | 420.2067 ns | 4.5092 ns | 672.17 |    6 |         - |
+| Implementation     | Scenario           | Runtime   | Mean           | Error       | Gen0   | Gen1   | Allocated |
+|------------------- |------------------- |---------- |---------------:|------------:|-------:|-------:|----------:|
+| Direct             | InvokeAsyncT       | .NET 11.0 |     22.8746 ns |   0.0713 ns | 0.0038 |      - |      48 B |
+| Immediate.Handlers | InvokeAsyncT       | .NET 11.0 |     24.1921 ns |   0.0680 ns | 0.0038 |      - |      48 B |
+| MediatorNet        | InvokeAsyncT       | .NET 11.0 |     37.3381 ns |   0.0689 ns | 0.0038 |      - |      48 B |
+| Foundatio.Mediator | InvokeAsyncT       | .NET 11.0 |     40.9700 ns |   0.0764 ns | 0.0057 |      - |      72 B |
+| DispatchR          | InvokeAsyncT       | .NET 11.0 |     47.7985 ns |   0.1209 ns | 0.0038 |      - |      48 B |
+| Axent              | InvokeAsyncT       | .NET 11.0 |     63.1785 ns |   0.1873 ns | 0.0082 |      - |     104 B |
+| MediatR            | InvokeAsyncT       | .NET 11.0 |     74.2955 ns |   0.9705 ns | 0.0197 |      - |     248 B |
 
-### [Benchmarks.Behaviors](https://github.com/ImmediatePlatform/Immediate.Handlers/tree/master/benchmarks/Benchmark.Behaviors)
+### InvokeAsyncTWithDI (aka FullQuery)
 
-This benchmark tests a more realistic scenario of using 1 behavior and 1 service.
+This benchmark tests the various mediator implementations with a query that includes a DI parameter and a behavior.
 
-| Method                       | Mean      | Error    | Ratio | Rank | Allocated |
-|----------------------------- |----------:|---------:|------:|-----:|----------:|
-| SendRequest_Baseline         |  47.83 ns | 0.160 ns |  1.00 |    1 |      40 B |
-| SendRequest_ImmediateHandler |  62.67 ns | 0.350 ns |  1.31 |    2 |      40 B |
-| SendRequest_IHandler         |  63.59 ns | 0.218 ns |  1.33 |    2 |      40 B |
-| SendRequest_Mediator         |  91.53 ns | 0.292 ns |  1.91 |    3 |      40 B |
-| SendRequest_IMediator        | 100.73 ns | 0.396 ns |  2.11 |    4 |      40 B |
-| SendRequest_MediatR          | 188.54 ns | 0.785 ns |  3.94 |    5 |     560 B |
+| Implementation     | Scenario           | Runtime   | Mean           | Error       | Gen0   | Gen1   | Allocated |
+|------------------- |------------------- |---------- |---------------:|------------:|-------:|-------:|----------:|
+| Direct             | InvokeAsyncTWithDI | .NET 11.0 |     32.8809 ns |   0.0889 ns | 0.0032 |      - |      40 B |
+| Immediate.Handlers | InvokeAsyncTWithDI | .NET 11.0 |     48.4441 ns |   0.1384 ns | 0.0032 |      - |      40 B |
+| Foundatio.Mediator | InvokeAsyncTWithDI | .NET 11.0 |     59.6983 ns |   0.1802 ns | 0.0051 |      - |      64 B |
+| MediatorNet        | InvokeAsyncTWithDI | .NET 11.0 |     61.1463 ns |   0.1275 ns | 0.0031 |      - |      40 B |
+| DispatchR          | InvokeAsyncTWithDI | .NET 11.0 |     73.2588 ns |   0.2354 ns | 0.0031 |      - |      40 B |
+| Axent              | InvokeAsyncTWithDI | .NET 11.0 |     84.3546 ns |   0.3107 ns | 0.0076 |      - |      96 B |
+| MediatR            | InvokeAsyncTWithDI | .NET 11.0 |    143.0193 ns |   0.8873 ns | 0.0439 |      - |     552 B |
+
+## Code
+
+The code can be found at: https://github.com/ImmediatePlatform/MediatorBenchmarks
