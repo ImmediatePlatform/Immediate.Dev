@@ -33,7 +33,8 @@ dotnet add package Immediate.Cache
 
 ```cs |copy|title=Program.cs {2}
 var builder = WebApplication.CreateBuilder();
-builder.Services.AddHandlers();
+// <MyApp> here will be the name of your project
+builder.Services.AddMyAppHandlers();
 
 var app = builder.Build();
 app.Run();
