@@ -182,17 +182,6 @@ generation time, but [IHR0020](/docs/Immediate.Handlers/diagnostics) warns you t
 for something that will not happen. Behaviors listed assembly-wide are not warned about — dropping them
 per handler is the whole point of constraints.
 
-<Callout type="warning" title="Never list an abstract behavior">
-
-An `abstract` behavior class passes every analyzer check but the generator cannot construct it, and
-rather than skipping it, generation **stops**. If the abstract type is listed on one handler, that
-handler's file is not emitted; if it is listed assembly-wide, nothing at all is emitted — no handler
-files and no `Add…Handlers` method. The symptom is a wave of "does not contain a definition for
-`Handler`" errors with no Immediate.Handlers diagnostic pointing at the cause. List concrete behavior
-types only.
-
-</Callout>
-
 ## Registering behaviors
 
 Behaviors are registered by `services.AddXxxBehaviors()`, which registers every type referenced in any

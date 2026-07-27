@@ -21,7 +21,7 @@ dotnet add package Immediate.Validations
 <Callout type="note" title="Prerequisites">
 
 Immediate.Validations depends on **Immediate.Handlers**, which comes in transitively — you do
-not need to install it separately. Supported target frameworks are `net8.0` through `net11.0`.
+not need to install it separately. Supported target frameworks are `net8.0` through `net10.0`.
 The `ValidationBehavior<,>` integration additionally requires an Immediate.Handlers pipeline;
 see [Integrating with Immediate.Handlers](/docs/Immediate.Validations/immediate-handlers-integration).
 

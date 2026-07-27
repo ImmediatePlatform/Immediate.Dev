@@ -46,13 +46,6 @@ redundant but harmless — it simply short-circuits at step 1 to the same result
 
 </Callout>
 
-<Callout type="warning" title="PATCH binds the body too">
-
-`PATCH` is in the body-binding set alongside `POST` and `PUT`. The package readme and older versions
-of this page listed only `POST` and `PUT`.
-
-</Callout>
-
 <Callout type="warning" title="[MapMethod] is not verb-aware">
 
 Step 4 keys off the _attribute_, not the verb string. `[MapMethod("POST", "/users")]` falls into the

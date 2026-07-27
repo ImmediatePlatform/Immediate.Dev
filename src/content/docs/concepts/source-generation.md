@@ -4,10 +4,6 @@ description: Why ImmediatePlatform generates code at compile time instead of usi
 order: 1
 ---
 
-<script lang="ts">
-	import { Callout } from '$lib/components/docs';
-</script>
-
 Every ImmediatePlatform package is a Roslyn source generator. Nothing in the platform scans
 assemblies, builds expression trees, or resolves types by name at runtime. When you write a
 handler, an endpoint, a validator or a registration attribute, the corresponding generator reads
@@ -42,31 +38,12 @@ Each package prefixes its output so you can tell at a glance which generator pro
 
 ## Inspecting the generated output
 
-Add these two properties to your `.csproj` and build. The generated files land on disk where you
-can open them.
-
-```xml title="MyApp.csproj"
-<PropertyGroup>
-	<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-	<CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
-</PropertyGroup>
-```
-
-Files then appear under
-`obj/generated/<GeneratorAssembly>/<GeneratorName>/IH.MyApp.GetUsersQuery.g.cs`.
-
-<Callout type="tip">
-Reading the generated file is the fastest way to debug a DI resolution failure or a behavior
-that is not running. Each package's <strong>How it works</strong> page walks through what to
-look for.
-</Callout>
-
-Your IDE can also show them without any project changes: in Visual Studio they are under
+Your IDE shows generated files without any project changes. In Visual Studio they are under
 **Dependencies → Analyzers**; in Rider, under **Dependencies → Source Generators**.
 
 ## Attributes on generated members
 
-Generated types and members carry two attributes:
+Generated types and members may carry these attributes, depending on their purpose:
 
 - `[GeneratedCode("Immediate.Handlers", "<version>")]` — marks the member as machine-written.
   Code-style analyzers and coverage tools skip it, and it records which package version emitted
@@ -83,18 +60,11 @@ hint that reaching for it means you have taken a wrong turn.
 
 Each package ships two builds of its generator and analyzers:
 
-| Roslyn | Used by          |
-| ------ | ---------------- |
-| 4.8    | net8.0, net9.0   |
-| 5.0    | net10.0, net11.0 |
+| Roslyn | Used by        |
+| ------ | -------------- |
+| 4.8    | net8.0, net9.0 |
+| 5.0    | net10.0        |
 
 NuGet picks the right one from the target framework, so there is nothing to configure. The
 consequence worth knowing is that generator behavior can differ slightly across target
 frameworks in a multi-targeted project, because two different generator builds are running.
-
-## Language version
-
-Some generated signatures adapt to your project's C# language version. The clearest example is
-the `tags` parameter on the registration methods, which is emitted as
-`params ReadOnlySpan<string>` on C# 13 and later and as `params string[]` on C# 12 and earlier.
-See [Tags and conditional registration](/docs/concepts/tags).

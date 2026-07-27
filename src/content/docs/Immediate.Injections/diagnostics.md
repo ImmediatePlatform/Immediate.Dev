@@ -231,14 +231,6 @@ public interface IService<T>;
 public sealed class Service<T> : IService<T>;
 ```
 
-<Callout type="warning" title="Only the unbound ServiceType spelling is caught">
-Write <code>UseProxyFactory = true</code> on a generic class <em>without</em> an unbound
-<code>ServiceType</code> — relying on <code>ImplementedInterfaces</code>,
-<code>SelfAndImplementedInterfaces</code> or an assembly default — and no diagnostic fires. The
-generator drops the registration and the service is simply missing at runtime. If an attributed
-generic class does not appear in the container, look for <code>UseProxyFactory</code> first.
-</Callout>
-
 Register a closed construction instead if you need a proxy.
 
 ## INJ0009
@@ -343,11 +335,6 @@ public sealed class Service<T> : IService<T>
 	public static Service<T> Create(IServiceProvider provider) => new();
 }
 ```
-
-The same caveat as INJ0008 applies: a `Factory` on a generic class with no unbound `ServiceType`
-is dropped silently rather than reported. A closed construction —
-`[RegisterSingleton<IService<string>>(Factory = nameof(Create))]` — is fine, because the
-resulting descriptor is not open.
 
 ## Where to go next
 

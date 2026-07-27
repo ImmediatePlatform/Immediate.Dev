@@ -164,14 +164,6 @@ await using var scope = owned.GetScope(out var handler);
 var response = await handler.HandleAsync(request, token);
 ```
 
-<Callout type="note">
-
-CA2000 would normally fire on that `out var handler`. The package ships a
-[diagnostic suppressor](/docs/Immediate.Cache/diagnostics) that silences it for this exact
-pattern.
-
-</Callout>
-
 ## `OwnedScope<T>`
 
 ```csharp

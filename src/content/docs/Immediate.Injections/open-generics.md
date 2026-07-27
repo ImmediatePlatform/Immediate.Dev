@@ -5,10 +5,6 @@ order: 5
 group: Guides
 ---
 
-<script lang="ts">
-	import { Callout } from '$lib/components/docs';
-</script>
-
 A generic class is registered as an **open generic** — one descriptor covering every closed
 construction. MSDI closes it on demand, so `IRepository<Todo>` and `IRepository<User>` both
 resolve from a single registration.
@@ -129,17 +125,6 @@ MSDI cannot build an open-generic service from a factory delegate, so neither `F
 // INJ0008 — UseProxyFactory with an open-generic ServiceType
 [RegisterScoped(ServiceType = typeof(IRepository<>), UseProxyFactory = true)]
 ```
-
-<Callout type="warning" title="Some of these fail silently">
-<a href="/docs/Immediate.Injections/diagnostics#inj0008">INJ0008</a> and
-<a href="/docs/Immediate.Injections/diagnostics#inj0012">INJ0012</a> only fire when the open
-generic is spelled as an unbound <code>ServiceType</code>. Write <code>Factory</code> or
-<code>UseProxyFactory</code> on a generic class <em>without</em> a <code>ServiceType</code> —
-relying on <code>Self</code>, <code>ImplementedInterfaces</code> or the assembly default instead
-— and the generator drops the registration with no diagnostic at all. If a generic class you
-attributed is missing from the container, check for a <code>Factory</code> or
-<code>UseProxyFactory</code> on it first.
-</Callout>
 
 Closed constructions are unaffected: `[RegisterScoped<IRepository<Todo>>]` on `Repository<T>` may
 use a factory, because the resulting descriptor is not open.

@@ -29,7 +29,7 @@ dotnet add package Immediate.Apis
   [IAPI0001](/docs/Immediate.Apis/diagnostics#iapi0001) is reported as an error.
 - **An ASP.NET Core project.** The generated code calls into `Microsoft.AspNetCore.Builder` and
   `Microsoft.AspNetCore.Routing`, which come from the ASP.NET Core shared framework.
-- The package targets `net8.0`, `net9.0`, `net10.0` and `net11.0`.
+- The package targets `net8.0`, `net9.0` and `net10.0`.
 
 </Callout>
 

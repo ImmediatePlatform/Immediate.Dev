@@ -66,33 +66,12 @@ the other compile failures with no matching diagnostic.
 | Requirement                                       | Enforced by                                   |
 | ------------------------------------------------- | --------------------------------------------- |
 | The cache class is declared `partial`             | Compiler (`CS0260`)                           |
-| The cache class is not `static`                   | Generator (silently skips)                    |
 | The cache class is not nested in another type     | [`IC0001`](/docs/Immediate.Cache/diagnostics) |
 | The target type carries `[Handler]`               | [`IC0002`](/docs/Immediate.Cache/diagnostics) |
 | The target's handle method returns `ValueTask<T>` | [`IC0003`](/docs/Immediate.Cache/diagnostics) |
-| The target type is not `static`                   | Nothing — see the callout above               |
-
-The target handler must also expose exactly one method named `Handle` or `HandleAsync`, and that
-method's first parameter is taken as the request type. Additional parameters are resolved from DI
-by Immediate.Handlers as usual, so a handler that injects a `DbContext` through its handle method
-caches just fine.
 
 Bare `ValueTask` command handlers cannot be cached: there is no response to store, and `IC0003`
 reports it.
-
-## Nullable requests and responses
-
-`ApplicationCache<TRequest, TResponse>` constrains both parameters to `class?`, so nullable
-reference types flow through unchanged. Match the handler's nullability in your override:
-
-```csharp title="NullableTypesCache.cs"
-[CacheFor<NullableTypesHandler>]
-public sealed partial class NullableTypesCache
-{
-	protected override string TransformKey(NullableTypesHandler.Query? request) =>
-		$"NullableTypesHandler(query: {request})";
-}
-```
 
 ## Registering the generated caches
 

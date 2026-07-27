@@ -68,6 +68,25 @@ The full inference order, including the `IFormFile` and per-property `[FromXxx]`
 [Binding request data](/docs/Immediate.Apis/binding-request-data). You can always override it by
 putting an explicit attribute on the request parameter.
 
+## Attributes from `HandleAsync`
+
+Attributes applied to `HandleAsync` are copied to the generated endpoint handler. This lets
+ASP.NET Core metadata attributes stay next to the method they describe:
+
+```csharp
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+[ProducesResponseType<IReadOnlyList<TodoItem>>(StatusCodes.Status200OK)]
+private ValueTask<IReadOnlyList<TodoItem>> HandleAsync(
+	Query query,
+	CancellationToken token
+) => ValueTask.FromResult(repository.GetAll());
+```
+
+The generated route handler carries the attribute, so it is available to OpenAPI and other ASP.NET
+Core conventions.
+
 ## An endpoint with a route parameter
 
 ```csharp title="Features/GetTodoQuery.cs"

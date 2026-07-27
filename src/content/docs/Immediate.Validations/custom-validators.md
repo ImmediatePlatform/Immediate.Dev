@@ -148,15 +148,6 @@ public sealed class NotEqualToAttribute(
    A reference whose type does not fit the target is **IV0015**; one that does not resolve to a
    usable member is **IV0017**.
 
-<Callout type="warning">
-
-`nameof(...)` is only resolved for **constructor parameters** marked `[TargetType]`. A
-`nameof(...)` assigned to a `[TargetType]` init-only _property_ is emitted as its literal
-string constant, even though the analyzer type-checks it as a member reference. Take anything
-that callers may want to reference by `nameof` as a constructor parameter.
-
-</Callout>
-
 A `params` constructor parameter maps to a `params` array parameter on `ValidateProperty`; this
 is how `OneOf` accepts a variable list of comparison values:
 

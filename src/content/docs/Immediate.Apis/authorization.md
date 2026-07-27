@@ -5,10 +5,6 @@ order: 4
 group: Guides
 ---
 
-<script lang="ts">
-	import { Callout } from '$lib/components/docs';
-</script>
-
 Put `[Authorize]` or `[AllowAnonymous]` on the handler class and the generator applies the matching
 convention to the generated endpoint.
 
@@ -68,16 +64,6 @@ to the endpoint. Using one is
 // IAPI0002: [Authorize] was used with invalid parameter Roles
 [Authorize(Roles = "Admin")]
 ```
-
-<Callout type="note" title="If you suppress IAPI0002, the endpoint disappears">
-
-IAPI0002 is an error, so an unsupported named argument fails the build — you cannot ship one by
-accident. Worth knowing anyway: if `[Authorize]` has _only_ named arguments and one of them is not
-`Policy`, the generator stops processing that handler entirely and emits no `MapEndpoint` method.
-So suppressing the diagnostic removes the route rather than leaving it unprotected. Express role
-checks as a policy instead.
-
-</Callout>
 
 Note that the constructor form is checked first, so `[Authorize("UserManagement", Roles = "Admin")]`
 still applies the `UserManagement` policy — while IAPI0002 fires for `Roles`.

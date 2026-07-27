@@ -31,15 +31,6 @@ That's the whole cache. The generator emits the base class
 `ApplicationCache<GetTodoQuery.Query, TodoItem?>` and a constructor taking `IMemoryCache` and an
 owned handler.
 
-<Callout type="warning" title="The target handler must not be static">
-The generator emits nothing for a <code>static</code> target handler, which leaves your
-<code>TransformKey</code> with nothing to override and produces a bare <code>CS0115</code> with
-no Immediate.Cache diagnostic pointing at the cause. This tutorial's handlers are
-<code>sealed partial class</code>, which is why. See
-<a href="/docs/Immediate.Cache/creating-a-cache">Creating a cache</a> for the full list of
-requirements on the target.
-</Callout>
-
 Note also that the cache class itself must be `partial` (the generator adds the base class and
 constructor to it) and must not be nested (`IC0001`).
 

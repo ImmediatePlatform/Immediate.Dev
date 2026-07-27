@@ -5,7 +5,7 @@ order: 1
 ---
 
 <script lang="ts">
-	import { Callout, CardGrid, LinkCard, PackageBadges } from '$lib/components/docs';
+	import { CardGrid, LinkCard, PackageBadges } from '$lib/components/docs';
 </script>
 
 <PackageBadges name="Immediate.Injections" />
@@ -25,7 +25,7 @@ The package ships the attributes, the generator and the analyzers together. Noth
 required at runtime beyond `Microsoft.Extensions.DependencyInjection.Abstractions`, which comes
 with the package.
 
-Supported target frameworks are `net8.0`, `net9.0`, `net10.0` and `net11.0`. See
+Supported target frameworks are `net8.0`, `net9.0` and `net10.0`. See
 [Package compatibility](/docs/concepts/package-compatibility) for the full matrix.
 
 ## Prerequisites
@@ -33,20 +33,6 @@ Supported target frameworks are `net8.0`, `net9.0`, `net10.0` and `net11.0`. See
 Unlike Immediate.Apis, Immediate.Cache and Immediate.Validations, this package does **not**
 require Immediate.Handlers. It is a standalone dependency-injection helper and can be used in a
 project that has no other ImmediatePlatform package installed.
-
-<Callout type="warning" title="One exception: [ImmediateAssemblyIdentifier]">
-The attribute that renames the generated <code>AddXxxServices</code> method is
-<code>ImmediateAssemblyIdentifierAttribute</code>, and it is defined in the
-<strong>Immediate.Handlers</strong> package — not this one. The Immediate.Injections generator
-recognises it <em>structurally</em>: it matches any arity-0 type named
-<code>Immediate.Handlers.Shared.ImmediateAssemblyIdentifierAttribute</code>, wherever that type
-came from. In a project that installs only Immediate.Injections the attribute does not exist, so
-you must either reference Immediate.Handlers or declare a matching type yourself. Declaring a
-<em>similar</em> type in a different namespace compiles fine and is silently ignored — you get
-the fallback name with no diagnostic. See
-<a href="/docs/concepts/assembly-identifier">The assembly identifier</a> for the full story and a
-copy-pasteable local declaration.
-</Callout>
 
 ## A minimal example
 

@@ -52,10 +52,12 @@ Three pieces make this work:
 [full list](/docs/Immediate.Validations/built-in-validators).
 
 <Callout type="note" title="Two validators you get without asking">
-The generator adds a null check to every non-nullable reference type property automatically, so
-<code>Title</code> is checked for null even though nothing says <code>[NotNull]</code>. It also
-applies <code>EnumValue</code> to every enum-typed property. Opt out of the null check with
-<code>[AllowNull]</code>.
+<ul>
+<li>The generator adds a null check to every non-nullable reference type property automatically,
+so <code>Title</code> is checked even without <code>[NotNull]</code>. Use <code>[AllowNull]</code>
+to opt out of that check.</li>
+<li>The generator applies <code>EnumValue</code> to every enum-typed property.</li>
+</ul>
 </Callout>
 
 ## Register the behavior

@@ -191,14 +191,6 @@ message reading "must be less than".
 public required string Name { get; init; }
 ```
 
-<Callout type="note">
-
-If the off-by-one wording in the `MinLength` and `MaxLength` defaults bothers you, override it
-per-property with `Message`, or globally through
-[the localizer](/docs/Immediate.Validations/localization).
-
-</Callout>
-
 ### Match
 
 **Strings only.** Takes either a regex pattern string or a `Regex` instance. The first positional

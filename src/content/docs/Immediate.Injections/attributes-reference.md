@@ -5,10 +5,6 @@ order: 11
 group: Reference
 ---
 
-<script lang="ts">
-	import { Callout } from '$lib/components/docs';
-</script>
-
 Everything in this package lives in the `Immediate.Injections.Shared` namespace.
 
 | Type                                                                                  | Target   | Multiple? |
@@ -168,12 +164,6 @@ Assembly-level defaults. Not `AllowMultiple`.
 	UseProxyFactory = true
 )]
 ```
-
-<Callout type="note">
-The XML doc on <code>RegistrationStrategy</code> states a default of <code>Self</code>; the
-enum's zero value is <code>None</code>. The two behave the same when no <code>ServiceType</code>
-is present.
-</Callout>
 
 See [Assembly-wide defaults](/docs/Immediate.Injections/assembly-defaults).
 

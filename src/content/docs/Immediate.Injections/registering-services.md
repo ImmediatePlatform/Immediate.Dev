@@ -168,26 +168,6 @@ spaces removed:
 The method returns the `IServiceCollection`, so it chains. It also accepts a `params` list of
 tags — see [Tagged registration](/docs/Immediate.Injections/tagged-registration).
 
-<Callout type="warning" title="Renaming AddXxxServices needs Immediate.Handlers">
-The override is <code>[assembly: ImmediateAssemblyIdentifier("Todo")]</code>, and that attribute
-is defined in the <strong>Immediate.Handlers</strong> package, not this one. The Injections
-generator matches it structurally by namespace and name
-(<code>Immediate.Handlers.Shared.ImmediateAssemblyIdentifierAttribute</code>, arity 0). In a
-project that installs only Immediate.Injections the type does not exist at all, and a
-similarly-named type you declare in some other namespace compiles cleanly and is silently
-ignored — you get the fallback name with no diagnostic. Reference Immediate.Handlers, or declare
-a matching type in exactly that namespace. See
-<a href="/docs/concepts/assembly-identifier">The assembly identifier</a>.
-</Callout>
-
-<Callout type="note">
-Immediate.Injections strips <code>.</code> and spaces from the assembly name, but — unlike
-Immediate.Handlers — it does <strong>not</strong> strip <code>-</code>. An assembly named
-<code>Todo-Web</code> produces <code>AddTodo-WebServices</code>, which is not a valid method
-name and will not compile. Set the identifier explicitly if your assembly name contains a
-hyphen.
-</Callout>
-
 ## Where to go next
 
 - [Registration strategies](/docs/Immediate.Injections/registration-strategies) — registering

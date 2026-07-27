@@ -82,7 +82,7 @@ registration method of its own; you add its `ValidationBehavior<,>` to your asse
 
 ## Supported target frameworks
 
-All five packages multi-target **net8.0, net9.0, net10.0 and net11.0**. Generators and analyzers
+All five packages multi-target **net8.0, net9.0 and net10.0**. Generators and analyzers
 ship in two Roslyn flavours, picked automatically from the target framework.
 
 <Callout type="note" title="C# 13 changes one generated signature">
@@ -97,18 +97,9 @@ For the full matrix, including which packages require which companions, see
 
 ## Verifying the install
 
-Build once, then check that the generated code appeared:
-
-```xml title="MyApp.csproj"
-<PropertyGroup>
-	<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-	<CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)generated</CompilerGeneratedFilesOutputPath>
-</PropertyGroup>
-```
-
-Files named `IH.*.g.cs`, `IA.*.g.cs`, `IV.*.g.cs`, `IC.*.g.cs` and `II.*.g.cs` will appear under
-`obj/generated/`. If a registration method does not exist, that directory is the first place to
-look — see [How source generation works](/docs/concepts/source-generation).
+Build once, then inspect the generated code in your IDE. In Visual Studio, expand
+**Dependencies → Analyzers**; in Rider, expand **Dependencies → Source Generators**. See
+[How source generation works](/docs/concepts/source-generation) for the generated file names.
 
 ## Next
 

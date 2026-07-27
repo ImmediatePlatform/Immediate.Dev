@@ -16,8 +16,8 @@ generated files appear on disk.
 
 <Callout type="note">
 
-The generator fully qualifies every type name with `global::`. The listings below have those prefixes
-stripped for readability; nothing else has been changed.
+The generator fully qualifies type names with <code>global::</code>. Those prefixes are omitted
+from the listings below for readability.
 
 </Callout>
 
@@ -193,9 +193,10 @@ public static IServiceCollection AddHandlers(
 }
 ```
 
-A fourth `services.Add` for the container class itself appears for sealed instance handlers. Note that
-this is a plain static method, not an extension method, and that `[EditorBrowsable(Never)]` keeps it out
-of IntelliSense even though it is `public` and callable.
+A fourth `services.Add` for the container class itself appears for sealed instance handlers.
+
+This is a plain static method, not an extension method. `[EditorBrowsable(Never)]` keeps it out of
+IntelliSense even though it is `public` and callable.
 
 ## What is emitted per assembly
 

@@ -28,7 +28,7 @@ dotnet add package Immediate.Handlers
 Immediate.Handlers is the core of the platform and has no companion package requirements of its own; it
 depends only on `Microsoft.Extensions.DependencyInjection.Abstractions`. Immediate.Validations,
 Immediate.Apis and Immediate.Cache all build on top of it. Supported target frameworks are `net8.0`
-through `net11.0`. See [Package compatibility](/docs/concepts/package-compatibility).
+through `net10.0`. See [Package compatibility](/docs/concepts/package-compatibility).
 
 </Callout>
 

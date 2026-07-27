@@ -14,6 +14,13 @@ compile time and writes plain `ServiceDescriptor` calls — there is no runtime 
 assembly scanning and nothing to configure. For the platform-wide picture, see
 [How source generation works](/docs/concepts/source-generation).
 
+<Callout type="note">
+
+The generator fully qualifies type names with <code>global::</code>. Those prefixes are omitted
+from the listings below for readability.
+
+</Callout>
+
 ## The generated files
 
 Every file is prefixed `II.` so you can tell at a glance which generator produced it.
@@ -98,11 +105,11 @@ Fully qualified, with no `using` directives, so nothing in your code can shadow 
 ```csharp title="Generated output"
 static partial void RegisterScoped1(this IServiceCollection services, ReadOnlySpan<string> tags)
 {
-	global::Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions.Add(
+	Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions.Add(
 		services,
-		global::Microsoft.Extensions.DependencyInjection.ServiceDescriptor.Scoped(
-			typeof(global::Todo.ITodoRepository),
-			typeof(global::Todo.TodoRepository)
+		Microsoft.Extensions.DependencyInjection.ServiceDescriptor.Scoped(
+			typeof(Todo.ITodoRepository),
+			typeof(Todo.TodoRepository)
 		)
 	);
 }
@@ -148,31 +155,15 @@ versions. Both are `params`, so `AddTodoServices("web")` compiles identically ei
 private partial methods always take a `ReadOnlySpan<string>`, which is legal on all supported
 frameworks; only the `params` modifier is version-sensitive.
 
-<Callout type="note">
-The generator reads the language version from the compilation's parse options and falls back to
-C# 12 if it cannot determine one. If you see <code>params string[]</code> in a project you
-expect to be on C# 13, check that <code>LangVersion</code> is actually set.
-</Callout>
-
 ## Assembly identifier
 
 `Xxx` in `AddXxxServices` comes from `[assembly: ImmediateAssemblyIdentifier("Xxx")]` if present
 and valid, otherwise from the assembly name with `.` and spaces removed and the result trimmed.
 
-<Callout type="warning">
-Two details specific to this package. First, the attribute type is defined in
-<strong>Immediate.Handlers</strong> and matched here structurally by namespace and name, so a
-project that does not reference Immediate.Handlers gets no override — see
-<a href="/docs/concepts/assembly-identifier">The assembly identifier</a>. Second, the fallback
-strips <code>.</code> and spaces but <strong>not</strong> <code>-</code>, so an assembly named
-<code>Todo-Web</code> generates an invalid method name and the build fails on the generated
-file.
-</Callout>
-
 ## Roslyn and target frameworks
 
 The package ships two builds of the generator and analyzers: Roslyn 4.8 for `net8.0` and
-`net9.0`, Roslyn 5.0 for `net10.0` and `net11.0`. The right one is selected by your target
+`net9.0`, and Roslyn 5.0 for `net10.0`. The right one is selected by your target
 framework automatically.
 
 The attributes themselves live in a small `Immediate.Injections.Shared` assembly that ships

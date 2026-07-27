@@ -13,6 +13,13 @@ Immediate.Cache is an incremental source generator plus a small runtime library.
 discovered by reflection; see [How source generation works](/docs/concepts/source-generation) for
 the shared mechanics.
 
+<Callout type="note">
+
+The generator fully qualifies type names with <code>global::</code>. Those prefixes are omitted
+from the listings below for readability.
+
+</Callout>
+
 ## What the generator emits
 
 The generator looks for classes attributed with ``Immediate.Cache.Shared.CacheForAttribute`1``, skips
@@ -29,17 +36,17 @@ its request and response types, and emits two kinds of file.
 
 namespace Dummy;
 
-partial class GetUsersQueryCache : global::Immediate.Cache.Shared.ApplicationCache<
-	global::Dummy.GetUsersQuery.Query,
-	global::Dummy.GetUsersQuery.Response
+partial class GetUsersQueryCache : Immediate.Cache.Shared.ApplicationCache<
+	Dummy.GetUsersQuery.Query,
+	Dummy.GetUsersQuery.Response
 >
 {
 	public GetUsersQueryCache(
-		global::Microsoft.Extensions.Caching.Memory.IMemoryCache memoryCache,
-		global::Immediate.Cache.Shared.Owned<
-			global::Immediate.Handlers.Shared.IHandler<
-				global::Dummy.GetUsersQuery.Query,
-				global::Dummy.GetUsersQuery.Response
+		Microsoft.Extensions.Caching.Memory.IMemoryCache memoryCache,
+		Immediate.Cache.Shared.Owned<
+			Immediate.Handlers.Shared.IHandler<
+				Dummy.GetUsersQuery.Query,
+				Dummy.GetUsersQuery.Response
 			>
 		> ownedHandler
 	) : base(memoryCache, ownedHandler)
@@ -138,5 +145,5 @@ that in mind for behaviors you expect to run on every request.
 
 The package ships the generator and analyzers twice — a Roslyn 4.8 build and a Roslyn 5.0 build —
 and NuGet selects between them based on the Roslyn version in your SDK, not on your target
-framework. The runtime library (`Immediate.Cache.Shared.dll`) targets `net8.0`, `net9.0`, `net10.0`
-and `net11.0`.
+framework. The runtime library (`Immediate.Cache.Shared.dll`) targets `net8.0`, `net9.0` and
+`net10.0`.

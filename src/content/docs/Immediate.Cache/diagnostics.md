@@ -86,15 +86,6 @@ public sealed partial class DeleteUserCommand
 }
 ```
 
-<Callout type="warning">
-
-IC0003 also fires when the analyzer cannot find a handle method at all — including when the handler
-declares **two** methods named `Handle` and `HandleAsync`, which Immediate.Cache treats as
-ambiguous. The message still says "must return a value", so if the return type looks correct, check
-that there is exactly one `Handle` or `HandleAsync` method on the handler.
-
-</Callout>
-
 ## The CA2000 suppressor
 
 `OwnedDisposableScopeSuppressor` (suppression id `OwnedDisposableScopeSuppression`) suppresses
@@ -114,55 +105,8 @@ The suppression is deliberately narrow. It applies only when the receiver of `Ge
 `Immediate.Cache.Shared.Owned<T>`; an `out` parameter from any other method, a returned disposable,
 or a `new` disposable is left alone.
 
-## Troubleshooting
+## Cache hits and the behavior pipeline
 
-Several failure modes produce a raw compiler error with no `IC` diagnostic pointing at the cause.
-
-### CS0115 on `TransformKey` — the handler is `static`
-
-```text
-error CS0115: 'GetValueCache.TransformKey(GetValue.Query)': no suitable method found to override
-```
-
-The generator refuses handler type arguments that are `static` classes and emits nothing at all —
-so the cache class has no base type and `TransformKey` has nothing to override. **No `IC`
-diagnostic reports this**; `CacheForUsageAnalyzer` checks that the target carries `[Handler]` and
-returns a value, but never checks `static`.
-
-Change the handler from `public static partial class` to `public sealed partial class`, and drop
-`static` from its handle method.
-
-### CS0260 on the cache class — missing `partial`
-
-```text
-error CS0260: Missing partial modifier on declaration of type 'GetValueCache'
-```
-
-The generator emits a `partial class` declaration to add the base type and constructor, so your
-declaration must be `partial` too.
-
-### CS0534 — `TransformKey` not implemented
-
-```text
-error CS0534: 'GetValueCache' does not implement inherited abstract member
-'ApplicationCache<Query, Response>.TransformKey(Query)'
-```
-
-The generation worked; you simply have not written the override yet.
-
-### Nothing is generated and nothing is reported
-
-A `static` cache class carrying `[CacheFor<T>]` is filtered out before the analyzer's conditions
-apply. So is a cache class whose target is a `static` handler. If `AddXxxCaches()` compiles but
-your cache type is not registered, check both.
-
-### `Unable to resolve service for type 'IMemoryCache'`
-
-`AddXxxCaches()` does not register a memory cache. Add `AddMemoryCache()`, from the
-`Microsoft.Extensions.Caching.Memory` package, to your service collection.
-
-### The handler never runs on a cache hit
-
-That is by design: the cache resolves `IHandler<TRequest, TResponse>`, so the whole
+The handler does not run on a cache hit. The cache resolves `IHandler<TRequest, TResponse>`, so the whole
 Immediate.Handlers behavior pipeline sits _inside_ the cache miss. See
 [How it works](/docs/Immediate.Cache/how-it-works).

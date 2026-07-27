@@ -112,16 +112,6 @@ extension to do:
 | Registration that needs real code             | [Manual registration](/docs/Immediate.Injections/manual-registration)     |
 | Set a default strategy for the whole assembly | [Assembly-wide defaults](/docs/Immediate.Injections/assembly-defaults)    |
 
-<Callout type="warning" title="If you use Immediate.Injections on its own">
-Immediate.Injections doesn't require Immediate.Handlers — but
-<code>[assembly: ImmediateAssemblyIdentifier]</code>, which renames
-<code>AddTodoServices()</code>, is defined in the Immediate.Handlers package. In an
-Injections-only project it either won't compile or, if you declare a similarly named type in the
-wrong namespace, will be ignored with no diagnostic. See
-<a href="/docs/concepts/assembly-identifier">The assembly identifier</a>. This tutorial
-references Immediate.Handlers anyway, so it doesn't apply here.
-</Callout>
-
 ## Run it
 
 ```bash title="terminal"

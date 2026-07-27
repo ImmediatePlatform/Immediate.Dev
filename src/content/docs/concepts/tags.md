@@ -65,9 +65,6 @@ Rules 1 and 2 together mean tags are additive: they let you pull in an extra sli
 assembly, not carve one out. If a handler must never be registered in the web host, tagging is
 the wrong tool — put it in a different assembly.
 
-The generated filter is a plain nested loop over the two string spans, so a large tag list has a
-cost, but in practice both lists are tiny.
-
 ## The `tags` parameter signature
 
 The generated parameter adapts to your project's C# language version:
@@ -92,7 +89,7 @@ services.AddTodoHandlers(tags: "worker");            // lifetime defaults to Sco
 `MapXxxEndpoints` takes an optional route `prefix` before `tags`:
 
 ```csharp
-app.MapTodoEndpoints(tags: "web");
+app.MapTodoEndpoints(tags: ["web"]);
 app.MapTodoEndpoints("/v1", "web");
 ```
 

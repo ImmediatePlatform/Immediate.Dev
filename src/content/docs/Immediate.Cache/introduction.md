@@ -37,7 +37,7 @@ dotnet add package Immediate.Cache
 ```
 
 The package ships the runtime types, the source generator and the analyzers together. It targets
-`net8.0`, `net9.0`, `net10.0` and `net11.0`.
+`net8.0`, `net9.0` and `net10.0`.
 
 <Callout type="note" title="Prerequisites">
 

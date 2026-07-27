@@ -102,15 +102,6 @@ type, or two `CustomizeEndpoint` overloads on one class — is
 [IAPI0004](/docs/Immediate.Apis/diagnostics#iapi0004), a warning, and the method is **silently
 ignored** by the generator.
 
-<Callout type="note">
-
-[IAPI0006](/docs/Immediate.Apis/diagnostics#iapi0006) is a hidden diagnostic that fires on every
-endpoint class with no `CustomizeEndpoint` method at all. It exists purely to offer the
-**Add `CustomizeEndpoint` method** refactoring in your IDE's lightbulb menu; it never shows up in
-build output.
-
-</Callout>
-
 ## `TransformResult`
 
 When you want the endpoint to return something other than the handler's response type — typically a
@@ -185,15 +176,6 @@ public static partial class DeleteUser
 	}
 }
 ```
-
-<Callout type="warning" title="The IAPI0007 code fix does not handle this case">
-
-[IAPI0007](/docs/Immediate.Apis/diagnostics#iapi0007) is the hidden diagnostic offering an
-**Add `TransformResult` method** refactoring. Its code fix only knows how to build the method for a
-`ValueTask<T>` handler; on a bare-`ValueTask` handler it returns the document unchanged, with no
-error message. Write the parameterless overload by hand.
-
-</Callout>
 
 ## Choosing between them
 

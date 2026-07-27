@@ -15,6 +15,13 @@ set of checks for a type, the order they run in, and the messages they produce a
 the project compiles. For the shared background on how these packages generate code, see
 [How source generation works](/docs/concepts/source-generation).
 
+<Callout type="note">
+
+The generator fully qualifies type names with <code>global::</code>. Those prefixes are omitted
+from the listings below for readability.
+
+</Callout>
+
 ## The pipeline
 
 The generator hooks `ForAttributeWithMetadataName` on
@@ -32,7 +39,7 @@ Because the model is equatable, editing an unrelated file does not re-render you
 ## What gets emitted
 
 For a class, struct or record, the generated partial declares
-`global::Immediate.Validations.Shared.IValidationTarget` and contains:
+`Immediate.Validations.Shared.IValidationTarget` and contains:
 
 - Explicit implementations of `IValidationTarget.Validate()` and
   `IValidationTarget.Validate(ValidationResult)`.
@@ -53,11 +60,11 @@ implementing several validated interfaces still compiles.
 Abridged, the shape looks like this:
 
 ```csharp title="IV...Query.g.cs"
-partial record Query : global::Immediate.Validations.Shared.IValidationTarget
+partial record Query : Immediate.Validations.Shared.IValidationTarget
 {
-	public static global::Immediate.Validations.Shared.ValidationResult Validate(
+	public static Immediate.Validations.Shared.ValidationResult Validate(
 		Query? target,
-		global::Immediate.Validations.Shared.ValidationResult errors
+		Immediate.Validations.Shared.ValidationResult errors
 	)
 	{
 		if (target is not { } t)
@@ -77,7 +84,7 @@ partial record Query : global::Immediate.Validations.Shared.IValidationTarget
 	}
 
 	private static void __ValidateName(
-		global::Immediate.Validations.Shared.ValidationResult errors,
+		Immediate.Validations.Shared.ValidationResult errors,
 		Query instance,
 		string target
 	)
@@ -86,7 +93,7 @@ partial record Query : global::Immediate.Validations.Shared.IValidationTarget
 		{
 			errors.Add(
 				$"Name",
-				global::Immediate.Validations.Shared.NotNullAttribute.DefaultMessage,
+				Immediate.Validations.Shared.NotNullAttribute.DefaultMessage,
 				new()
 				{
 					["PropertyName"] = $"Name",
@@ -98,11 +105,11 @@ partial record Query : global::Immediate.Validations.Shared.IValidationTarget
 		}
 
 		{
-			if (!global::Immediate.Validations.Shared.NotEmptyAttribute.ValidateProperty(t))
+			if (!Immediate.Validations.Shared.NotEmptyAttribute.ValidateProperty(t))
 			{
 				errors.Add(
 					$"Name",
-					global::Immediate.Validations.Shared.NotEmptyAttribute.DefaultMessage,
+					Immediate.Validations.Shared.NotEmptyAttribute.DefaultMessage,
 					new()
 					{
 						["PropertyName"] = $"Name",
@@ -191,4 +198,4 @@ contract), `ValidateClassAnalyzer` (validation targets and attribute usage),
 enumerated on the [Diagnostics](/docs/Immediate.Validations/diagnostics) page.
 
 Analyzers, code fixes and the generator are shipped twice in the package: a Roslyn 4.8 build used
-by `net8.0` and `net9.0`, and a Roslyn 5.0 build used by `net10.0` and `net11.0`.
+by `net8.0` and `net9.0`, and a Roslyn 5.0 build used by `net10.0`.

@@ -37,13 +37,6 @@ Three consequences follow directly from that shape:
 - **Every link is a real DI service.** A behavior that cannot be resolved is a runtime DI
   failure, not a silently skipped step.
 
-<Callout type="note">
-The innermost link is always <code>HandleBehavior</code>, which is itself a
-<code>Behavior&lt;TRequest, TResponse&gt;</code>. That is why <code>Next</code> in your outermost
-behavior and <code>Next</code> in your innermost behavior have identical shapes — the handler
-method is just the end of the same chain.
-</Callout>
-
 ## Where each package attaches
 
 **Immediate.Handlers** owns the chain itself: the `[Handler]` and `[Behaviors]` attributes, the

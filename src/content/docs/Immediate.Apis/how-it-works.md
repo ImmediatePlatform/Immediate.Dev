@@ -14,6 +14,13 @@ Immediate.Apis hooks the same `[Handler]` attribute that Immediate.Handlers does
 startup. For the general mechanics and how to inspect generated files, see
 [How source generation works](/docs/concepts/source-generation).
 
+<Callout type="note">
+
+The generator fully qualifies type names with <code>global::</code>. Those prefixes are omitted
+from the listings below for readability.
+
+</Callout>
+
 ## The files
 
 | File                           | Contents                                                  |
@@ -49,8 +56,7 @@ public static partial class GetUsers
 }
 ```
 
-the generator adds three members to the partial class (simplified — the real output is fully
-qualified with `global::`):
+the generator adds three members to the partial class (simplified):
 
 ```csharp title="IA.Users.GetUsers.g.cs"
 /// <remarks><see cref="Users.GetUsers.Query" /> registered using

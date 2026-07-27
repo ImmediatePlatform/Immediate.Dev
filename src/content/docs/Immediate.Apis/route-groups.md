@@ -54,15 +54,6 @@ The type argument to `[MapGroup<T>]` must carry `[RouteGroup]`. If it does not,
 [IAPI0013](/docs/Immediate.Apis/diagnostics#iapi0013) is reported as an **error** and the endpoint is
 not generated at all.
 
-<Callout type="warning" title="Grouped endpoints leave the top-level registration">
-
-An endpoint with `[MapGroup<T>]` is **no longer registered by `MapXxxEndpoints()` directly**. It is
-reached only through its group, which `MapXxxEndpoints()` maps for you as long as the group is a
-top-level one. This is by design, but it means a typo in the group hierarchy makes routes silently
-disappear rather than fail.
-
-</Callout>
-
 ## Nesting groups
 
 Groups nest through **nested C# classes**, not through an attribute parameter. Declare an inner
@@ -98,16 +89,6 @@ public static partial class GetUsers
 
 `MapXxxEndpoints()` maps `Api`; `Api` maps `Api.V1`; `Api.V1` maps `Api.V1.Users`; and `Api.V1.Users`
 maps `GetUsers`. The final route is `api/v1/users`.
-
-<Callout type="danger" title="A [RouteGroup] nested in a non-group class is silently ignored">
-
-The generator only accepts a `[RouteGroup]` class whose containing type is _also_ a `[RouteGroup]`
-class (or which has no containing type at all). A `[RouteGroup]` class nested inside an ordinary
-class produces no group, no diagnostic, and any endpoint pointing at it is never mapped —
-`[MapGroup<T>]` is happy, because its target does carry `[RouteGroup]`. If a grouped endpoint returns
-404, check that every class in the chain is a route group or the top level.
-
-</Callout>
 
 ## Customizing a group
 

@@ -12,23 +12,16 @@ order: 5
 
 | Package                                                           | Requires                           | Target frameworks | Current major |
 | ----------------------------------------------------------------- | ---------------------------------- | ----------------- | ------------- |
-| [Immediate.Handlers](/docs/Immediate.Handlers/introduction)       | —                                  | net8.0 – net11.0  | 3.x           |
-| [Immediate.Validations](/docs/Immediate.Validations/introduction) | Immediate.Handlers                 | net8.0 – net11.0  | 3.x           |
-| [Immediate.Apis](/docs/Immediate.Apis/introduction)               | Immediate.Handlers, ASP.NET Core   | net8.0 – net11.0  | 6.x           |
-| [Immediate.Cache](/docs/Immediate.Cache/introduction)             | Immediate.Handlers, `IMemoryCache` | net8.0 – net11.0  | 2.x           |
-| [Immediate.Injections](/docs/Immediate.Injections/introduction)   | — (see below)                      | net8.0 – net11.0  | 0.x           |
+| [Immediate.Handlers](/docs/Immediate.Handlers/introduction)       | —                                  | net8.0 – net10.0  | 3.x           |
+| [Immediate.Validations](/docs/Immediate.Validations/introduction) | Immediate.Handlers                 | net8.0 – net10.0  | 3.x           |
+| [Immediate.Apis](/docs/Immediate.Apis/introduction)               | Immediate.Handlers, ASP.NET Core   | net8.0 – net10.0  | 6.x           |
+| [Immediate.Cache](/docs/Immediate.Cache/introduction)             | Immediate.Handlers, `IMemoryCache` | net8.0 – net10.0  | 2.x           |
+| [Immediate.Injections](/docs/Immediate.Injections/introduction)   | —                                  | net8.0 – net10.0  | 1.x           |
+| Immediate.Jobs                                                    | Immediate.Handlers                 | net8.0 – net10.0  | 0.x           |
 
 Immediate.Handlers is the core. Validations, Apis and Cache each take a package reference on it
 and are meaningless without it — they extend handlers rather than standing alone. You do not
 need to install it separately; it comes in transitively.
-
-<Callout type="warning" title="Immediate.Injections is the exception, with an asterisk">
-Immediate.Injections has no dependency on Immediate.Handlers and works on its own. The one
-seam is <code>[assembly: ImmediateAssemblyIdentifier]</code>, whose attribute type is defined in
-the Immediate.Handlers package. Using it in an Injections-only project requires either a
-reference to Immediate.Handlers or a hand-declared matching type — see
-<a href="/docs/concepts/assembly-identifier">The assembly identifier</a>.
-</Callout>
 
 ## Mixing and matching
 
@@ -46,11 +39,7 @@ ASP.NET Core controllers instead of Immediate.Apis. The
 
 ## Target frameworks
 
-All five packages multi-target **net8.0, net9.0, net10.0 and net11.0**.
-
-Generators and analyzers ship in two Roslyn flavours — 4.8 for net8.0/net9.0 and 5.0 for
-net10.0/net11.0 — selected automatically by NuGet. See
-[How source generation works](/docs/concepts/source-generation).
+All six packages multi-target **net8.0, net9.0 and net10.0**.
 
 ## C# language version
 
@@ -69,5 +58,5 @@ the relevant page, and removed diagnostic IDs are kept in the diagnostics tables
 searching for one still lands somewhere useful.
 </Callout>
 
-The five packages version independently. A major bump in one does not imply a bump in the
+The packages version independently. A major bump in one does not imply a bump in the
 others, and there is no combined "platform version" to pin.

@@ -5,10 +5,6 @@ order: 9
 group: Guides
 ---
 
-<script lang="ts">
-	import { Callout } from '$lib/components/docs';
-</script>
-
 `[assembly: RegistrationDefaults(...)]` sets the fallback values used by every registration
 attribute in the assembly, so you write the common case once instead of on every class.
 
@@ -36,13 +32,6 @@ is not `AllowMultiple`.
 
 Only these three exist. There is no assembly-wide default for `ServiceType`, `ServiceKey`,
 `Factory`, `Tags` or the lifetime.
-
-<Callout type="note">
-The XML documentation on <code>RegistrationDefaultsAttribute.RegistrationStrategy</code> says the
-default value is <code>Self</code>. The enum's zero value is actually <code>None</code>. The two
-behave identically when no <code>ServiceType</code> is present, so the IntelliSense text is
-misleading rather than wrong — but <code>None</code> is what the generator sees.
-</Callout>
 
 ## Per-attribute values always win
 

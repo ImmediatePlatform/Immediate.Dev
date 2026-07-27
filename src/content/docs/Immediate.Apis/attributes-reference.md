@@ -65,15 +65,6 @@ by verb string, so `[MapMethod("POST", …)]` binds `[AsParameters]`. See
 
 </Callout>
 
-<Callout type="note" title="The obsolete two-string constructor">
-
-`MapMethodAttribute` also carries `MapMethodAttribute(string route, string method)` — note the
-reversed argument order. It is `[Obsolete]`, hidden from IntelliSense with
-`[EditorBrowsable(Never)]`, and deprioritised with `[OverloadResolutionPriority(-1)]`, so new source
-always binds to the current overload. It exists only for binary compatibility; do not use it.
-
-</Callout>
-
 ## The verb attributes
 
 `MapGetAttribute`, `MapPostAttribute`, `MapPutAttribute`, `MapPatchAttribute` and
