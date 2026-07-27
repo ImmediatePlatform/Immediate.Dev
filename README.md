@@ -1,28 +1,34 @@
 # Immediate.Dev
 
-Public website for the ImmediatePlatform, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+Public website and documentation for [ImmediatePlatform](https://github.com/ImmediatePlatform), built with SvelteKit, Tailwind CSS, shadcn-svelte, and MDSvex.
+
+The application is based on [code-gio/svelte-docs-starter](https://github.com/code-gio/svelte-docs-starter) at commit [`12b09f1`](https://github.com/code-gio/svelte-docs-starter/commit/12b09f16253b00dfa613c6797b787fa23be09e05).
 
 ## Developing
 
-After installing node.js (version 23 is recommended), enable `yarn` by running `corepack enable`.
-
-Once you've installed dependencies with `yarn install`, start a development server:
+Install Node.js 22 and pnpm 10, then restore dependencies and start the development server:
 
 ```bash
-yarn dev
-
-# or start the server and open the app in a new browser tab
-yarn dev -- --open
+pnpm install
+pnpm dev
 ```
 
-## Building
-
-To create a production build run:
+## Validation
 
 ```bash
-yarn build
+pnpm check
+pnpm lint
+pnpm build
 ```
 
-You can preview the production build with `yarn preview`.
+`pnpm build` prerenders the site into `build/` and generates its Pagefind search index.
 
-> Deployment uses [@sveltejs/adapter-static](https://kit.svelte.dev/docs/adapters).
+## Documentation content
+
+Documentation pages live under `src/content/docs`. Page order comes from each file's `order` frontmatter value; sidebar section order comes from `src/lib/docs/config.ts`.
+
+To add another package, create its content directory and add one autogeneration entry to the sidebar configuration.
+
+## Deployment
+
+The `Generate Docs` GitHub Actions workflow installs dependencies with pnpm, performs a static production build, and publishes `build/` to GitHub Pages. It is started manually with `workflow_dispatch` and reads the canonical URL from the `SITE_URL` repository variable.

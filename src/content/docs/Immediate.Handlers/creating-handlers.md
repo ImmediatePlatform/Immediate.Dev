@@ -1,0 +1,111 @@
+---
+title: Creating handlers
+description: Learn how to create handlers
+order: 1
+---
+
+Handlers can be created by using the following code:
+
+```csharp
+[Handler]
+public static partial class GetUsersQuery
+{
+    public record Query;
+
+    private static ValueTask<IEnumerable<User>> HandleAsync(
+        Query _,
+        UsersService usersService,
+        CancellationToken token
+	)
+    {
+        return usersService.GetUsers();
+    }
+}
+```
+
+This will automatically generate a new class, `GetUsersQuery.Handler`, which encapsulates the following:
+
+- attaching any behaviors which may be relevant for the query
+- using a class to receive any DI services, such as `UsersService`
+
+Consuming code can now do the following:
+
+```csharp
+public class Consumer(GetUsersQuery.Handler handler)
+{
+	public async Task Consumer(CancellationToken token)
+	{
+		var response = await handler.HandleAsync(new(), token);
+		// do something with response
+	}
+}
+```
+
+For Command handlers, use a `ValueTask`, and Immediate.Handlers will insert a return type
+of `ValueTuple` to your handler automatically.
+
+```csharp
+[Handler]
+public static partial class CreateUserCommand
+{
+    public record Command(string Email);
+
+    private static async ValueTask HandleAsync(
+        Command command,
+        UsersService usersService,
+        CancellationToken token
+	)
+    {
+        await usersService.CreateUser(command.Email);
+    }
+}
+
+public class Consumer(CreateUserCommand.Handler handler)
+{
+	public async Task Consumer(CancellationToken token)
+	{
+		await handler.HandleAsync(new(), token);
+		// do something with response
+	}
+}
+```
+
+`CancellationTokens` are also optional, and may be omitted if unnecessary.
+
+```csharp
+[Handler]
+public static partial class GetHelloResponse
+{
+    public record Query(string Name);
+
+    private static ValueTask<string> Handle(Query query)
+    {
+        return ValueTask.FromResult($"Hello {query.Name}!");
+    }
+}
+```
+
+In case your project layout does not allow direct for references between consumer and handler, the handler will implement the `IHandler<TRequest, Response>` interface.
+
+```csharp
+public class Consumer(IHandler<GetUsersQuery.Query, IEnumerable<User>> handler)
+{
+	public async Task Consumer(CancellationToken token)
+	{
+		var response = await handler.HandleAsync(new(), token);
+		// do something with response
+	}
+}
+```
+
+## Registering with `IServiceCollection`
+
+In your `Program.cs`, add a call to `services.AddXxxHandlers()`, where `Xxx` is the application identifier.
+By default, this is the short form of the assembly name. For example:
+
+- For a project named `Web`, it will be `services.AddWebHandlers()`
+- For a project named `Application.Web`, it will be `services.AddApplicationWebHandlers()`
+
+However, this name can be overridden using `[assembly: ImmediateAssemblyIdentifierAttribute("SomeIdentifier")]`.
+
+Calling this `AddXxxHandlers()` method will register all classes in the assembly marked with `[Handler]`.

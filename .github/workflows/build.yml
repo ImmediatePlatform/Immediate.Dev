@@ -7,40 +7,43 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: true
 
-on: 
+on:
   workflow_dispatch:
 
 jobs:
   docs:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup node
-      uses: actions/setup-node@v4
-      with:
-        node-version: '23'
-    - name: Enable corepack
-      run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.7.1
 
-    - name: Restore dependencies
-      run: yarn install --immutable
-    - name: Build
-      env:
-        VITE_SITE_URL: ${{ vars.SITE_URL }}
-      run: yarn build
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
 
-    - name: Setup Pages
-      uses: actions/configure-pages@v5
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: './build'
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - name: Restore dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        env:
+          VITE_SITE_URL: ${{ vars.SITE_URL }}
+        run: pnpm build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './build'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
