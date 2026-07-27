@@ -6,7 +6,7 @@ The application is based on [code-gio/svelte-docs-starter](https://github.com/co
 
 ## Developing
 
-Install Node.js 22 and pnpm 10, then restore dependencies and start the development server:
+Install Node.js 26 and pnpm 10, then restore dependencies and start the development server:
 
 ```bash
 pnpm install
