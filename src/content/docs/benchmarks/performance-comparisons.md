@@ -1,5 +1,6 @@
 ---
 title: Performance comparisons
+description: Benchmark results comparing Immediate.Handlers against MediatR and other mediator implementations.
 order: 1
 ---
 

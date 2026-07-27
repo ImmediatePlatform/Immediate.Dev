@@ -51,7 +51,7 @@
 		{
 			name: 'Immediate.Validations',
 			description: 'High-performance validation generated from your request types.',
-			href: '/docs/Immediate.Validation/creating-validators',
+			href: '/docs/Immediate.Validations/creating-validators',
 			icon: ShieldCheckIcon
 		},
 		{

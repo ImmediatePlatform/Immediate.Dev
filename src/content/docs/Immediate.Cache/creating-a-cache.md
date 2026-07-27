@@ -1,85 +1,144 @@
 ---
 title: Creating a cache
-description: Learn how to create a cache to use with your handler
-order: 1
+description: Declare a cache class, implement TransformKey, and register the generated caches with the service collection.
+order: 2
+group: Guides
 ---
 
 <script lang="ts">
 	import { Callout } from '$lib/components/docs';
 </script>
 
-Create a class and apply the `[CacheFor<>]` attribute, targeting a handler. Add a `TransformKey` method to transform a
-request into a cache key. For example:
+A cache is a `partial` class marked with `[CacheFor<THandler>]` that supplies one method:
+`TransformKey`, which turns a request into the string used as the cache key. The source generator
+adds the base class and the constructor.
 
-```csharp title="GetValueCache.cs"
+```csharp title="GetValue.cs"
 [Handler]
-public static partial class GetValue
+public sealed partial class GetValue
 {
 	public sealed record Query(int Value);
 	public sealed record Response(int Value);
 
-	private static ValueTask<Response> HandleAsync(
+	private ValueTask<Response> HandleAsync(
 		Query query,
 		CancellationToken _
 	) => ValueTask.FromResult(new Response(query.Value));
 }
+```
 
+```csharp title="GetValueCache.cs"
 [CacheFor<GetValue>]
-public sealed class GetValueCache
+public sealed partial class GetValueCache
 {
 	protected override string TransformKey(GetValue.Query request) =>
 		$"GetValue(query: {request.Value})";
 }
 ```
 
-In this case, the `GetValueCache` class will serve as a cache for the `GetValue` IH handler.
+`GetValueCache` now derives from `ApplicationCache<GetValue.Query, GetValue.Response>` — the
+generator infers both type arguments from the handler's `HandleAsync` signature, so you never write
+them yourself. That is also why `TransformKey` is an `override` in a class with no visible base
+type.
 
-### Adding generated caches to the `IServiceCollection` collection
+<Callout type="danger" title="The target handler must not be static">
 
-In your `Program.cs`, add a call to `services.AddXxxCaches()`, where Xxx is the application identifier. By default,
-this is the short form of the assembly name. For example:
+`[CacheFor<T>]` silently generates **nothing** when `T` is a `static` class. Immediate.Handlers
+happily accepts `public static partial class GetValue` with a `private static HandleAsync`, but
+Immediate.Cache's generator requires the handler type argument to be a non-static type; when it is
+static the generator skips the class entirely, no base type is emitted, and your `TransformKey`
+fails to compile with:
+
+```text
+error CS0115: 'GetValueCache.TransformKey(GetValue.Query)': no suitable method found to override
+```
+
+**No `IC` diagnostic reports this** — the analyzer checks that the target carries `[Handler]` and
+returns a value, but not that it is an instance class. If you see CS0115 on `TransformKey`, change
+the handler from `public static partial class` to `public sealed partial class` (and drop `static`
+from its `HandleAsync`). See [Diagnostics](/docs/Immediate.Cache/diagnostics) for
+the other compile failures with no matching diagnostic.
+
+</Callout>
+
+## Requirements
+
+| Requirement                                       | Enforced by                                   |
+| ------------------------------------------------- | --------------------------------------------- |
+| The cache class is declared `partial`             | Compiler (`CS0260`)                           |
+| The cache class is not `static`                   | Generator (silently skips)                    |
+| The cache class is not nested in another type     | [`IC0001`](/docs/Immediate.Cache/diagnostics) |
+| The target type carries `[Handler]`               | [`IC0002`](/docs/Immediate.Cache/diagnostics) |
+| The target's handle method returns `ValueTask<T>` | [`IC0003`](/docs/Immediate.Cache/diagnostics) |
+| The target type is not `static`                   | Nothing — see the callout above               |
+
+The target handler must also expose exactly one method named `Handle` or `HandleAsync`, and that
+method's first parameter is taken as the request type. Additional parameters are resolved from DI
+by Immediate.Handlers as usual, so a handler that injects a `DbContext` through its handle method
+caches just fine.
+
+Bare `ValueTask` command handlers cannot be cached: there is no response to store, and `IC0003`
+reports it.
+
+## Nullable requests and responses
+
+`ApplicationCache<TRequest, TResponse>` constrains both parameters to `class?`, so nullable
+reference types flow through unchanged. Match the handler's nullability in your override:
+
+```csharp title="NullableTypesCache.cs"
+[CacheFor<NullableTypesHandler>]
+public sealed partial class NullableTypesCache
+{
+	protected override string TransformKey(NullableTypesHandler.Query? request) =>
+		$"NullableTypesHandler(query: {request})";
+}
+```
+
+## Registering the generated caches
+
+In your `Program.cs`, add a call to `services.AddXxxCaches()`, where `Xxx` is the application
+identifier. By default this is the assembly name with `.` and spaces removed:
 
 - For a project named `Web`, it will be `services.AddWebCaches()`
 - For a project named `Application.Web`, it will be `services.AddApplicationWebCaches()`
 
-However, this name can be overridden using `[assembly: ImmediateAssemblyIdentifierAttribute("SomeIdentifier")]`.
+The name can be overridden with
+`[assembly: ImmediateAssemblyIdentifier("SomeIdentifier")]` — see
+[The assembly identifier](/docs/concepts/assembly-identifier).
 
-## Retrieve Data From the Cache
+```csharp title="Program.cs"
+var builder = WebApplication.CreateBuilder(args);
 
-Using an instance of the `GetValueCache` class that you have created above, you can simply call:
-
-```csharp
-var response = await cache.GetValue(request, token);
+builder.Services.AddMemoryCache();
+builder.Services.AddWebBehaviors();
+builder.Services.AddWebHandlers();
+builder.Services.AddWebCaches();
 ```
 
-If there is a cached value, it will be returned; otherwise a temporary scope will be used to create the handler and
-execute it; and the returned value will be stored.
+<Callout type="warning">
 
-<Callout type="note">
-If simultaneous requests are made while the handler is executing, they will wait for the first handler to
-complete, rather than executing the handler a second/simultaenous time.
+`AddXxxCaches()` registers the caches but **not** an `IMemoryCache`. Without a call to
+`AddMemoryCache()`, resolving a cache class throws at the first request for `IMemoryCache`. The
+handlers themselves still need `AddXxxHandlers()`: the cache resolves its handler from the
+container each time it executes.
+
 </Callout>
 
-## Removing Data From the Cache
+## Consuming the cache
 
-Using an instance of the `GetValueCache` class that you have created above, you can remove cached data by calling:
+Each cache class is registered under its own concrete type, not under `ApplicationCache<,>` or any
+interface. Inject the class directly:
 
-```csharp
-await cache.RemoveValue(request);
+```csharp title="UsersController.cs"
+public sealed class UsersController(GetValueCache cache)
+{
+	public async Task<GetValue.Response> Get(int value, CancellationToken token) =>
+		await cache.GetValue(new GetValue.Query(value), token);
+}
 ```
 
-<Callout type="note">
-If a handler is running based on this request, it will be cancelled, and any callers waiting on the results from this handler will experience a `CancellationToken` cancellation.
-</Callout>
+Cache classes are registered as **Singletons**, so never inject a scoped service such as a
+`DbContext` into your cache class — see [How it works](/docs/Immediate.Cache/how-it-works). Scoped
+dependencies belong on the handler.
 
-## Updating Data In the Cache
-
-Using an instance of the `GetValueCache` class that you have created above, you can assign cached data by calling:
-
-```csharp
-await cache.SetValue(request, response);
-```
-
-<Callout type="note">
-If a handler is running based on this request, it will be cancelled, and any callers waiting on the results from this handler will immediately receive the updated response.
-</Callout>
+Next: [reading and writing cached data](/docs/Immediate.Cache/reading-and-writing).

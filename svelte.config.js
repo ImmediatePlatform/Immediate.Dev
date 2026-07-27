@@ -48,8 +48,66 @@ function codeHighlighter(code, lang, meta) {
 	return `{@html \`${result.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`}`;
 }
 
+/**
+ * GitHub-style slug: lowercase, drop anything but word chars, spaces and hyphens,
+ * then collapse whitespace to hyphens.
+ * @param {string} text
+ */
+function slugify(text) {
+	return text
+		.trim()
+		.toLowerCase()
+		.replace(/[^\p{L}\p{N}\s-]/gu, '')
+		.replace(/\s+/g, '-')
+		.replace(/-+/g, '-')
+		.replace(/^-|-$/g, '');
+}
+
+/**
+ * Concatenates the visible text of a hast node.
+ * @param {any} node
+ * @returns {string}
+ */
+function textContent(node) {
+	if (node.type === 'text') return node.value;
+	if (!Array.isArray(node.children)) return '';
+	return node.children.map(textContent).join('');
+}
+
+/**
+ * Gives every heading a stable `id`, so in-page anchors resolve and the
+ * table of contents (which filters on `el.id`) has something to collect.
+ */
+function rehypeHeadingIds() {
+	/** @param {any} tree */
+	return (tree) => {
+		/** @type {Map<string, number>} */
+		const seen = new Map();
+
+		/** @param {any} node */
+		function walk(node) {
+			if (node.type === 'element' && /^h[1-6]$/.test(node.tagName)) {
+				node.properties ??= {};
+				if (!node.properties.id) {
+					const base = slugify(textContent(node));
+					if (base) {
+						const count = seen.get(base) ?? 0;
+						seen.set(base, count + 1);
+						node.properties.id = count === 0 ? base : `${base}-${count}`;
+					}
+				}
+			}
+
+			for (const child of node.children ?? []) walk(child);
+		}
+
+		walk(tree);
+	};
+}
+
 const markdownPreprocessor = mdsvex({
 	extensions: ['.md', '.svx'],
+	rehypePlugins: [rehypeHeadingIds],
 	highlight: {
 		highlighter: codeHighlighter
 	}

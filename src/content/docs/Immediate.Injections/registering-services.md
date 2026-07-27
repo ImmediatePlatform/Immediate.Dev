@@ -1,30 +1,197 @@
 ---
-title: Registering Services
-description: Annotate classes and call the generated registration extension to register services.
-order: 1
+title: Registering services
+description: Mark a class with a lifetime attribute and call the generated AddXxxServices extension.
+order: 2
+group: Guides
 ---
 
-Services can be marked for registration using the `RegisterScoped`, `RegisterSingleton`, or `RegisterTransient`
-attributes. These attributes support various options to control how the service is registered (e.g. which interfaces,
-duplicate handling, factories, tags).
+<script lang="ts">
+	import { Callout } from '$lib/components/docs';
+</script>
 
-```csharp title="Service.cs"
+Registration has two halves: an attribute on the class, and one call to the generated extension
+method at startup. Everything else on this page is a variation on those two.
+
+## The three lifetime attributes
+
+`RegisterSingleton`, `RegisterScoped` and `RegisterTransient` all live in
+`Immediate.Injections.Shared` and all carry the same properties. They differ only in the
+`ServiceDescriptor` lifetime they emit.
+
+```csharp title="Services.cs"
 using Immediate.Injections.Shared;
 
-public interface IService { }
+[RegisterSingleton]
+public sealed class Clock;
 
-[RegisterScoped<IService>]
-public class Service : IService
-{
-}
+[RegisterScoped]
+public sealed class UnitOfWork;
+
+[RegisterTransient]
+public sealed class EmailSender;
 ```
 
-### Adding declared registrations to the `IServiceCollection` collection
+With no other properties set, each class is registered **as itself**. `Clock` resolves through
+`GetRequiredService<Clock>()`, not through any interface it happens to implement.
 
-In your `Program.cs`, add a call to `services.AddXxxServices()`, where Xxx is the application identifier. By default,
-this is the short form of the assembly name. For example:
+The attributes target classes, and records count — the generator accepts both class and record
+declarations.
 
-- For a project named `Web`, it will be `services.AddWebServices()`
-- For a project named `Application.Web`, it will be `services.AddApplicationWebServices()`
+## The three forms
 
-However, this name can be overridden using `[assembly: ImmediateAssemblyIdentifierAttribute("SomeIdentifier")]`.
+Each lifetime attribute exists in three arities. They are not interchangeable; each answers a
+different question.
+
+| Form                                          | Answers                                                                | Extra properties                      |
+| --------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------- |
+| `[RegisterScoped]`                            | "register this class, however the strategy says"                       | `ServiceType`, `RegistrationStrategy` |
+| `[RegisterScoped<TService>]`                  | "register this class as `TService`"                                    | —                                     |
+| `[RegisterScoped<TService, TImplementation>]` | "register this _closed construction_ of a generic class as `TService`" | —                                     |
+
+<Callout type="note">
+The generic forms deliberately do <strong>not</strong> expose <code>ServiceType</code> or
+<code>RegistrationStrategy</code> — the type arguments already say what the service type is.
+Both generic forms do expose <code>ServiceKey</code>, <code>Factory</code>,
+<code>DuplicateStrategy</code>, <code>UseProxyFactory</code> and <code>Tags</code>.
+</Callout>
+
+### Non-generic
+
+The most flexible form. Use `ServiceType` for a single service type, or `RegistrationStrategy`
+to register against a set of types. The two are mutually exclusive
+([INJ0003](/docs/Immediate.Injections/diagnostics#inj0003)).
+
+```csharp title="NonGeneric.cs"
+using Immediate.Injections.Shared;
+
+public interface IClock;
+
+[RegisterSingleton(ServiceType = typeof(IClock))]
+public sealed class SystemClock : IClock;
+
+public interface IUnitOfWork;
+
+[RegisterScoped(RegistrationStrategy = RegistrationStrategy.SelfAndImplementedInterfaces)]
+public sealed class UnitOfWork : IUnitOfWork;
+```
+
+### One type argument
+
+The everyday form for "this class implements this interface".
+
+```csharp title="OneArgument.cs"
+using Immediate.Injections.Shared;
+
+public interface ITodoRepository;
+
+[RegisterScoped<ITodoRepository>]
+public sealed class TodoRepository : ITodoRepository;
+```
+
+Only `ITodoRepository` is registered. `TodoRepository` itself is not resolvable — for that, use
+`RegistrationStrategy.SelfAndImplementedInterfaces` instead. The class must be assignable to the
+type argument, or you get [INJ0004](/docs/Immediate.Injections/diagnostics#inj0004).
+
+### Two type arguments
+
+This form exists for one job: registering a **specific closed construction** of a generic class.
+`TImplementation` must be a construction of the attributed class itself.
+
+```csharp title="TwoArguments.cs"
+using Immediate.Injections.Shared;
+
+public interface IRepository<T>;
+
+[RegisterScoped<IRepository<Todo>, Repository<Todo>>]
+[RegisterScoped<IRepository<User>, Repository<User>>]
+public sealed class Repository<T> : IRepository<T>;
+```
+
+That emits two registrations, one per attribute:
+
+```csharp title="Generated output"
+ServiceDescriptor.Scoped(typeof(IRepository<Todo>), typeof(Repository<Todo>));
+ServiceDescriptor.Scoped(typeof(IRepository<User>), typeof(Repository<User>));
+```
+
+Two rules the analyzer enforces:
+
+- On a **non-generic** class the form is redundant — `[RegisterScoped<IFoo, Foo>]` on `Foo` says
+  nothing that `[RegisterScoped<IFoo>]` does not. That is
+  [INJ0005](/docs/Immediate.Injections/diagnostics#inj0005), an info-level suggestion; the
+  registration is still emitted.
+- If `TImplementation` is not a construction of the attributed class, it is
+  [INJ0006](/docs/Immediate.Injections/diagnostics#inj0006), an error, and nothing is emitted.
+
+If you want the _open_ generic registered instead — `IRepository<>` closed on demand by the
+container — see [Open generics](/docs/Immediate.Injections/open-generics).
+
+## Several attributes on one class
+
+All three attributes are declared `AllowMultiple = true`, so a class can carry as many as it
+needs, of the same lifetime or of different ones.
+
+```csharp title="MultipleAttributes.cs"
+using Immediate.Injections.Shared;
+
+public interface ICache;
+
+[RegisterSingleton<ICache>]
+[RegisterSingleton<ICache>(ServiceKey = "fallback")]
+public sealed class MemoryCache : ICache;
+```
+
+Each attribute produces its own independent registration. A common pairing is one plain
+registration plus one keyed registration of the same class, so it is reachable both ways.
+
+## Calling the generated method
+
+Add one call in `Program.cs`:
+
+```csharp title="Program.cs"
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddTodoServices();
+
+var app = builder.Build();
+```
+
+`Xxx` in `AddXxxServices` is the assembly identifier — by default the assembly name with `.` and
+spaces removed:
+
+| Assembly name     | Generated method              |
+| ----------------- | ----------------------------- |
+| `Todo`            | `AddTodoServices()`           |
+| `Todo.Web`        | `AddTodoWebServices()`        |
+| `Application.Web` | `AddApplicationWebServices()` |
+
+The method returns the `IServiceCollection`, so it chains. It also accepts a `params` list of
+tags — see [Tagged registration](/docs/Immediate.Injections/tagged-registration).
+
+<Callout type="warning" title="Renaming AddXxxServices needs Immediate.Handlers">
+The override is <code>[assembly: ImmediateAssemblyIdentifier("Todo")]</code>, and that attribute
+is defined in the <strong>Immediate.Handlers</strong> package, not this one. The Injections
+generator matches it structurally by namespace and name
+(<code>Immediate.Handlers.Shared.ImmediateAssemblyIdentifierAttribute</code>, arity 0). In a
+project that installs only Immediate.Injections the type does not exist at all, and a
+similarly-named type you declare in some other namespace compiles cleanly and is silently
+ignored — you get the fallback name with no diagnostic. Reference Immediate.Handlers, or declare
+a matching type in exactly that namespace. See
+<a href="/docs/concepts/assembly-identifier">The assembly identifier</a>.
+</Callout>
+
+<Callout type="note">
+Immediate.Injections strips <code>.</code> and spaces from the assembly name, but — unlike
+Immediate.Handlers — it does <strong>not</strong> strip <code>-</code>. An assembly named
+<code>Todo-Web</code> produces <code>AddTodo-WebServices</code>, which is not a valid method
+name and will not compile. Set the identifier explicitly if your assembly name contains a
+hyphen.
+</Callout>
+
+## Where to go next
+
+- [Registration strategies](/docs/Immediate.Injections/registration-strategies) — registering
+  against interfaces, and duplicate handling
+- [Keyed services](/docs/Immediate.Injections/keyed-services)
+- [Attributes reference](/docs/Immediate.Injections/attributes-reference) — every property in
+  one table
