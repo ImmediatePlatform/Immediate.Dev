@@ -8,8 +8,8 @@ order: 4
 	import { Callout } from '$lib/components/docs';
 </script>
 
-Three packages support tags: Immediate.Handlers, Immediate.Apis and Immediate.Injections. The
-mechanism is the same in all three, and the semantics are easy to get backwards, so they are
+Four packages support tags: Immediate.Handlers, Immediate.Apis, Immediate.Injections and
+Immediate.Jobs. The mechanism is shared, and the semantics are easy to get backwards, so they are
 stated precisely here. Package-specific examples live on each package's tagged-registration
 page.
 
@@ -23,6 +23,9 @@ Tags are declared on the item, as a string array:
 ```csharp
 [Handler(Tags = ["worker"])]
 public sealed partial class ProcessOutboxCommand { /* … */ }
+
+[Handler(Tags = ["fulfillment"]), Job]
+public sealed partial class ReserveInventoryJob { /* … */ }
 
 [MapGet("/api/todos", Tags = ["web"])]
 public sealed partial class GetTodosQuery { /* … */ }
@@ -42,6 +45,7 @@ Filtering happens where you register, not where you declare:
 // Worker host — background handlers and their services only
 services.AddTodoHandlers(tags: "worker");
 services.AddTodoServices("worker");
+services.AddTodoJobs(tags: ["fulfillment"]);
 
 // Web host — HTTP endpoints only
 app.MapTodoEndpoints(tags: "web");
@@ -93,8 +97,21 @@ app.MapTodoEndpoints(tags: ["web"]);
 app.MapTodoEndpoints("/v1", "web");
 ```
 
+`AddXxxJobs` takes its optional options delegate before `tags`. It reads the job's
+Immediate.Handlers `Tags` value; use the same filter for Jobs and Handlers so every selected job
+has a generated handler at execution:
+
+```csharp
+services.AddTodoHandlers(tags: ["fulfillment"]);
+services.AddTodoJobs(options => options.UseInMemory(), tags: ["fulfillment"]);
+```
+
+`AddXxxJobs` does not replace `AddXxxHandlers`. Job queue definitions are assembly-wide and remain
+registered even when job tags filter which job definitions and schedulers are added.
+
 ## Where to go next
 
 - [Immediate.Handlers — Tagged registration](/docs/Immediate.Handlers/tagged-registration)
 - [Immediate.Apis — Tagged registration](/docs/Immediate.Apis/tagged-registration)
 - [Immediate.Injections — Tagged registration](/docs/Immediate.Injections/tagged-registration)
+- [Immediate.Jobs — Registration and hosting](/docs/Immediate.Jobs/registration-and-hosting)

@@ -1,6 +1,6 @@
 ---
 title: The assembly identifier
-description: How the Xxx in AddXxxHandlers, MapXxxEndpoints and AddXxxServices is derived, and how to override it.
+description: How the Xxx in generated registration and mapping methods is derived, and how to override it.
 order: 3
 ---
 
@@ -13,8 +13,9 @@ an identifier derived from your assembly:
 | Immediate.Apis       | `MapXxxEndpoints()`                     |
 | Immediate.Cache      | `AddXxxCaches()`                        |
 | Immediate.Injections | `AddXxxServices()`                      |
+| Immediate.Jobs       | `AddXxxJobs()`                          |
 
-All four packages read the same source. Set it once and every generated method name changes
+All five packages read the same source. Set it once and every generated method name changes
 together.
 
 ## Default derivation
@@ -39,8 +40,8 @@ using Immediate.Handlers.Shared;
 [assembly: ImmediateAssemblyIdentifier("Todo")]
 ```
 
-Every generator in the project now emits `AddTodoHandlers()`, `MapTodoEndpoints()`,
-`AddTodoCaches()` and `AddTodoServices()`.
+Every applicable generator in the project now emits `AddTodoHandlers()`, `MapTodoEndpoints()`,
+`AddTodoCaches()`, `AddTodoServices()` and `AddTodoJobs()`.
 
 ## Validity rules
 

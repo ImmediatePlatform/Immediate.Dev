@@ -22,6 +22,9 @@ dotnet add package Immediate.Validations
 dotnet add package Immediate.Apis
 dotnet add package Immediate.Cache
 
+# Preview: available when the first Immediate.Jobs packages are published.
+dotnet add package Immediate.Jobs --prerelease
+
 # Independent of the above:
 dotnet add package Immediate.Injections
 ```
@@ -29,10 +32,10 @@ dotnet add package Immediate.Injections
 ## The dependency graph
 
 ```text
-                 Immediate.Handlers
-                  ▲       ▲       ▲
-                  │       │       │
-   Immediate.Validations  │  Immediate.Cache
+                    Immediate.Handlers
+                  ▲       ▲       ▲       ▲
+                  │       │       │       │
+   Immediate.Validations  │  Immediate.Cache  Immediate.Jobs (preview)
                           │
                     Immediate.Apis
 
@@ -41,11 +44,13 @@ dotnet add package Immediate.Injections
 
 - **Immediate.Handlers** is the core and depends on nothing but
   `Microsoft.Extensions.DependencyInjection.Abstractions`.
-- **Immediate.Validations**, **Immediate.Apis** and **Immediate.Cache** each take a package
+- **Immediate.Validations**, **Immediate.Apis**, **Immediate.Cache** and **Immediate.Jobs** each take a package
   reference on Immediate.Handlers, so it arrives transitively. Installing it explicitly as well
   is harmless and makes the intent clearer.
 - **Immediate.Apis** additionally requires ASP.NET Core — use the `Microsoft.NET.Sdk.Web` SDK.
 - **Immediate.Cache** requires `IMemoryCache`, registered with `services.AddMemoryCache()`.
+- **Immediate.Jobs** runs as a hosted service. It defaults to non-durable in-memory storage; add
+  a provider package and configuration for production.
 - **Immediate.Injections** requires none of the others.
 
 ## Registration
@@ -60,6 +65,7 @@ builder.Services.AddMyAppBehaviors();  // Immediate.Handlers — behaviors
 builder.Services.AddMemoryCache();     // required by Immediate.Cache
 builder.Services.AddMyAppCaches();     // Immediate.Cache
 builder.Services.AddMyAppServices();   // Immediate.Injections
+builder.Services.AddMyAppJobs();       // Immediate.Jobs (preview)
 
 var app = builder.Build();
 
@@ -75,8 +81,24 @@ registration method of its own; you add its `ValidationBehavior<,>` to your asse
 
 ## Supported target frameworks
 
-All five packages multi-target **net8.0, net9.0 and net10.0**. Generators and analyzers
-ship in two Roslyn flavours, picked automatically from the target framework.
+The released packages multi-target **net8.0, net9.0 and net10.0**. The Immediate.Jobs preview
+tracks current `main` and targets **net8.0 through net11.0**.
+
+## Immediate.Jobs companion packages
+
+These commands become usable with the first preview publication:
+
+```bash
+dotnet add package Immediate.Jobs.EntityFrameworkCore --prerelease
+dotnet add package Immediate.Jobs.LinqToDB --prerelease
+dotnet add package Immediate.Jobs.Redis --prerelease
+dotnet add package Immediate.Jobs.Dashboard --prerelease
+dotnet add package Immediate.Jobs.NodaTime --prerelease
+dotnet add package Immediate.Jobs.Testing --prerelease
+```
+
+EF Core and LinqToDB provide full SQL-backed workflows; Redis provides distributed queues and
+recurring schedules without batch graphs or fair queues. Dashboard requires ASP.NET Core.
 
 <Callout type="note" title="C# 13 changes one generated signature">
 The <code>tags</code> parameter on the generated registration methods is emitted as

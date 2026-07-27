@@ -6,7 +6,7 @@ order: 1
 
 Every ImmediatePlatform package is a Roslyn source generator. Nothing in the platform scans
 assemblies, builds expression trees, or resolves types by name at runtime. When you write a
-handler, an endpoint, a validator or a registration attribute, the corresponding generator reads
+handler, an endpoint, a validator, a job or a registration attribute, the corresponding generator reads
 your code during compilation and writes ordinary C# alongside it.
 
 ## What that buys you
@@ -35,6 +35,7 @@ Each package prefixes its output so you can tell at a glance which generator pro
 | Immediate.Validations | `IV.<Name>.g.cs`              | —                                                                        |
 | Immediate.Cache       | `IC.<Namespace>.<Class>.g.cs` | `IC.ServiceCollectionExtensions.g.cs`                                    |
 | Immediate.Injections  | —                             | `II.ServiceCollectionExtensions.g.cs`, `II.RegisterServicesMethods.g.cs` |
+| Immediate.Jobs        | `IJ.<Namespace>.<Class>.g.cs` | `IJ.ServiceCollectionExtensions.g.cs`                                    |
 
 ## Inspecting the generated output
 
@@ -68,3 +69,15 @@ Each package ships two builds of its generator and analyzers:
 NuGet picks the right one from the target framework, so there is nothing to configure. The
 consequence worth knowing is that generator behavior can differ slightly across target
 frameworks in a multi-targeted project, because two different generator builds are running.
+
+Immediate.Jobs is the preview exception and currently ships framework-specific analyzer builds:
+
+| Jobs target | Roslyn |
+| ----------- | ------ |
+| net8.0      | 4.11   |
+| net9.0      | 4.12   |
+| net10.0     | 5.0    |
+| net11.0     | 5.3    |
+
+Its per-job `IJ` output includes the typed scheduler, direct invoker and generated JSON metadata;
+the assembly output adds `AddXxxJobs()`.

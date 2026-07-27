@@ -102,7 +102,8 @@ Please see our [full cookbook](/docs/cookbook/the-cookbook) for all integration 
 
 - Reflection-free background job scheduler for .NET built on Immediate.Handlers.
 - Generates typed schedulers, payload metadata, and dependency-injection registrations at compile time.
-- See the [Immediate.Jobs introduction](/docs/Immediate.Jobs/introduction) while the complete package documentation is migrated.
+- See the [Immediate.Jobs manual](/docs/Immediate.Jobs/introduction) for scheduling, workflows,
+  storage, operations and testing.
 
 <Callout type="tip" title="Where to next">
 <a href="/docs/getting-started/installation">Installation</a> covers the packages and how they
