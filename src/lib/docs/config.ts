@@ -10,7 +10,7 @@ import PlugIcon from '@lucide/svelte/icons/plug';
 import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
 import type { DocsConfig } from './types.js';
 
-const packageGroups = ['Guides', 'Reference', 'Diagnostics'];
+const packageGroups = ['Guides', 'Reference', 'Diagnostics', 'Samples'];
 
 export const docsConfig: DocsConfig = {
 	site: {
