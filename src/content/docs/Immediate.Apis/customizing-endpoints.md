@@ -1,119 +1,187 @@
 ---
 title: Customizing endpoints
-description: Learn how to customize endpoints to add authorization, OpenAPI metadata and more
-order: 2
+description: Add endpoint metadata with attributes or CustomizeEndpoint, and reshape the response with TransformResult.
+order: 5
+group: Guides
 ---
 
-## AsParameters
+<script lang="ts">
+	import { Callout } from '$lib/components/docs';
+</script>
 
-By default on POST and PUT requests Immediate.Apis will assume that your request class should be treated as a `[FromBody]`. Sometimes, however, this is not desired. For example imagine a PUT request that sits at a route `/api/todos/{id}` and updates a TODO with a given ID. We would want to get the `id` from the route and the properties to update from the body. To do so, we need to create the following request command class:
+There are three ways to change what the generated endpoint looks like, from cheapest to most
+powerful: attributes on your `Handle` method, a `CustomizeEndpoint` method, and a `TransformResult`
+method.
 
-```csharp title="UpdateTodo.cs"
-public sealed record Command
-{
-    public sealed record CommandBody
-    {
-        // props here;
-    }
+## Attributes on the handle method
 
-    [FromRoute]
-    public required int Id { get; init; }
+Every attribute you put on `Handle`/`HandleAsync` is copied onto the generated minimal-API delegate.
+This is the shortest route to OpenAPI metadata:
 
-    [FromBody]
-    public required CommandBody Body { get; init; }
-}
-```
-
-...and modify the `HandleAsync` method to let Immediate.Apis know we want to treat the outer `Command` class as `[AsParameters]`, like so:
-
-```csharp title="UpdateTodo.cs" {2}
-private static async ValueTask<Results<NoContent, NotFound>> HandleAsync(
-    [AsParameters] Command command,
-    ExampleDbContext dbContext,
-    CancellationToken ct
-)
-{
-    // ...
-}
-```
-
-## Authorization
-
-The `[AllowAnonymous]` and `[Authorized("Policy")]` attributes are supported and will be applied to the endpoint.
-
-```csharp title="GetUsersQuery.cs" {3}
+```csharp title="GetUsers.cs" {7-8}
 [Handler]
 [MapGet("/users")]
-[AllowAnonymous]
-public static partial class GetUsersQuery
+public static partial class GetUsers
 {
-    public record Query;
+	public sealed record Query;
 
-    private static ValueTask<IEnumerable<User>> HandleAsync(
-        Query _,
-        UsersService usersService,
-        CancellationToken token)
-    {
-        return usersService.GetUsers();
-    }
+	[ProducesResponseType<IReadOnlyList<User>>(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	private static ValueTask<IReadOnlyList<User>> HandleAsync(
+		Query _,
+		UsersService usersService,
+		CancellationToken token
+	)
+	{
+		return usersService.GetUsersAsync(token);
+	}
 }
 ```
 
-## Additional customization
+The generator emits these directly on the lambda:
 
-Additional customization of the endpoint registration can be done by adding a `CustomizeEndpoint` method, like so:
+```csharp
+endpoint = app.MapGet(
+	"/users",
+	[ProducesResponseTypeAttribute<IReadOnlyList<User>>(200)]
+	async (/* ... */) => { /* ... */ }
+);
+```
 
-```csharp title="GetUsersQuery.cs" {5-9}
+<Callout type="tip">
+
+This is usually nicer than the equivalent `CustomizeEndpoint(e => e.Produces<T>())` call: it sits
+next to the method whose return type it describes, and it survives refactoring better. Constructor
+and named arguments are both carried across.
+
+</Callout>
+
+## `CustomizeEndpoint`
+
+For anything that needs the builder — `WithDescription`, `WithName`, `RequireRateLimiting`, filters,
+output caching — declare a `CustomizeEndpoint` method on the handler class. The generator calls it
+once per registered route, after authorization conventions have been applied.
+
+```csharp title="GetUsers.cs" {5-9}
 [Handler]
 [MapGet("/users")]
-[Authorize(Policies.UserManagement)]
-public static partial class GetUsersQuery
+public static partial class GetUsers
 {
-    internal static void CustomizeEndpoint(IEndpointConventionBuilder endpoint)
-        => endpoint
-            .Produces<IEnumerable<User>>(StatusCodes.Status200OK)
-            .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status500InternalServerError)
-            .WithTags(nameof(User));
+	internal static void CustomizeEndpoint(RouteHandlerBuilder endpoint)
+		=> endpoint
+			.WithDescription("Returns every user")
+			.ProducesValidationProblem()
+			.ProducesProblem(StatusCodes.Status500InternalServerError);
 
-    public record Query;
+	public sealed record Query;
 
-    private static ValueTask<IEnumerable<User>> HandleAsync(
-        Query _,
-        UsersService usersService,
-        CancellationToken token)
-    {
-        return usersService.GetUsers();
-    }
+	private static ValueTask<IReadOnlyList<User>> HandleAsync(
+		Query _,
+		UsersService usersService,
+		CancellationToken token
+	)
+	{
+		return usersService.GetUsersAsync(token);
+	}
 }
 ```
 
-## Transforming the handler result into a different type
+The method must be:
 
-In some cases, you may wish to transform the result of the handler into a different type; for example, you may wish to return a `Results<>` type which will work with asp.net core to return various status codes.
+| Requirement   | Accepted values                                           |
+| ------------- | --------------------------------------------------------- |
+| Accessibility | `internal` **or** `private`                               |
+| Modifier      | `static`                                                  |
+| Return type   | `void`                                                    |
+| Parameter     | `RouteHandlerBuilder` **or** `IEndpointConventionBuilder` |
 
-You can transform the result of your handler into a different type by adding a `TransformResult` method, like so:
+Use `RouteHandlerBuilder` when you need the route-handler-specific extension methods such as
+`Produces<T>()` or `WithOpenApi()`; `IEndpointConventionBuilder` is enough for the generic
+conventions. Anything else — `public`, an instance method, a non-`void` return, a different parameter
+type, or two `CustomizeEndpoint` overloads on one class — is
+[IAPI0004](/docs/Immediate.Apis/diagnostics#iapi0004), a warning, and the method is **silently
+ignored** by the generator.
 
-```csharp title="GetUsersQuery.cs" {5-8}
+## `TransformResult`
+
+When you want the endpoint to return something other than the handler's response type — typically a
+`Results<,>` union so ASP.NET Core can produce different status codes — add a `TransformResult`
+method. The generated delegate returns `TransformResult(ret)` instead of `ret`.
+
+```csharp title="GetUser.cs" {5-8}
 [Handler]
-[MapGet("/users")]
-[Authorize(Policies.UserManagement)]
-public static partial class GetUsersQuery
+[MapGet("/users/{id:int}")]
+public static partial class GetUser
 {
-    internal static Results<Ok<IEnumerable<User>>, NotFound> TransformResult(IEnumerable<User> result)
-    {
-        return TypedResults.Ok(result);
-    }
+	internal static Results<Ok<User>, NotFound> TransformResult(User? result)
+		=> result is null
+			? TypedResults.NotFound()
+			: TypedResults.Ok(result);
 
-    public record Query;
+	public sealed record Query
+	{
+		public required int Id { get; init; }
+	}
 
-    private static ValueTask<IEnumerable<User>> HandleAsync(
-        Query _,
-        UsersService usersService,
-        CancellationToken token
-    )
-    {
-        return usersService.GetUsers();
-    }
+	private static ValueTask<User?> HandleAsync(
+		Query query,
+		UsersService usersService,
+		CancellationToken token
+	)
+	{
+		return usersService.GetUserAsync(query.Id, token);
+	}
 }
 ```
+
+The rules are stricter than for `CustomizeEndpoint`:
+
+| Requirement   | Value                                                              |
+| ------------- | ------------------------------------------------------------------ |
+| Accessibility | `internal` only — `private` is rejected                            |
+| Modifier      | `static`                                                           |
+| Return type   | anything except `void`                                             |
+| Parameter     | exactly the handler's response type, matched including nullability |
+
+The parameter type must match the `T` in the handler's `ValueTask<T>` _including nullability
+annotations_: a handler returning `ValueTask<User?>` needs `TransformResult(User? result)`, not
+`TransformResult(User result)`. A mismatch is
+[IAPI0005](/docs/Immediate.Apis/diagnostics#iapi0005) and the method is ignored.
+
+### Command handlers with no response
+
+A handler whose `HandleAsync` returns a bare `ValueTask` has no response value, so its
+`TransformResult` takes **no parameters at all**:
+
+```csharp title="DeleteUser.cs" {5-6}
+[Handler]
+[MapDelete("/users/{id:int}")]
+public static partial class DeleteUser
+{
+	internal static NoContent TransformResult()
+		=> TypedResults.NoContent();
+
+	public sealed record Command
+	{
+		public required int Id { get; init; }
+	}
+
+	private static async ValueTask HandleAsync(
+		Command command,
+		UsersService usersService,
+		CancellationToken token
+	)
+	{
+		await usersService.DeleteAsync(command.Id, token);
+	}
+}
+```
+
+## Choosing between them
+
+- Need static OpenAPI metadata? Use attributes on `HandleAsync`.
+- Need the builder API, a filter, or anything conditional? Use `CustomizeEndpoint`.
+- Need to change the HTTP status code based on the response value? Use `TransformResult`.
+- Need the same customization on every endpoint in a set? Use a
+  [route group](/docs/Immediate.Apis/route-groups), or the `RouteGroupBuilder` returned by
+  `MapXxxEndpoints`.

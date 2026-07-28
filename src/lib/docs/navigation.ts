@@ -1,6 +1,67 @@
 import { docsConfig } from './config.js';
 import { getDocsByDirectory, getAllDocs } from './content.js';
-import type { NavItem } from './types.js';
+import type { DocPage, NavItem, SidebarSection } from './types.js';
+
+function toNavItem(doc: DocPage): NavItem {
+	return {
+		title: doc.meta.sidebar?.label ?? doc.meta.title,
+		href: doc.href,
+		order: doc.meta.order
+	};
+}
+
+function byOrder(a: NavItem, b: NavItem): number {
+	return (a.order ?? 999) - (b.order ?? 999);
+}
+
+/**
+ * Splits a section's docs into ungrouped leaves (rendered first) followed by one
+ * nested item per `meta.group`, ordered by `section.groups` then first-seen order.
+ */
+function buildSectionItems(docs: DocPage[], section: SidebarSection): NavItem[] {
+	const ungrouped: NavItem[] = [];
+	const grouped = new Map<string, NavItem[]>();
+
+	for (const doc of docs) {
+		const group = doc.meta.group;
+		if (!group) {
+			ungrouped.push(toNavItem(doc));
+			continue;
+		}
+
+		let bucket = grouped.get(group);
+		if (!bucket) {
+			bucket = [];
+			grouped.set(group, bucket);
+		}
+		bucket.push(toNavItem(doc));
+	}
+
+	ungrouped.sort(byOrder);
+
+	const declared = section.groups ?? [];
+	const groupNames = [...grouped.keys()].sort((a, b) => {
+		const aIndex = declared.indexOf(a);
+		const bIndex = declared.indexOf(b);
+		if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+		if (aIndex !== -1) return -1;
+		if (bIndex !== -1) return 1;
+		return 0;
+	});
+
+	const items = [...ungrouped];
+	for (const name of groupNames) {
+		const groupItems = grouped.get(name)!;
+		groupItems.sort(byOrder);
+		items.push({
+			title: name,
+			items: groupItems,
+			order: groupItems[0]?.order
+		});
+	}
+
+	return items;
+}
 
 export function generateNavigation(): NavItem[] {
 	const nav: NavItem[] = [];
@@ -8,18 +69,11 @@ export function generateNavigation(): NavItem[] {
 	for (const section of docsConfig.sidebar) {
 		if (section.autogenerate) {
 			const docs = getDocsByDirectory(section.autogenerate.directory);
-			const items: NavItem[] = docs.map((doc) => ({
-				title: doc.meta.sidebar?.label ?? doc.meta.title,
-				href: doc.href,
-				order: doc.meta.order
-			}));
-
-			items.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
 			nav.push({
 				title: section.label,
 				icon: section.icon,
-				items
+				items: buildSectionItems(docs, section)
 			});
 		} else if (section.items) {
 			nav.push({

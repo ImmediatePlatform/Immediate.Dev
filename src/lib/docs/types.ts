@@ -4,6 +4,8 @@ export interface DocMeta {
 	title: string;
 	description: string;
 	order?: number;
+	/** Optional middle sidebar level. Docs without a group render before all groups. */
+	group?: string;
 	sidebar?: { label?: string };
 	draft?: boolean;
 	lastUpdated?: string;
@@ -55,12 +57,16 @@ export interface DocsConfig {
 	sidebar: SidebarSection[];
 	toc?: { minDepth?: number; maxDepth?: number };
 	versions?: VersionConfig;
+	/** Old slug -> new slug. Served as 308s and emitted during prerender. */
+	redirects?: Record<string, string>;
 }
 
 export interface SidebarSection {
 	label: string;
 	autogenerate?: { directory: string };
 	items?: { label: string; href: string }[];
+	/** Display order of `DocMeta.group` values within this section. */
+	groups?: string[];
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	icon?: any;
 }

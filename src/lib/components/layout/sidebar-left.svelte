@@ -30,9 +30,49 @@
 	}
 
 	function sectionHasActive(section: NavItem): boolean {
-		return section.items?.some((item) => isActive(item.href)) ?? false;
+		return section.items?.some((item) => isActive(item.href) || sectionHasActive(item)) ?? false;
 	}
 </script>
+
+{#snippet navItems(items: NavItem[], depth = 0)}
+	<!-- Each nesting level costs horizontal space, so indent the group level more tightly. -->
+	<Sidebar.MenuSub class={depth > 0 ? 'mx-2 px-2' : undefined}>
+		{#each items as item (item.title)}
+			{@const children = item.items ?? []}
+			{#if children.length}
+				<Collapsible.Root open={sectionHasActive(item)} class="group/group">
+					{#snippet child({ props })}
+						<Sidebar.MenuSubItem {...props}>
+							<Collapsible.Trigger>
+								{#snippet child({ props })}
+									<Sidebar.MenuSubButton {...props} class="text-muted-foreground w-full">
+										<span>{item.title}</span>
+										<ChevronRightIcon
+											class="ms-auto size-3.5 shrink-0 transition-transform duration-200 group-data-[state=open]/group:rotate-90"
+										/>
+									</Sidebar.MenuSubButton>
+								{/snippet}
+							</Collapsible.Trigger>
+							<Collapsible.Content>
+								{@render navItems(children, depth + 1)}
+							</Collapsible.Content>
+						</Sidebar.MenuSubItem>
+					{/snippet}
+				</Collapsible.Root>
+			{:else}
+				<Sidebar.MenuSubItem>
+					<Sidebar.MenuSubButton isActive={isActive(item.href)}>
+						{#snippet child({ props })}
+							<a href={item.href ?? '#'} {...props}>
+								<span>{item.title}</span>
+							</a>
+						{/snippet}
+					</Sidebar.MenuSubButton>
+				</Sidebar.MenuSubItem>
+			{/if}
+		{/each}
+	</Sidebar.MenuSub>
+{/snippet}
 
 <Sidebar.Root bind:ref aria-label="Documentation navigation" {...restProps}>
 	<Sidebar.Header>
@@ -121,19 +161,7 @@
 									{/snippet}
 								</Collapsible.Trigger>
 								<Collapsible.Content>
-									<Sidebar.MenuSub>
-										{#each section.items ?? [] as item (item.title)}
-											<Sidebar.MenuSubItem>
-												<Sidebar.MenuSubButton isActive={isActive(item.href)}>
-													{#snippet child({ props })}
-														<a href={item.href ?? '#'} {...props}>
-															<span>{item.title}</span>
-														</a>
-													{/snippet}
-												</Sidebar.MenuSubButton>
-											</Sidebar.MenuSubItem>
-										{/each}
-									</Sidebar.MenuSub>
+									{@render navItems(section.items ?? [])}
 								</Collapsible.Content>
 							</Sidebar.MenuItem>
 						{/snippet}

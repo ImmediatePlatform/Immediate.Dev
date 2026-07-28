@@ -37,6 +37,7 @@ function buildDocs(
 				title: meta?.title ?? slug.split('/').pop() ?? '',
 				description: meta?.description ?? '',
 				order: meta?.order,
+				group: meta?.group,
 				sidebar: meta?.sidebar,
 				lastUpdated: meta?.lastUpdated
 			},

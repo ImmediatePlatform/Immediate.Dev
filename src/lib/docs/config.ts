@@ -5,9 +5,12 @@ import ClockIcon from '@lucide/svelte/icons/clock';
 import DatabaseIcon from '@lucide/svelte/icons/database';
 import GaugeIcon from '@lucide/svelte/icons/gauge';
 import GlobeIcon from '@lucide/svelte/icons/globe';
+import LayersIcon from '@lucide/svelte/icons/layers';
 import PlugIcon from '@lucide/svelte/icons/plug';
 import ShieldCheckIcon from '@lucide/svelte/icons/shield-check';
 import type { DocsConfig } from './types.js';
+
+const packageGroups = ['Guides', 'Reference', 'Diagnostics'];
 
 export const docsConfig: DocsConfig = {
 	site: {
@@ -23,32 +26,43 @@ export const docsConfig: DocsConfig = {
 		{
 			label: 'Getting Started',
 			icon: RocketIcon,
-			autogenerate: { directory: 'getting-started' }
+			autogenerate: { directory: 'getting-started' },
+			groups: ['Tutorial']
+		},
+		{
+			label: 'Platform Concepts',
+			icon: LayersIcon,
+			autogenerate: { directory: 'concepts' }
 		},
 		{
 			label: 'Immediate.Handlers',
 			icon: BlocksIcon,
-			autogenerate: { directory: 'Immediate.Handlers' }
+			autogenerate: { directory: 'Immediate.Handlers' },
+			groups: packageGroups
 		},
 		{
-			label: 'Immediate.Validation',
+			label: 'Immediate.Validations',
 			icon: ShieldCheckIcon,
-			autogenerate: { directory: 'Immediate.Validation' }
+			autogenerate: { directory: 'Immediate.Validations' },
+			groups: packageGroups
 		},
 		{
 			label: 'Immediate.Apis',
 			icon: GlobeIcon,
-			autogenerate: { directory: 'Immediate.Apis' }
+			autogenerate: { directory: 'Immediate.Apis' },
+			groups: packageGroups
 		},
 		{
 			label: 'Immediate.Cache',
 			icon: DatabaseIcon,
-			autogenerate: { directory: 'Immediate.Cache' }
+			autogenerate: { directory: 'Immediate.Cache' },
+			groups: packageGroups
 		},
 		{
 			label: 'Immediate.Injections',
 			icon: PlugIcon,
-			autogenerate: { directory: 'Immediate.Injections' }
+			autogenerate: { directory: 'Immediate.Injections' },
+			groups: packageGroups
 		},
 		{
 			label: 'Immediate.Jobs',
@@ -69,5 +83,18 @@ export const docsConfig: DocsConfig = {
 	toc: {
 		minDepth: 2,
 		maxDepth: 3
+	},
+	redirects: {
+		'Immediate.Validation/creating-validators': 'Immediate.Validations/creating-validators',
+		'Immediate.Validation/custom-messages': 'Immediate.Validations/custom-messages',
+		'Immediate.Validation/extending-validation-classes':
+			'Immediate.Validations/additional-validations',
+		'Immediate.Validation/validating-instances': 'Immediate.Validations/validating-instances',
+		'Immediate.Validation/immediate-handlers':
+			'Immediate.Validations/immediate-handlers-integration',
+		'Immediate.Validation/handling-failures': 'Immediate.Validations/handling-failures',
+		'Immediate.Apis/swashbuckle-support': 'Immediate.Apis/openapi',
+		'Immediate.Injections/register-services': 'Immediate.Injections/manual-registration',
+		'Immediate.Injections/attributes': 'Immediate.Injections/attributes-reference'
 	}
 };
