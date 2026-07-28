@@ -48,13 +48,6 @@ dotnet add package Immediate.Injections
 - **Immediate.Cache** requires `IMemoryCache`, registered with `services.AddMemoryCache()`.
 - **Immediate.Injections** requires none of the others.
 
-<Callout type="warning" title="One seam in Immediate.Injections' independence">
-<code>[assembly: ImmediateAssemblyIdentifier]</code>, which renames the generated registration
-methods, is defined in the <strong>Immediate.Handlers</strong> package. An Injections-only
-project that wants to use it must reference Immediate.Handlers or declare a matching attribute
-type itself. See <a href="/docs/concepts/assembly-identifier">The assembly identifier</a>.
-</Callout>
-
 ## Registration
 
 Each package generates one assembly-level method, named after your assembly:
