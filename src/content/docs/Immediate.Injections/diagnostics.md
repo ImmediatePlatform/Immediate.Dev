@@ -35,14 +35,6 @@ downgraded or disabled through <code>.editorconfig</code>, <code>NoWarn</code> o
 <code>#pragma</code>. Fix the code instead.
 </Callout>
 
-<Callout type="warning" title="Not everything invalid is reported">
-
-Some invalid combinations cause the generator to drop a registration with no diagnostic at all —
-most importantly `Factory` or `UseProxyFactory` on a **generic** target class that does not
-spell its service type as an unbound `typeof`. See INJ0008 and INJ0012 below.
-
-</Callout>
-
 ## INJ0001
 
 **RegisterServices method is invalid** — Error.
