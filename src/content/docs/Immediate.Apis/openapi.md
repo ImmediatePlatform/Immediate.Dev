@@ -35,7 +35,7 @@ Configure `CustomSchemaIds` to use the full name, replacing the CLR nested-type 
 ```csharp title="Program.cs" {3}
 builder.Services.AddSwaggerGen(options =>
 {
-	options.CustomSchemaIds(t => t.FullName?.Replace('+', '.'));
+	options.CustomSchemaIds(t => t.FullName?.Replace('+', '.') ?? t.Name);
 });
 ```
 
@@ -50,8 +50,8 @@ to the default for everything else:
 ```csharp title="Program.cs" {2-5}
 builder.Services
 	.AddOpenApi(o => o.CreateSchemaReferenceId = t =>
-		t.Type.IsNested
-			? $"{t.Type.DeclaringType!.Name}+{t.Type.Name}"
+		t.Type.IsNested && t.Type.FullName is { } fullName
+			? fullName.Replace('+', '.')
 			: OpenApiOptions.CreateDefaultSchemaReferenceId(t));
 
 var app = builder.Build();
@@ -63,8 +63,9 @@ app.MapUsersApiEndpoints();
 ```
 
 `CreateSchemaReferenceId` receives a `JsonTypeInfo`, so the CLR type is on `t.Type`. This produces
-`DeleteUser+Command` and `CreateUser+Command` — distinct, and readable in the Scalar or Swagger UI
-sidebar. It needs `Microsoft.AspNetCore.OpenApi`; the `MapScalarApiReference()` call comes from
+`MyApp.Api.DeleteUser.Command` and `MyApp.Api.CreateUser.Command` — distinct even when handlers
+with the same names exist in different namespaces. It needs `Microsoft.AspNetCore.OpenApi`; the
+`MapScalarApiReference()` call comes from
 `Scalar.AspNetCore` and is optional.
 
 <Callout type="note">

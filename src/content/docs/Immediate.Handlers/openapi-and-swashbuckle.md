@@ -34,7 +34,8 @@ the resulting ids remain valid:
 ```csharp title="Program.cs"
 builder.Services.AddSwaggerGen(options =>
 {
-	options.CustomSchemaIds(x => x.FullName?.Replace("+", ".", StringComparison.Ordinal));
+	options.CustomSchemaIds(x =>
+		x.FullName?.Replace("+", ".", StringComparison.Ordinal) ?? x.Name);
 });
 ```
 
@@ -42,18 +43,20 @@ builder.Services.AddSwaggerGen(options =>
 
 <Callout type="tip">
 
-Full names make for long, namespace-heavy schema ids in the generated document. If you would rather keep
-them short, an alternative is to key off the declaring type instead:
+Full names make for long, namespace-heavy schema ids in the generated document. If you would
+rather flatten the nested portion, an alternative is to append the nested type name to the
+declaring type's full name:
 
 ```csharp
 options.CustomSchemaIds(x =>
-	x.DeclaringType is { } declaring
-		? $"{declaring.Name}{x.Name}"
+	x.DeclaringType?.FullName is { } declaringName
+		? $"{declaringName.Replace("+", ".", StringComparison.Ordinal)}{x.Name}"
 		: x.Name);
 ```
 
-which yields `DeleteUserCommand` and `CreateUserCommandCommand`. Pick whichever reads better in your
-client generator; the only requirement is uniqueness.
+which yields `MyApp.Api.DeleteUserCommand` and `MyApp.Api.CreateUserCommand`. Pick whichever
+reads better in your client generator; retaining the namespace ensures that declaring types with
+the same name do not collide.
 
 </Callout>
 

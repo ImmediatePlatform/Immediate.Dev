@@ -36,6 +36,7 @@ public static void ConfigureProblemDetails(ProblemDetailsOptions options) =>
 					)
 			)
 			{
+				Title = ex.Title,
 				Status = StatusCodes.Status400BadRequest,
 			},
 

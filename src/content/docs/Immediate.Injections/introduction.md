@@ -59,8 +59,8 @@ builder.Services.AddTodoServices();
 ```
 
 `AddTodoServices` is generated. The `Todo` in the middle is the assembly identifier — by default
-the assembly name with `.` and spaces removed, so a project named `Todo` gets `AddTodoServices`
-and a project named `Todo.Web` gets `AddTodoWebServices`.
+the assembly name with `.`, spaces and `-` removed, so a project named `Todo` gets
+`AddTodoServices` and a project named `Todo.Web` gets `AddTodoWebServices`.
 
 The generated body is a literal list of `ServiceDescriptor` calls:
 

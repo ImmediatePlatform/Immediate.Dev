@@ -5,6 +5,7 @@
 	import { docsConfig } from '$lib/docs/config.js';
 	import MobileToc from '$lib/components/mobile-toc.svelte';
 	import BackToTop from '$lib/components/nav/back-to-top.svelte';
+	import CopyMarkdown from '$lib/components/nav/copy-markdown.svelte';
 	import CopyUrl from '$lib/components/nav/copy-url.svelte';
 	import PageFeedback from '$lib/components/nav/page-feedback.svelte';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
@@ -121,16 +122,23 @@
 
 <article id="doc-content" class="doc-content mx-auto w-full max-w-4xl" data-pagefind-body>
 	<header class="mb-8">
-		<h1 class="text-3xl font-bold tracking-tight">{meta.title}</h1>
-		{#if meta.description}
-			<p class="text-muted-foreground mt-2 text-lg">{meta.description}</p>
-		{/if}
-		{#if readingTime}
-			<div class="text-muted-foreground mt-3 flex items-center gap-1.5 text-sm">
-				<ClockIcon class="size-3.5" />
-				<span>{readingTime}</span>
+		<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+			<div class="min-w-0">
+				<h1 class="text-3xl font-bold tracking-tight">{meta.title}</h1>
+				{#if meta.description}
+					<p class="text-muted-foreground mt-2 text-lg">{meta.description}</p>
+				{/if}
+				{#if readingTime}
+					<div class="text-muted-foreground mt-3 flex items-center gap-1.5 text-sm">
+						<ClockIcon class="size-3.5" />
+						<span>{readingTime}</span>
+					</div>
+				{/if}
 			</div>
-		{/if}
+			{#if rawContent}
+				<CopyMarkdown markdown={rawContent} />
+			{/if}
+		</div>
 	</header>
 
 	<MobileToc />

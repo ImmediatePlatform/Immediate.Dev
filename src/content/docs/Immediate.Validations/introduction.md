@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: Compile-time generated validation for your requests, with no reflection and no runtime rule registration.
+description: Compile-time generated validation for your requests, with no runtime rule registration.
 order: 1
 ---
 
@@ -10,7 +10,14 @@ order: 1
 
 <PackageBadges name="Immediate.Validations" />
 
-Immediate.Validations generates validation code at compile time. You annotate a type with `[Validate]`, declare that it implements `IValidationTarget<T>`, and decorate its properties with validator attributes; the source generator emits a `Validate` method that runs those checks in order and returns a `ValidationResult`. There is no rule registry, no expression trees at runtime, no reflection over your types, and nothing to register in the container. Mistakes — a missing attribute, a validator applied to a type it cannot handle, a behavior pipeline that forgot validation — are reported as compiler diagnostics rather than as surprises in production.
+Immediate.Validations generates validation code at compile time. You annotate a type with
+`[Validate]`, declare that it implements `IValidationTarget<T>`, and decorate its properties with
+validator attributes; the source generator emits a `Validate` method that runs those checks in
+order and returns a `ValidationResult`. There is no runtime rule registry or expression-tree
+traversal, and nothing to register in the container. Custom-validator metadata such as
+`DefaultMessage` may still be accessed reflectively. Mistakes — a missing attribute, a validator
+applied to a type it cannot handle, a behavior pipeline that forgot validation — are reported as
+compiler diagnostics rather than as surprises in production.
 
 ## Installation
 
@@ -63,8 +70,9 @@ itself, which gives you the same imperative freedom without a second class.
 
 If you are coming from `System.ComponentModel.DataAnnotations`, the surface will look familiar,
 but validation is executed by generated code instead of `Validator.TryValidateObject`'s
-reflection walk, nested objects and collections are recursed into automatically, and the whole
-thing is trimming- and AOT-friendly.
+reflection-based traversal, and nested objects and collections are recursed into automatically.
+The generated validation path supports trimming and AOT; preserve any reflectively accessed
+custom-validator metadata when trimming.
 
 ## Where to go next
 

@@ -20,12 +20,17 @@ Start with a plain in-memory repository. It becomes a properly registered servic
 it's an ordinary class.
 
 ```csharp title="TodoRepository.cs"
+using System.Collections.Concurrent;
+
 namespace Todo;
 
 public sealed record TodoItem(int Id, string Title, bool IsComplete);
 
 public sealed class TodoRepository
 {
+	private readonly object _gate = new();
+	private readonly ConcurrentDictionary<int, SemaphoreSlim> _operationLocks = new();
+
 	private readonly List<TodoItem> _items =
 	[
 		new(1, "Read the tutorial", IsComplete: false),
@@ -34,26 +39,43 @@ public sealed class TodoRepository
 
 	private int _nextId = 3;
 
-	public IReadOnlyList<TodoItem> GetAll() => [.. _items];
+	public SemaphoreSlim GetOperationLock(int id) =>
+		_operationLocks.GetOrAdd(id, static _ => new(1, 1));
 
-	public TodoItem? GetById(int id) => _items.Find(t => t.Id == id);
+	public IReadOnlyList<TodoItem> GetAll()
+	{
+		lock (_gate)
+			return [.. _items];
+	}
+
+	public TodoItem? GetById(int id)
+	{
+		lock (_gate)
+			return _items.Find(t => t.Id == id);
+	}
 
 	public TodoItem Add(string title)
 	{
-		var item = new TodoItem(_nextId++, title, IsComplete: false);
-		_items.Add(item);
-		return item;
+		lock (_gate)
+		{
+			var item = new TodoItem(_nextId++, title, IsComplete: false);
+			_items.Add(item);
+			return item;
+		}
 	}
 
 	public TodoItem? Complete(int id)
 	{
-		var index = _items.FindIndex(t => t.Id == id);
-		if (index < 0)
-			return null;
+		lock (_gate)
+		{
+			var index = _items.FindIndex(t => t.Id == id);
+			if (index < 0)
+				return null;
 
-		var updated = _items[index] with { IsComplete = true };
-		_items[index] = updated;
-		return updated;
+			var updated = _items[index] with { IsComplete = true };
+			_items[index] = updated;
+			return updated;
+		}
 	}
 }
 ```

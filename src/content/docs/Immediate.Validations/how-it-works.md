@@ -190,7 +190,7 @@ type test and no cost for handlers that do not validate. See
 
 ## Analyzers, fixes and suppressors
 
-Four analyzers ship alongside the generator: `ValidatorClassAnalyzer` (the custom validator
+Three analyzers ship alongside the generator: `ValidatorClassAnalyzer` (the custom validator
 contract), `ValidateClassAnalyzer` (validation targets and attribute usage),
 `AssemblyBehaviorAnalyzer` (the assembly behavior list), and two `DiagnosticSuppressor`s —
 `InvalidAttributeTargetSuppressor` for the `element:` attribute target, and

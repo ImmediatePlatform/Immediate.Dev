@@ -53,15 +53,12 @@ public static partial class GetConfigurationQuery
 The attribute wins. The generated registration code emits the literal lifetime for that handler and
 ignores whatever was passed to `AddXxxHandlers`.
 
-<Callout type="warning" title="Behaviors are always transient">
+<Callout type="warning" title="Generated behavior registrations are transient">
 
-The lifetime argument applies to handlers only. Behaviors are registered with `TryAddTransient`
-regardless of what you pass to `AddXxxHandlers`, and there is no knob to change that. A behavior that
-holds state across requests will not behave the way you expect — each handler resolution gets fresh
-behavior instances.
-
-`TryAdd` semantics also mean that if you register a behavior type yourself _before_ calling
-`AddXxxBehaviors`, your registration wins.
+The lifetime argument applies to handlers only. Generated behavior registrations use
+`TryAddTransient` regardless of what you pass to `AddXxxHandlers`. If you register a behavior
+type yourself _before_ calling `AddXxxBehaviors`, `TryAdd` preserves your registration and its
+lifetime instead. Otherwise, each handler resolution gets fresh behavior instances.
 
 </Callout>
 

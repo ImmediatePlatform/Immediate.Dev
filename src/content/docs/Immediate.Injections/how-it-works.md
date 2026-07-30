@@ -117,13 +117,13 @@ static partial void RegisterScoped1(this IServiceCollection services, ReadOnlySp
 
 The pieces map one-to-one onto attribute properties:
 
-| Generated element                                                  | Comes from                                                                                               |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `ServiceCollectionDescriptorExtensions.Add` / `TryAdd` / `Replace` | `DuplicateStrategy`                                                                                      |
-| `ServiceDescriptor.Scoped` / `KeyedScoped` / …                     | The lifetime attribute, plus `ServiceKey`                                                                |
-| First `typeof(...)`                                                | `ServiceType`, `TService`, or the computed `RegistrationStrategy` set                                    |
-| Second argument                                                    | `typeof(implementation)`, `Type.Factory` for `Factory`, or `GetRequiredService<T>` for `UseProxyFactory` |
-| The enclosing `if (tags is [] ...)` guard                          | `Tags`                                                                                                   |
+| Generated element                                                  | Comes from                                                                                                                   |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `ServiceCollectionDescriptorExtensions.Add` / `TryAdd` / `Replace` | `DuplicateStrategy`                                                                                                          |
+| `ServiceDescriptor.Scoped` / `KeyedScoped` / …                     | The lifetime attribute, plus `ServiceKey`                                                                                    |
+| First `typeof(...)`                                                | `ServiceType`, `TService`, or the computed `RegistrationStrategy` set                                                        |
+| Second argument                                                    | `typeof(implementation)`, `<AttributedType>.<FactoryMethod>` for `Factory`, or `GetRequiredService<T>` for `UseProxyFactory` |
+| The enclosing `if (tags is [] ...)` guard                          | `Tags`                                                                                                                       |
 
 ## Tag filtering
 

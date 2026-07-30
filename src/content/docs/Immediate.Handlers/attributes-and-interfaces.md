@@ -22,7 +22,7 @@ Everything you write against lives in the `Immediate.Handlers.Shared` namespace,
 | `Behavior<TRequest, TResponse>`          | Abstract class | you derive from it            |
 | `StreamingBehavior<TRequest, TResponse>` | Abstract class | you derive from it            |
 
-### `[Handler]`
+## `[Handler]`
 
 ```csharp
 [AttributeUsage(AttributeTargets.Class)]
@@ -54,7 +54,7 @@ handler out of registration calls that pass a non-overlapping tag list.
 See [Registering with `IServiceCollection`](/docs/Immediate.Handlers/registration) and [Tagged
 registration](/docs/Immediate.Handlers/tagged-registration).
 
-### `[Behaviors]`
+## `[Behaviors]`
 
 ```csharp
 [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class)]
@@ -86,7 +86,7 @@ public sealed class DefaultBehaviorsAttribute : Attribute;
 Generic behaviors must be listed unbound. The first type listed is the outermost in the pipeline. See
 [Creating behaviors](/docs/Immediate.Handlers/creating-behaviors).
 
-### `[assembly: ImmediateAssemblyIdentifier]`
+## `[assembly: ImmediateAssemblyIdentifier]`
 
 ```csharp
 [AttributeUsage(AttributeTargets.Assembly)]
@@ -109,7 +109,7 @@ attribute drives the generated method names in Immediate.Apis, Immediate.Cache a
 — see [The assembly identifier](/docs/concepts/assembly-identifier), which also covers the trap for
 projects that use Immediate.Injections without referencing Immediate.Handlers.
 
-### `IHandler<TRequest, TResponse>`
+## `IHandler<TRequest, TResponse>`
 
 ```csharp
 public interface IHandler<TRequest, TResponse>
@@ -133,7 +133,7 @@ Referencing an `IHandler<,>` for which no concrete handler exists in the compila
 
 </Callout>
 
-### `IStreamingHandler<TRequest, TResponse>`
+## `IStreamingHandler<TRequest, TResponse>`
 
 ```csharp
 public interface IStreamingHandler<TRequest, TResponse>
@@ -146,7 +146,7 @@ The streaming counterpart, implemented by handlers whose handle method returns
 `IAsyncEnumerable<TResponse>`. `TResponse` is the _element_ type, not the enumerable. See [Streaming
 handlers](/docs/Immediate.Handlers/streaming-handlers).
 
-### `Behavior<TRequest, TResponse>`
+## `Behavior<TRequest, TResponse>`
 
 ```csharp
 public abstract class Behavior<TRequest, TResponse>
@@ -170,7 +170,7 @@ public abstract class Behavior<TRequest, TResponse>
   request runs. Its setter is hidden from IntelliSense and is for the generator's use.
 - **`SetInnerHandler`** — called by generated code only; it throws if called twice.
 
-### `StreamingBehavior<TRequest, TResponse>`
+## `StreamingBehavior<TRequest, TResponse>`
 
 ```csharp
 public abstract class StreamingBehavior<TRequest, TResponse>

@@ -17,7 +17,7 @@ order: 5
 | [Immediate.Apis](/docs/Immediate.Apis/introduction)               | Immediate.Handlers, ASP.NET Core   | net8.0 – net10.0  | 6.x           |
 | [Immediate.Cache](/docs/Immediate.Cache/introduction)             | Immediate.Handlers, `IMemoryCache` | net8.0 – net10.0  | 2.x           |
 | [Immediate.Injections](/docs/Immediate.Injections/introduction)   | —                                  | net8.0 – net10.0  | 1.x           |
-| Immediate.Jobs                                                    | Immediate.Handlers                 | net8.0 – net10.0  | 0.x           |
+| [Immediate.Jobs](/docs/Immediate.Jobs/introduction)               | Immediate.Handlers, hosted service | net8.0 – net11.0  | preview       |
 
 Immediate.Handlers is the core. Validations, Apis and Cache each take a package reference on it
 and are meaningless without it — they extend handlers rather than standing alone. You do not
@@ -39,7 +39,8 @@ ASP.NET Core controllers instead of Immediate.Apis. The
 
 ## Target frameworks
 
-All six packages multi-target **net8.0, net9.0 and net10.0**.
+The released packages multi-target **net8.0, net9.0 and net10.0**. Immediate.Jobs currently tracks
+`main` and additionally targets **net11.0**.
 
 ## C# language version
 
@@ -56,6 +57,13 @@ versioned doc trees. Where behavior changed in a specific release — a diagnost
 removed, an attribute constructor that was obsoleted — it is called out inline with a callout on
 the relevant page, and removed diagnostic IDs are kept in the diagnostics tables so that
 searching for one still lands somewhere useful.
+</Callout>
+
+<Callout type="warning" title="Immediate.Jobs preview exception">
+Immediate.Jobs has no published preview yet. Its manual intentionally documents the checked-out
+<code>main</code> implementation instead of a latest release, including APIs and storage schemas
+that may change before stability. Package commands use <code>--prerelease</code> and become usable
+when the first preview is published.
 </Callout>
 
 The packages version independently. A major bump in one does not imply a bump in the

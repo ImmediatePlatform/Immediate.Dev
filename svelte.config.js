@@ -81,27 +81,42 @@ function textContent(node) {
 function rehypeHeadingIds() {
 	/** @param {any} tree */
 	return (tree) => {
-		/** @type {Map<string, number>} */
-		const seen = new Map();
+		/** @type {Set<string>} */
+		const usedIds = new Set();
 
 		/** @param {any} node */
-		function walk(node) {
+		function reserveExplicitIds(node) {
+			if (node.type === 'element' && /^h[1-6]$/.test(node.tagName)) {
+				node.properties ??= {};
+				if (typeof node.properties.id === 'string' && node.properties.id) {
+					usedIds.add(node.properties.id);
+				}
+			}
+
+			for (const child of node.children ?? []) reserveExplicitIds(child);
+		}
+
+		/** @param {any} node */
+		function addGeneratedIds(node) {
 			if (node.type === 'element' && /^h[1-6]$/.test(node.tagName)) {
 				node.properties ??= {};
 				if (!node.properties.id) {
 					const base = slugify(textContent(node));
 					if (base) {
-						const count = seen.get(base) ?? 0;
-						seen.set(base, count + 1);
-						node.properties.id = count === 0 ? base : `${base}-${count}`;
+						let id = base;
+						let suffix = 1;
+						while (usedIds.has(id)) id = `${base}-${suffix++}`;
+						usedIds.add(id);
+						node.properties.id = id;
 					}
 				}
 			}
 
-			for (const child of node.children ?? []) walk(child);
+			for (const child of node.children ?? []) addGeneratedIds(child);
 		}
 
-		walk(tree);
+		reserveExplicitIds(tree);
+		addGeneratedIds(tree);
 	};
 }
 

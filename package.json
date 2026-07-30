@@ -24,7 +24,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build && pagefind --site build --glob \"docs/**/*.html\" --output-path build/pagefind && node scripts/sync-pagefind.mjs",
+		"build": "vite build && node scripts/normalize-prerendered-redirects.mjs && pagefind --site build --glob \"docs/**/*.html\" --output-path build/pagefind && node scripts/sync-pagefind.mjs",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
