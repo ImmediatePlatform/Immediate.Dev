@@ -32,7 +32,7 @@ links.
 | `workers.active` | Observable gauge   | none                               |
 
 The gauges are local runtime observations, not authoritative cluster totals. Use provider
-monitoring snapshots for durable/cluster state. Alert on growing due depth, exhausted failures,
+monitoring snapshots for durable/cluster state. Alert on growing queue depth, exhausted failures,
 retries and stale server heartbeats; interpret duration by job name and outcome.
 
 ## Structured logs

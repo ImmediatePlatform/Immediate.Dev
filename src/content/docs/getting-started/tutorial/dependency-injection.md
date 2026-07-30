@@ -65,6 +65,7 @@ namespace Todo;
 
 public interface ITodoRepository
 {
+	SemaphoreSlim GetOperationLock(int id);
 	IReadOnlyList<TodoItem> GetAll();
 	TodoItem? GetById(int id);
 	TodoItem Add(string title);

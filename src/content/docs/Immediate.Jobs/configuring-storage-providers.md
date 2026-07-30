@@ -80,7 +80,7 @@ var dataOptions = new DataOptions().UsePostgreSQL(connectionString);
 
 await dataOptions.CreateImmediateJobsSchemaAsync(
 	schema: "background", // must be null for SQLite
-	cancellationToken
+	CancellationToken.None
 );
 
 builder.Services.AddMyAppJobs(options =>

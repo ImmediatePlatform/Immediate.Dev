@@ -31,8 +31,11 @@ public sealed class UnitOfWork;
 public sealed class EmailSender;
 ```
 
-With no other properties set, each class is registered **as itself**. `Clock` resolves through
-`GetRequiredService<Clock>()`, not through any interface it happens to implement.
+With no other properties or assembly-wide registration strategy set, each class is registered
+**as itself**. `Clock` resolves through `GetRequiredService<Clock>()`, not through any interface
+it happens to implement. A bare lifetime attribute inherits
+`RegistrationDefaults.RegistrationStrategy` when one is configured, so an assembly default may
+also register implemented interfaces.
 
 The attributes target classes, and records count — the generator accepts both class and record
 declarations.

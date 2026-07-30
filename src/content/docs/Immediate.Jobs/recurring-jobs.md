@@ -23,7 +23,13 @@ invalid cron is also an analyzer error.
 Inject `CleanupSessionsJob.Scheduler` to trigger a code-defined schedule immediately:
 
 ```csharp
-await scheduler.TriggerNowAsync(cancellationToken);
+public sealed class CleanupOperations(CleanupSessionsJob.Scheduler scheduler)
+{
+	public async ValueTask RunNowAsync(CancellationToken cancellationToken)
+	{
+		_ = await scheduler.TriggerNowAsync(cancellationToken);
+	}
+}
 ```
 
 At startup the hosted service upserts every code-defined schedule and removes obsolete
@@ -48,13 +54,21 @@ public sealed partial class TenantCleanupJob(AppDbContext db)
 		new(db.DeleteExpiredSessions(cancellationToken));
 }
 
-await tenantCleanupScheduler.AddOrUpdateRecurringAsync(
-	"tenant-42-cleanup",
-	"0 0 3 * * *",
-	"UTC",
-	cancellationToken
-);
-await tenantCleanupScheduler.RemoveRecurringAsync("tenant-42-cleanup", cancellationToken);
+public sealed class TenantScheduleManager(TenantCleanupJob.Scheduler tenantCleanupScheduler)
+{
+	public async ValueTask ConfigureAsync(CancellationToken cancellationToken)
+	{
+		await tenantCleanupScheduler.AddOrUpdateRecurringAsync(
+			"tenant-42-cleanup",
+			"0 0 3 * * *",
+			"UTC",
+			cancellationToken
+		);
+	}
+
+	public ValueTask RemoveAsync(CancellationToken cancellationToken) =>
+		tenantCleanupScheduler.RemoveRecurringAsync("tenant-42-cleanup", cancellationToken);
+}
 ```
 
 `AddOrUpdateRecurringAsync` is durable and idempotently replaces the named dynamic schedule.

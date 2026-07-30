@@ -34,6 +34,10 @@ builder.Services.AddImmediateJobsNodaTime();
 provider:
 
 ```csharp
+using NodaTime;
+
+IDateTimeZoneProvider timeZoneProvider = DateTimeZoneProviders.Tzdb;
+builder.Services.AddSingleton(timeZoneProvider);
 builder.Services.AddImmediateJobsNodaTime(timeZoneProvider);
 ```
 

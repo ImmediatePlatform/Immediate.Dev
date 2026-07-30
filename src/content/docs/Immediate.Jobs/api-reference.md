@@ -185,13 +185,18 @@ interface IJobBatchScheduler
 | `SucceededRetention` / `BatchSucceededRetention` |                                            24 hours |
 | `FailedRetention` / `BatchFailedRetention`       |                                              7 days |
 | `PurgeInterval`                                  |                                              1 hour |
-| `StorageMode`                                    |    `SingleServer` until default in-memory selection |
+| `StorageMode`                                    |     `InMemory` when no storage provider is selected |
 
 Fluent methods are `UseInMemory()`, `UseStorage(factory)`, `UseSingleServer()`,
 `UseSingleServer(factory)`, `UseDistributed()` and `UseFairQueues(configure)`. `FairQueueOptions`
 has `ConcurrencyShareThreshold = 0.10`, `MinInflightForNoisy = 30`, and
 `GroupRoundRobin = true`. Builder extensions are `UseIdGenerator<TGenerator>()` and
 `AddHealthCheck(name = "immediate-jobs", failureStatus = null, tags = null)`.
+
+`ImmediateJobsOptions.StorageMode` starts as `SingleServer`, which is the default topology when a
+durable factory does not select another mode. During registration, however, no selected storage
+factory causes Jobs to call `UseInMemory()`; the effective no-provider mode is therefore
+`InMemory`.
 
 ## Serialization and telemetry
 

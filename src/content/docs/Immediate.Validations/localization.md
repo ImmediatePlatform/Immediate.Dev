@@ -107,7 +107,7 @@ request.
 
 A key your localizer does not contain resolves to the key itself, so a missing
 `GreaterThanAttribute` entry produces the error message `GreaterThanAttribute`. Supply all
-fifteen keys, or fall back to the built-in localizer for the ones you do not override.
+fifteen keys.
 
 </Callout>
 

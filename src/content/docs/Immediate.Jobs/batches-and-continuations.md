@@ -9,7 +9,7 @@ group: Guides
 	import { Callout } from '$lib/components/docs';
 </script>
 
-Batches persist jobs and their dependency edges atomically. They require a graph-capable SQL
+Batches persist jobs and their dependency edges atomically. They require a graph-capable
 provider; Redis exposes queue and recurring capabilities only. Resolve the scoped
 `IJobBatchScheduler` from DI, normally through constructor injection alongside the generated job
 schedulers.
@@ -83,6 +83,9 @@ idempotency or duplicate tracking.
 Batch members can carry the same fair-queue group IDs as ordinary scheduled work:
 
 ```csharp
+var tenantId = "tenant-42";
+var runAt = DateTimeOffset.UtcNow.AddMinutes(5);
+
 var grouped = import.AddToBatchInGroup(batch, new(importId), tenantId);
 var groupedAt = import.AddToBatchAt(batch, new(importId), runAt, tenantId);
 ```

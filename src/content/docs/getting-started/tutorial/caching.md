@@ -65,7 +65,10 @@ namespace Todo.Features;
 
 [Handler]
 [MapGet("/api/todos/{id:int}")]
-public sealed partial class GetTodo(GetTodoQueryCache cache)
+public sealed partial class GetTodo(
+	TodoRepository repository,
+	GetTodoQueryCache cache
+)
 {
 	public sealed record Query
 	{
@@ -77,10 +80,22 @@ public sealed partial class GetTodo(GetTodoQueryCache cache)
 			? TypedResults.NotFound()
 			: TypedResults.Ok(result);
 
-	private ValueTask<TodoItem?> HandleAsync(
+	private async ValueTask<TodoItem?> HandleAsync(
 		Query query,
 		CancellationToken token
-	) => cache.GetValue(new GetTodoQuery.Query { Id = query.Id }, token);
+	)
+	{
+		var operationLock = repository.GetOperationLock(query.Id);
+		await operationLock.WaitAsync(token);
+		try
+		{
+			return await cache.GetValue(new GetTodoQuery.Query { Id = query.Id }, token);
+		}
+		finally
+		{
+			_ = operationLock.Release();
+		}
+	}
 }
 ```
 
@@ -112,19 +127,31 @@ public sealed partial class CompleteTodoCommand(
 	internal static Results<Ok<TodoItem>, NotFound> TransformResult(TodoItem? result) =>
 		result is null ? TypedResults.NotFound() : TypedResults.Ok(result);
 
-	private ValueTask<TodoItem?> HandleAsync(
+	private async ValueTask<TodoItem?> HandleAsync(
 		[AsParameters] Command command,
 		CancellationToken token
 	)
 	{
-		var updated = repository.Complete(command.Id);
-		cache.RemoveValue(new GetTodoQuery.Query { Id = command.Id });
-		return ValueTask.FromResult(updated);
+		var operationLock = repository.GetOperationLock(command.Id);
+		await operationLock.WaitAsync(token);
+		try
+		{
+			var updated = repository.Complete(command.Id);
+			cache.RemoveValue(new GetTodoQuery.Query { Id = command.Id });
+			return updated;
+		}
+		finally
+		{
+			_ = operationLock.Release();
+		}
 	}
 }
 ```
 
 `RemoveValue` and `SetValue` are synchronous and return `void`. Only `GetValue` is awaitable.
+The read and completion handlers hold the same per-Todo operation lock until their cache work is
+finished. An in-flight read therefore cannot repopulate an entry with the pre-completion value
+after `Complete` removes it.
 
 If you already have the new value in hand, `SetValue` writes it without ever running the handler:
 
