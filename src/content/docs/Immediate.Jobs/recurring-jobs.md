@@ -31,6 +31,10 @@ code-defined rows. Dynamic rows are left alone. This reconciliation means a depl
 cron expression, but two versions of an application should not intentionally define different
 schedules under the same name.
 
+When the persisted cron expression and time zone are unchanged, reconciliation preserves its
+stored `NextRunAt`, including an occurrence that became due while the application was stopped. A
+changed cron expression or time zone recomputes the next occurrence from the current time.
+
 ## Dynamic schedules
 
 Omit `Cron` from a payloadless job and inject its generated scheduler as

@@ -74,6 +74,23 @@ abandons the buffer. A batch can commit only once and cannot be modified after c
 alternative, `batches.RunAsync(body, cancellationToken)` creates the buffer, runs the body and
 commits only when the body completes successfully.
 
+Failures before `CommitAsync` begins write nothing. Once commit begins, however, the batch is
+closed even when the call throws, and a transport failure can leave the durable outcome unknown:
+storage may have committed the graph before the caller lost the response. Do not retry the same
+`JobBatch`; an operation that rebuilds and commits another batch needs application-level
+idempotency or duplicate tracking.
+
+Batch members can carry the same fair-queue group IDs as ordinary scheduled work:
+
+```csharp
+var grouped = import.AddToBatchInGroup(batch, new(importId), tenantId);
+var groupedAt = import.AddToBatchAt(batch, new(importId), runAt, tenantId);
+```
+
+`AddToBatchInGroup` also accepts an optional delay. Whitespace group IDs are normalized to no
+group, the 128-character limit still applies, and the configured provider must support fair
+acquisition for the group to affect dispatch order.
+
 ## Chains, fan-out and fan-in
 
 `ScheduleAfterAsync(JobHandle, ...)` creates a chain. Pass a `ReadOnlySpan<JobHandle>` to wait for
@@ -134,7 +151,7 @@ dependency on the new job. Existing continuations therefore wait for both jobs.
 <Callout type="warning">
 
 `JobDetails` expansion is valid only during the active attempt. It requires a graph provider and,
-except for detached scheduling, the current job must belong to a batch. `IJOB0020` warns when
+except for detached scheduling, the current job must belong to a batch. `IJOB0015` warns when
 `Detached` is passed to `AddToBatchAsync`.
 
 </Callout>

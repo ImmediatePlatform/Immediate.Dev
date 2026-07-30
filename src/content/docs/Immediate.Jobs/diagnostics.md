@@ -5,28 +5,27 @@ order: 18
 group: Diagnostics
 ---
 
-Immediate.Jobs ships both declaration analyzers and the newer generator-shape analyzer. Their IDs
-are literal strings, so `IJOB0004` and `IJOB004` are different diagnostics. All entries below are
-active in the checked-out analyzer source and tests.
+Immediate.Jobs currently uses one zero-padded diagnostic sequence. The analyzer package exposes
+the following IDs; method-shape, `partial` and other handler diagnostics come from
+Immediate.Handlers separately.
 
-| ID         | Severity | Trigger and location                                                                                                           | Fix                                                                                    |
-| ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `IJOB0001` | Error    | A `[Job]` type lacks `[Handler]`; job declaration.                                                                             | Add Immediate.Handlers `[Handler]`.                                                    |
-| `IJOB0002` | Error    | Two jobs derive/configure the same persisted name; each conflicting type.                                                      | Give every job a unique stable `Name`.                                                 |
-| `IJOB0003` | Error    | Two queue definitions derive/configure the same persisted name; each conflicting type.                                         | Give every queue a unique stable `Name`.                                               |
-| `IJOB0004` | Error    | The compilation references NodaTime but not `Immediate.Jobs.NodaTime`; compilation-wide, no source location.                   | Add the companion package, or remove the NodaTime reference.                           |
-| `IJOB0005` | Error    | `MaxAttempts < 1`, negative `MaxConcurrency`, undefined enum, or invalid/non-positive `Timeout`/`BackoffBase`; `[Job]`.        | Use a valid positive/defined value.                                                    |
-| `IJOB0006` | Error    | A cron job has a payload other than `EmptyJobRequest`; job type.                                                               | Make it payloadless or remove `Cron`.                                                  |
-| `IJOB0007` | Error    | Invalid five/six-field cron or blank cron time zone; `[Job]`.                                                                  | Correct `Cron` and use a non-blank IANA zone.                                          |
-| `IJOB0008` | Error    | Explicit/derived job name contains no letter or digit; job type.                                                               | Rename the class or set a usable `Name`.                                               |
-| `IJOB0009` | Error    | `[UsesQueue<T>]` points to a type without `[QueueDefinition]`; attribute.                                                      | Mark `T` as a queue definition or select the correct type.                             |
-| `IJOB0020` | Warning  | `AddToBatchAsync(JobDetails, ..., ContinuationOptions.Detached)`; the `Detached` argument.                                     | Use `ScheduleAfter` for detached work or a batch-joining option.                       |
-| `IJOB003`  | Error    | Payload graph cannot receive source-generated JSON metadata; request parameter.                                                | Replace delegates, pointers, ref-like/open/inaccessible shapes with serializable data. |
-| `IJOB004`  | Error    | The job does not have exactly one private instance `HandleAsync` returning `ValueTask`, request first and token last; `[Job]`. | Match the required Immediate.Handlers job signature.                                   |
-| `IJOB010`  | Error    | Queue name is blank/reserved `default`, or concurrency is negative; queue attribute.                                           | Use a non-reserved stable name and non-negative concurrency.                           |
-| `IJOB011`  | Error    | Queue target lacks `[QueueDefinition]`; `[UsesQueue<T>]`.                                                                      | Define the queue. This overlaps the older `IJOB0009` check.                            |
-| `IJOB013`  | Error    | Context extractor does not implement exactly one `IJobContextExtractor<T>`; context-use attribute.                             | Implement one closed extractor interface.                                              |
-| `IJOB014`  | Error    | Context value graph cannot receive source-generated JSON metadata; context-use attribute.                                      | Use an AOT-safe serializable context record.                                           |
+| ID         | Severity | Trigger and location                                                                                         | Fix                                                                                             |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `IJOB0001` | Error    | A `[Job]` type lacks `[Handler]`; job declaration.                                                           | Add Immediate.Handlers `[Handler]`.                                                             |
+| `IJOB0002` | Error    | Two jobs derive/configure the same persisted name; each conflicting type.                                    | Give every job a unique stable `Name`.                                                          |
+| `IJOB0003` | Error    | Two queue definitions derive/configure the same persisted name; each conflicting type.                       | Give every queue a unique stable `Name`.                                                        |
+| `IJOB0004` | Error    | The compilation references NodaTime but not `Immediate.Jobs.NodaTime`; compilation-wide, no source location. | Add the companion package, or remove the NodaTime reference.                                    |
+| `IJOB0005` | Error    | Invalid attempts, concurrency, enum, timeout or backoff configuration; `[Job]`.                              | Use defined enums, positive attempts/backoff/timeout and non-negative concurrency.              |
+| `IJOB0006` | Error    | A cron job has a payload other than `EmptyJobRequest`; job type.                                             | Make it payloadless or remove `Cron`.                                                           |
+| `IJOB0007` | Error    | Invalid five/six-field cron or blank cron time zone; `[Job]`.                                                | Correct `Cron` and use a non-blank time-zone ID.                                                |
+| `IJOB0008` | Error    | Explicit/derived job name contains no letter or digit; job type.                                             | Rename the class or set a usable `Name`.                                                        |
+| `IJOB0009` | Error    | `[UsesQueue<T>]` points to a type without `[QueueDefinition]`; attribute.                                    | Mark `T` as a queue definition or select the correct type.                                      |
+| `IJOB0010` | Warning  | One class carries both `[Job]` and `[QueueDefinition]`; both attributes.                                     | Split the job and queue definition into separate types.                                         |
+| `IJOB0011` | Error    | Queue name is blank/reserved `default`, or concurrency is negative; queue attribute.                         | Use a non-reserved stable name and non-negative concurrency.                                    |
+| `IJOB0012` | Error    | A valid job handler returns a value, such as `ValueTask<T>`, instead of `ValueTask`; handler method.         | Return non-generic `ValueTask`; background jobs have no return-value consumer.                  |
+| `IJOB0013` | Error    | Payload graph cannot receive generated JSON metadata; offending request member/type.                         | Use supported concrete values, one-dimensional arrays, `List<T>` or `Dictionary<TKey, TValue>`. |
+| `IJOB0014` | Error    | Context graph cannot receive generated JSON metadata; offending context member/type.                         | Apply the same AOT-safe shape rules as a job payload.                                           |
+| `IJOB0015` | Warning  | `AddToBatchAsync(JobDetails, ..., ContinuationOptions.Detached)`; the `Detached` argument.                   | Use `ScheduleAfter` for detached work or a batch-joining option.                                |
 
 ## Related runtime failures
 

@@ -35,13 +35,13 @@ public sealed class UsageContext
 }
 
 public sealed class UsageContextExtractor(UsageContext usage)
-	: IJobContextExtractor<UsageContextSnapshot>
+	: JobContextExtractor<UsageContextSnapshot>
 {
-	public string Key => "usage"; // stable; renaming this class won't break in-flight records
+	public override string Key => "usage"; // stable across extractor type renames
 
-	public UsageContextSnapshot? Capture() => usage.Value;
+	public override UsageContextSnapshot? Capture() => usage.Value;
 
-	public void Restore(UsageContextSnapshot snapshot) => usage.Value = snapshot;
+	public override void Restore(UsageContextSnapshot snapshot) => usage.Value = snapshot;
 }
 
 builder.Services.AddScoped<UsageContext>();
@@ -74,12 +74,15 @@ public sealed partial class SendInvoiceJob
 ```
 
 The generated scoped scheduler resolves extractors and captures them at enqueue time. The worker
-creates a new scope, deserializes the envelope with generated metadata, then restores extractors in
-attribute order before running behaviors. Extractor `Key` values must be stable and unique per job;
-treat keys as persisted schema and keep context small and free of secrets.
+creates a new scope, deserializes the envelope with generated metadata, then restores the same set
+of extractors before running behaviors. Relative ordering is not guaranteed across compiler or
+package versions, so extractors must be idempotent and independent of one another. Extractor `Key`
+values must be stable and unique per job; treat keys as persisted schema and keep context small and
+free of secrets.
 
-An extractor must implement exactly one `IJobContextExtractor<TContext>`, and `TContext` follows
-the same source-generated JSON restrictions as payloads. Multiple extractors are supported.
+An extractor derives from `JobContextExtractor<TContext>` and overrides `Key`, `Capture` and
+`Restore`. `TContext` follows the same source-generated JSON restrictions as payloads, including
+the supported collection shapes. Multiple extractors are supported.
 
 If a durable record contains an extractor key no longer known to the registered definition, the
 runtime logs the orphaned slice and skips it so rolling deployments can continue. Restore failures

@@ -28,9 +28,16 @@ public sealed partial class SendWelcomeEmail(IEmailSender sender)
 ## Payload and payloadless jobs
 
 A payload is persisted as JSON. It must be source-generatable by `System.Text.Json`: use public
-properties/fields and supported concrete types, avoid open generics, pointers, delegates,
-ref-like types and inaccessible constructors. Generated metadata is used for both serialization
-and Native AOT; no reflection fallback is needed.
+readable properties and supported concrete types. One-dimensional arrays, `List<T>` and
+`Dictionary<TKey, TValue>` receive generated collection metadata; other `IEnumerable<T>` shapes
+such as `HashSet<T>`, multidimensional arrays and dictionaries with unsupported key types are
+rejected. Interfaces, abstract types, open generics, pointers, delegates, ref-like types and
+unsupported `System` types are also rejected.
+
+Prefer records or classes with a public constructor whose parameters match their public members.
+Constructor availability is not currently an analyzer error, so a type that receives metadata but
+cannot be constructed by `System.Text.Json` can still fail when a worker deserializes it. Generated
+metadata is used for both serialization and Native AOT; no reflection fallback is needed.
 
 A payloadless job receives `EmptyJobRequest`:
 

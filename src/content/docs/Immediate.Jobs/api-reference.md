@@ -35,7 +35,8 @@ sealed class QueueDefinitionAttribute : Attribute
 }
 
 sealed class UsesQueueAttribute<TQueue> : Attribute;
-sealed class UsesJobContextAttribute<TExtractor> : Attribute;
+sealed class UsesJobContextAttribute<TExtractor> : Attribute
+	where TExtractor : JobContextExtractor;
 ```
 
 ## Requests, handles and context
@@ -61,11 +62,15 @@ sealed record BatchHandle
 	string Id { get; }
 }
 
-interface IJobContextExtractor<TContext>
+public abstract class JobContextExtractor
 {
-	string Key { get; }
-	TContext? Capture();
-	void Restore(TContext context);
+	public abstract string Key { get; }
+}
+
+public abstract class JobContextExtractor<TContext> : JobContextExtractor
+{
+	public abstract TContext? Capture();
+	public abstract void Restore(TContext context);
 }
 ```
 
@@ -91,8 +96,12 @@ interface IJobScheduler<TPayload>
 Every generated `JobScheduler<TPayload>` additionally exposes:
 
 ```csharp
-JobHandle AddToBatch(IJobBatch batch, TPayload payload, TimeSpan? delay = null);
-JobHandle AddToBatchAt(IJobBatch batch, TPayload payload, DateTimeOffset runAt);
+JobHandle AddToBatch(JobBatch batch, TPayload payload, TimeSpan? delay = null);
+JobHandle AddToBatchInGroup(
+	JobBatch batch, TPayload payload, string? groupId, TimeSpan? delay = null);
+JobHandle AddToBatchAt(JobBatch batch, TPayload payload, DateTimeOffset runAt);
+JobHandle AddToBatchAt(
+	JobBatch batch, TPayload payload, DateTimeOffset runAt, string? groupId);
 
 ValueTask<JobHandle> ScheduleAfterAsync(
 	JobHandle parent, TPayload payload,
@@ -144,18 +153,18 @@ interface IRecurringJobScheduler : IRecurringJobTrigger
 	ValueTask RemoveRecurringAsync(string name, CancellationToken token = default);
 }
 
-interface IJobBatch : IAsyncDisposable
+public sealed class JobBatch : IAsyncDisposable
 {
-	string Id { get; }
-	ValueTask<BatchHandle> CommitAsync(CancellationToken token = default);
+	public string Id { get; }
+	public ValueTask<BatchHandle> CommitAsync(CancellationToken token = default);
 }
 
 interface IJobBatchScheduler
 {
-	IJobBatch Begin();
-	IJobBatch Begin(BatchHandle after, ContinuationTrigger on = ContinuationTrigger.Success);
+	JobBatch Begin();
+	JobBatch Begin(BatchHandle after, ContinuationTrigger on = ContinuationTrigger.Success);
 	ValueTask<BatchHandle> RunAsync(
-		Func<IJobBatch, ValueTask> body, CancellationToken token = default);
+		Func<JobBatch, ValueTask> body, CancellationToken token = default);
 }
 ```
 
@@ -166,17 +175,17 @@ interface IJobBatchScheduler
 `AddXxxJobs(Action<ImmediateJobsOptions>? configure = null, params ... tags)` returns
 `ImmediateJobsBuilder`.
 
-| `ImmediateJobsOptions` member                    |                                          Default |
-| ------------------------------------------------ | -----------------------------------------------: |
-| `MaxParallelJobs`                                |                     `Environment.ProcessorCount` |
-| `AcquisitionBatchSize`                           |                                             `32` |
-| `PollingInterval`                                |                                         1 second |
-| `LeaseDuration`                                  |                                       30 seconds |
-| `ShutdownTimeout`                                |                                       30 seconds |
-| `SucceededRetention` / `BatchSucceededRetention` |                                         24 hours |
-| `FailedRetention` / `BatchFailedRetention`       |                                           7 days |
-| `PurgeInterval`                                  |                                           1 hour |
-| `StorageMode`                                    | `SingleServer` until default in-memory selection |
+| `ImmediateJobsOptions` member                    |                                             Default |
+| ------------------------------------------------ | --------------------------------------------------: |
+| `MaxParallelJobs`                                | `Math.Clamp(Environment.ProcessorCount * 4, 8, 32)` |
+| `AcquisitionBatchSize`                           |                                                `32` |
+| `PollingInterval`                                |                                            1 second |
+| `LeaseDuration`                                  |                                          30 seconds |
+| `ShutdownTimeout`                                |                                          30 seconds |
+| `SucceededRetention` / `BatchSucceededRetention` |                                            24 hours |
+| `FailedRetention` / `BatchFailedRetention`       |                                              7 days |
+| `PurgeInterval`                                  |                                              1 hour |
+| `StorageMode`                                    |    `SingleServer` until default in-memory selection |
 
 Fluent methods are `UseInMemory()`, `UseStorage(factory)`, `UseSingleServer()`,
 `UseSingleServer(factory)`, `UseDistributed()` and `UseFairQueues(configure)`. `FairQueueOptions`
