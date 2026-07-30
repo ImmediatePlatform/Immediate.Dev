@@ -47,6 +47,66 @@ errors, identifiers and mutations. A named policy applies to UI assets and APIs 
 The UI shows queue/state totals, recent history, jobs and details, recurring schedules, scheduler
 servers, batches and workflow graphs. Graph views appear only for graph-capable storage.
 
+## Dashboard UI
+
+### Inspect jobs
+
+The Jobs view lists recent executions and their current state. Select a job to inspect its
+invocation, execution metadata, payload, errors and any application-defined telemetry links.
+
+<figure class="not-prose my-8">
+    <img
+        src="/images/immediate-jobs/dashboard/jobs-light.png"
+        alt="The Immediate.Jobs dashboard Jobs view in light mode, with a succeeded job expanded to show its details"
+        width="1713"
+        height="999"
+        loading="lazy"
+        decoding="async"
+        class="block w-full rounded-xl border border-border shadow-sm dark:hidden"
+    />
+    <img
+        src="/images/immediate-jobs/dashboard/jobs-dark.png"
+        alt="The Immediate.Jobs dashboard Jobs view in dark mode, with a succeeded job expanded to show its details"
+        width="1713"
+        height="999"
+        loading="lazy"
+        decoding="async"
+        class="hidden w-full rounded-xl border border-border shadow-sm dark:block"
+    />
+    <figcaption class="mt-3 text-center text-sm text-muted-foreground">
+        Job history with an expanded invocation, execution metadata, payload and telemetry links.
+    </figcaption>
+</figure>
+
+### Follow batch workflows
+
+The Batches view visualizes the jobs in a batch and the continuations between them. Select a node
+to inspect that job without losing the surrounding workflow context.
+
+<figure class="not-prose my-8">
+    <img
+        src="/images/immediate-jobs/dashboard/batch-workflow-light.png"
+        alt="The Immediate.Jobs dashboard batch workflow graph in light mode, showing succeeded jobs and their continuations"
+        width="1728"
+        height="999"
+        loading="lazy"
+        decoding="async"
+        class="block w-full rounded-xl border border-border shadow-sm dark:hidden"
+    />
+    <img
+        src="/images/immediate-jobs/dashboard/batch-workflow-dark.png"
+        alt="The Immediate.Jobs dashboard batch workflow graph in dark mode, showing succeeded jobs and their continuations"
+        width="1728"
+        height="999"
+        loading="lazy"
+        decoding="async"
+        class="hidden w-full rounded-xl border border-border shadow-sm dark:block"
+    />
+    <figcaption class="mt-3 text-center text-sm text-muted-foreground">
+        A batch workflow graph with continuation relationships and job details available in place.
+    </figcaption>
+</figure>
+
 ## Telemetry links
 
 `AddTelemetryLink` adds an application-defined destination to each job's detail view. The
