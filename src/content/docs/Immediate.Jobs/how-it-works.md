@@ -39,7 +39,7 @@ generators.
 
 The hosted service initializes storage and recurring definitions, then builds acquisition requests
 from queue priority plus node, queue and job capacity. Storage atomically changes eligible due work
-to `Processing`, assigns a worker/lease and increments attempts. Distributed providers coordinate
+to `Active`, assigns a worker/lease and increments attempts. Distributed providers coordinate
 this in the shared backend; single-server mode acquires from memory and mirrors ownership to its
 durable replica.
 
@@ -50,14 +50,16 @@ generated handler. The call enters Immediate.Handlers behaviors and ends at the 
 
 Success atomically records completion and any buffered mid-execution continuations. Failure stores
 the exception and either schedules a retry or leaves a terminal failure. Settling a graph node
-releases eligible children or cascade-cancels children whose trigger can no longer be satisfied.
+releases eligible children or marks unselected branches `Skipped`. Release and recursive skipping
+are committed in the same transaction as the parent's terminal transition.
 
 ## Recurring materialization
 
 Code-defined schedules are reconciled at startup. The recurring loop asks storage for due
 schedules; the provider atomically materializes a uniquely keyed occurrence and advances its next
 run. This keeps multiple distributed nodes from creating the same occurrence. Overlap policy is
-evaluated against active occurrences of the same schedule.
+evaluated against active occurrences of the same schedule; `Skip` persists a terminal skipped
+occurrence so monitoring retains the scheduling decision.
 
 ## Generated JSON, trimming and Native AOT
 

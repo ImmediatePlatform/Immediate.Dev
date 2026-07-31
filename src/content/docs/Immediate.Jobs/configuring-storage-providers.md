@@ -122,6 +122,7 @@ support graph workflows or fair queues.
 
 Storage initialization is idempotent provider startup, not a substitute for controlled production
 schema evolution. Keep migrations/bootstrap and provider packages at the same preview revision as
-the core package.
+the core package. The batch table now includes a non-null `SkippedCount` column; existing SQL
+schemas created before that field need an application-owned migration that defaults it to zero.
 
 </Callout>

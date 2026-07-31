@@ -26,6 +26,11 @@ sealed class JobAttribute : Attribute
 
 enum OverlapPolicy { Skip, Queue, Concurrent }
 enum BackoffStrategy { Fixed, Exponential, ExponentialJitter }
+enum JobState
+{
+	AwaitingContinuation, AwaitingParameters, Scheduled, Pending, Active,
+	Succeeded, Failed, Cancelled, Skipped
+}
 
 sealed class QueueDefinitionAttribute : Attribute
 {
@@ -128,8 +133,9 @@ ValueTask<JobHandle> AddToBatchAsync(
 `ContinuationTrigger.Success` waits for every parent to succeed. `Failure` waits for every parent
 to become terminal and then runs when at least one failed. `Complete` waits for every parent to
 become terminal regardless of outcome. A `BatchHandle` is a single parent whose state becomes
-`Failed` when any item in the completed batch failed; cancellation alone does not satisfy
-`Failure`.
+`Failed` when any item in the completed batch failed; cancellation or skipped branches alone do
+not satisfy `Failure`. When a `Success` or `Failure` condition cannot be satisfied, the child and
+any ineligible descendants become terminal `Skipped` records.
 
 | `ContinuationOptions`           | Batch membership | Effect on the current job's existing continuations               |
 | ------------------------------- | ---------------- | ---------------------------------------------------------------- |
@@ -220,11 +226,19 @@ interface IJobBatchMonitor
 		string batchId, BatchMemberQuery query, CancellationToken token = default);
 	ValueTask<BatchGraph?> GetGraphAsync(string batchId, CancellationToken token = default);
 }
+
+sealed record BatchStatus(
+	string Id, BatchState State,
+	int Total, int Succeeded, int Failed, int Cancelled, int Skipped, int Remaining,
+	DateTimeOffset CreatedAt, DateTimeOffset? StartedAt, DateTimeOffset? CompletedAt,
+	double FractionSettled
+);
 ```
 
 `BatchMemberQuery` and `JobBatchQuery` contain optional state, `Skip`, and `Take = 100`.
 `JobStatus`, `BatchStatus`, `BatchMemberStatus`, `BatchGraph`, `BatchGraphNode` and
-`BatchGraphEdge` are immutable monitoring records.
+`BatchGraphEdge` are immutable monitoring records. `FractionSettled` includes every terminal
+outcome, including `Skipped`.
 
 ## Dashboard
 
@@ -281,8 +295,8 @@ each `ScheduledJobCapture<T>` contains `Id`, `Payload`, `RunAt`, and `GroupId`.
 it exposes `Services`, `Storage`, `TimeProvider`, and `Batches`. Operations are `DrainAsync`, both
 `AdvanceTimeAndDrainAsync` overloads, `QueryJobsAsync`, both `GetJobAsync` overloads, both
 `AssertEnqueuedAsync<T>` overloads, `AssertBatchCommittedAtomicallyAsync`,
-`AssertContinuationReleasedAfterAsync`, `AssertCascadeCancelledAsync`, and
-`RunThroughPipelineAsync<T>`.
+`AssertContinuationReleasedAfterAsync`, `AssertCascadeSkippedAsync`, its compatibility alias
+`AssertCascadeCancelledAsync`, and `RunThroughPipelineAsync<T>`.
 
 ## Custom storage contracts
 
@@ -290,9 +304,11 @@ it exposes `Services`, `Storage`, `TimeProvider`, and `Batches`. Operations are 
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `IJobStorage`          | Initialize; enqueue; lease/acquire/renew; persist execution telemetry; complete/fail; query/status; retry/delete/purge; heartbeat and health. |
 | `IRecurringJobStorage` | Upsert/remove/pause/resume schedules; identify due rows; uniquely materialize each occurrence; reconcile obsolete code-defined schedules.     |
-| `IJobGraphStorage`     | Atomically enqueue batches/edges; settle and release/cascade dependencies; add mid-run members; monitor/cancel/delete/purge graphs.           |
+| `IJobGraphStorage`     | Atomically enqueue batches/edges; settle and release/skip dependencies; add mid-run members; monitor/cancel/delete/purge graphs.              |
 | `IJobStorageReplica`   | Restore durable records and mirror explicit acquisitions for the single-server wrapper.                                                       |
 
 `StorageCapabilities` flags are `Queue`, `Recurring` and `Graph`; call
 `storage.GetCapabilities()` to detect the optional interfaces. Low-level `JobRecord`, acquisition,
 definition and graph persistence records are provider contracts, not application scheduling APIs.
+`IJobStorage.RetryAsync` accepts `Failed` and `Scheduled`: a scheduled invocation is moved to
+`Pending` immediately while retaining its attempt count and latest failure details.

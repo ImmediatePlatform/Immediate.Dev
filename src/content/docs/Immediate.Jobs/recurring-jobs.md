@@ -77,11 +77,11 @@ dashboard can trigger, pause and resume existing schedules.
 
 ## Overlap policy
 
-| Policy       | When the previous occurrence is still active                            |
-| ------------ | ----------------------------------------------------------------------- |
-| `Skip`       | Do not materialize this occurrence.                                     |
-| `Queue`      | Materialize it and let it wait.                                         |
-| `Concurrent` | Allow both invocations to execute, subject to other concurrency limits. |
+| Policy       | When the previous occurrence is still active                               |
+| ------------ | -------------------------------------------------------------------------- |
+| `Skip`       | Persist the occurrence as terminal `Skipped` history without executing it. |
+| `Queue`      | Materialize it and let it wait.                                            |
+| `Concurrent` | Allow both invocations to execute, subject to other concurrency limits.    |
 
 Materialization is coordinated in durable storage, so `Recurring` capability is required. Redis
 and the SQL providers support it; graph support is unrelated.

@@ -47,7 +47,8 @@ Assert.Equal(JobState.Succeeded, (await harness.GetJobAsync(handle, cancellation
 exposes `Storage`, `TimeProvider`, `Services` and `Batches`.
 
 For graphs, use `AssertBatchCommittedAtomicallyAsync`,
-`AssertContinuationReleasedAfterAsync` and `AssertCascadeCancelledAsync`. Call
+`AssertContinuationReleasedAfterAsync` and `AssertCascadeSkippedAsync`.
+`AssertCascadeCancelledAsync` remains as a compatibility alias. Call
 `RunThroughPipelineAsync<TPayload>` when a test already has a record/payload and needs to execute
 its generated invoker through the real DI/behavior pipeline.
 

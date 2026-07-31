@@ -41,6 +41,7 @@ Some facts depend on runtime values or durable state and cannot be diagnosed at 
   detects multiple-process replica drift;
 - unknown stored job names fail terminally because no generated definition can execute them;
 - unknown context slices are logged and skipped so rolling deployments can continue;
+- dashboard mutations return HTTP 404 for an unknown job, batch or recurring schedule;
 - retry/delete/cancel operations reject incompatible lifecycle states with
   `ImmediateJobException` (HTTP 409 in the dashboard).
 

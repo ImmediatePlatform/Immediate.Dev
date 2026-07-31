@@ -102,15 +102,18 @@ handles from unrelated open batches are rejected. `ScheduleAfterAsync(BatchHandl
 the entire prior batch. `batches.Begin(previousBatch, trigger)` creates a follow-up batch whose
 root members all depend on it.
 
-| `ContinuationTrigger` | Child is released when…                                                      |
-| --------------------- | ---------------------------------------------------------------------------- |
-| `Success`             | all parents succeed; otherwise the child is cascade-cancelled.               |
-| `Failure`             | all parents are terminal and at least one failed; otherwise it is cancelled. |
-| `Complete`            | all parents reach any terminal state.                                        |
+| `ContinuationTrigger` | Condition and unmatched outcome                                                      |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| `Success`             | Released when every parent succeeds; skipped when a parent settles unsuccessfully.   |
+| `Failure`             | Released after every parent settles if at least one failed; otherwise skipped.       |
+| `Complete`            | Released after every parent reaches any terminal state; it has no unmatched outcome. |
 
 For a continuation attached to a `BatchHandle`, the batch is one parent. It becomes `Failed` after
 all of its items finish when **any item failed**, so a `Failure` continuation is released in that
-case. Cancelled items alone make the batch `Cancelled` and do not satisfy `Failure`.
+case. Explicitly cancelled items alone make the batch `Cancelled`, while skipped branches do not
+fail the batch. Neither outcome satisfies `Failure`. Conditional branches that are not selected
+become terminal `Skipped` records, and skipping propagates through descendants whose own triggers
+cannot be satisfied.
 
 ## Expanding a running workflow
 
@@ -159,5 +162,7 @@ except for detached scheduling, the current job must belong to a batch. `IJOB001
 
 </Callout>
 
-Monitor a graph through `IJobBatchMonitor.GetStatusAsync`, `QueryMembersAsync` and `GetGraphAsync`,
-or use the dashboard's workflow view and batch cancel/delete operations.
+Monitor a graph through `IJobBatchMonitor.GetStatusAsync`, `QueryMembersAsync` and `GetGraphAsync`.
+`BatchStatus` counts succeeded, failed, cancelled and skipped members separately; a batch can
+succeed when every executed member succeeded even if conditional branches were skipped. The
+dashboard exposes the same progress and workflow states alongside batch cancel/delete operations.

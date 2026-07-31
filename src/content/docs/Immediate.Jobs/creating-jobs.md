@@ -35,9 +35,12 @@ rejected. Interfaces, abstract types, open generics, pointers, delegates, ref-li
 unsupported `System` types are also rejected.
 
 Prefer records or classes with a public constructor whose parameters match their public members.
-Constructor availability is not currently an analyzer error, so a type that receives metadata but
-cannot be constructed by `System.Text.Json` can still fail when a worker deserializes it. Generated
-metadata is used for both serialization and Native AOT; no reflection fallback is needed.
+Public `init` properties that are not constructor parameters are also supported, including
+optional and `required` properties; generated metadata initializes them through an object
+initializer. Constructor availability is not currently an analyzer error, so a type that receives
+metadata but cannot be constructed by `System.Text.Json` can still fail when a worker deserializes
+it. Generated metadata is used for both serialization and Native AOT; no reflection fallback is
+needed.
 
 A payloadless job receives `EmptyJobRequest`:
 
