@@ -44,8 +44,9 @@ Without `RequireAuthorization`, every dashboard endpoint is development-only and
 other environments. Treat the dashboard as an administrative surface: it exposes payloads,
 errors, identifiers and mutations. A named policy applies to UI assets and APIs together.
 
-The UI shows queue/state totals, recent history, jobs and details, recurring schedules, scheduler
-servers, batches and workflow graphs. Graph views appear only for graph-capable storage.
+The UI shows queue/state totals, including skipped work, recent history, jobs and details,
+recurring schedules, scheduler servers, batches and workflow graphs. Graph views appear only for
+graph-capable storage.
 
 ## Dashboard UI
 
@@ -53,6 +54,8 @@ servers, batches and workflow graphs. Graph views appear only for graph-capable 
 
 The Jobs view lists recent executions and their current state. Select a job to inspect its
 invocation, execution metadata, payload, errors and any application-defined telemetry links.
+Failed jobs offer **Retry**; scheduled first attempts and delayed retries offer **Run now**, which
+moves the existing invocation to `Pending` without changing its attempt or failure history.
 
 <figure class="not-prose my-8">
     <img
@@ -80,8 +83,9 @@ invocation, execution metadata, payload, errors and any application-defined tele
 
 ### Follow batch workflows
 
-The Batches view visualizes the jobs in a batch and the continuations between them. Select a node
-to inspect that job without losing the surrounding workflow context.
+The Batches view visualizes the jobs in a batch and the continuations between them. Progress and
+workflow nodes distinguish skipped conditional branches from explicitly cancelled work. Select a
+node to inspect that job without losing the surrounding workflow context.
 
 <figure class="not-prose my-8">
     <img
@@ -139,7 +143,7 @@ All paths below are relative to the mapped prefix.
 | `GET /api/jobs`                               | Filter by `state`, `queue`, `search`; `skip`; `take` 1–200 (default 50). |
 | `GET /api/jobs/{jobId}`                       | Latest durable record.                                                   |
 | `GET /api/jobs/{jobId}/telemetry-links`       | Configured trace/log destinations.                                       |
-| `POST /api/jobs/{jobId}/retry`                | Retry failed work.                                                       |
+| `POST /api/jobs/{jobId}/retry`                | Retry failed work or run scheduled work now.                             |
 | `DELETE /api/jobs/{jobId}`                    | Delete terminal work.                                                    |
 | `GET /api/recurring`                          | Recurring schedules.                                                     |
 | `POST /api/recurring/{name}/trigger`          | Materialize an immediate invocation.                                     |
@@ -153,6 +157,11 @@ All paths below are relative to the mapped prefix.
 | `DELETE /api/batches/{id}`                    | Delete a terminal graph.                                                 |
 | `GET /api/events`                             | SSE `state` snapshots at `UpdateInterval`.                               |
 | `GET /api/batches/{id}/stream`                | SSE `status` and `graph` events on change.                               |
+
+Successful retry, delete, pause, resume and batch mutations return `204`; recurring trigger returns
+`202`. A mutation returns `404` when its job, batch or recurring schedule does not exist (or the
+provider lacks the required capability), and `409` when the resource exists but its lifecycle
+state does not allow the operation.
 
 SSE sends `retry: 3000`, disables proxy buffering and ends when the request is aborted. It is a
 poll-backed live view, not a durable event log; clients must refresh after reconnecting.
