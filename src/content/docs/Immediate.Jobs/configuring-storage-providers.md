@@ -62,10 +62,26 @@ public sealed class JobsDbContext(DbContextOptions<JobsDbContext> options) : DbC
 }
 ```
 
-The application owns database creation for `JobsDbContext`. `AddImmediateJobs` maps seven tables,
-their indexes and constraints. `EnsureCreated` is appropriate only for samples or disposable
-databases. Using an existing business `DbContext` is supported, but it couples the jobs schema to
-that model.
+`AddImmediateJobs` configures the EF Core model but does not ship or apply migration files. Generate
+an application-owned migration explicitly after adding the model:
+
+```bash
+dotnet ef migrations add CreateImmediateJobsSchema \
+	--context JobsDbContext \
+	--output-dir Migrations/ImmediateJobs
+```
+
+Run the command from the startup project. If the context and startup application are in different
+projects, also pass the appropriate `--project` and `--startup-project` paths. Apply the generated
+migration through the application's normal deployment process, or locally with:
+
+```bash
+dotnet ef database update --context JobsDbContext
+```
+
+The generated migration creates the seven Immediate.Jobs tables, indexes and constraints.
+`EnsureCreated` is appropriate only for samples or disposable databases. Using an existing business
+`DbContext` is supported, but it couples the jobs schema to that model.
 
 ## LinqToDB
 
