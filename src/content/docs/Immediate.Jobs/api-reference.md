@@ -291,10 +291,14 @@ Call `AddImmediateJobsDashboard` before building the application. It registers t
 generated Immediate.Apis handlers and Immediate.Validations behavior. `MapImmediateJobsDashboard`
 also accepts an optional configuration callback, but service registration is the preferred
 configuration point. `ImmediateJobsDashboardOptions.UpdateInterval` defaults to two seconds.
-`RequireAuthorization(string policy)` and `AddTelemetryLink(string label,
-JobTelemetryLinkKind kind, Func<JobTelemetryLinkContext, Uri?> createUrl)` return the same options
-object. Link kinds are `Trace` and `Logs`. `JobTelemetryLinkContext.Execution` is `null` for a
-job-level link and contains the exact `JobExecutionRecord` for an execution-level link.
+`AllowInAnyEnvironment()`, `RequireAuthorization(string policy)` and
+`AddTelemetryLink(string label, JobTelemetryLinkKind kind,
+Func<JobTelemetryLinkContext, Uri?> createUrl)` return the same options object. Without an
+authorization policy, dashboard endpoints are restricted to the `Development` environment by
+default; `AllowInAnyEnvironment()` explicitly disables that restriction. A configured
+authorization policy remains authoritative. Link kinds are `Trace` and `Logs`.
+`JobTelemetryLinkContext.Execution` is `null` for a job-level link and contains the exact
+`JobExecutionRecord` for an execution-level link.
 
 ## Provider registration
 
