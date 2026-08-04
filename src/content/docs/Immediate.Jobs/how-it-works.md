@@ -39,19 +39,21 @@ generators.
 
 The hosted service initializes storage and recurring definitions, then builds acquisition requests
 from queue priority plus node, queue and job capacity. Storage atomically changes eligible due work
-to `Active`, assigns a worker/lease and increments attempts. Distributed providers coordinate
-this in the shared backend; single-server mode acquires from memory and mirrors ownership to its
-durable replica.
+to `Active`, assigns a worker/lease, increments attempts and creates a retained execution record.
+Distributed providers coordinate this in the shared backend; single-server mode acquires from
+memory and mirrors ownership to its durable replica.
 
 For each acquired record the worker creates a consumer activity and logging scope, starts lease
 renewal and a linked timeout token, then creates a fresh async DI scope. The generated invoker
 deserializes context and payload, restores known slices, assigns `JobDetails` and resolves the
 generated handler. The call enters Immediate.Handlers behaviors and ends at the private job method.
 
-Success atomically records completion and any buffered mid-execution continuations. Failure stores
-the exception and either schedules a retry or leaves a terminal failure. Settling a graph node
-releases eligible children or marks unselected branches `Skipped`. Release and recursive skipping
-are committed in the same transaction as the parent's terminal transition.
+Success atomically closes the execution and records completion plus any buffered mid-execution
+continuations. Failure closes the attempt with its full exception and either schedules a retry or
+leaves a terminal failure. Telemetry, renewal and terminal updates carry the acquired attempt and
+worker ID so stale owners cannot mutate a reacquired or explicitly cancelled job. Settling a graph
+node releases eligible children or marks unselected branches `Skipped`. Release and recursive
+skipping are committed in the same transaction as the parent's terminal transition.
 
 ## Recurring materialization
 
@@ -66,9 +68,10 @@ occurrence so monitoring retains the scheduling decision.
 Schedulers and invokers call `IJobSerializer` overloads that receive generated
 `JsonTypeInfo<T>`. The generated resolver covers the payload graph and every opted-in context
 type, so trimming does not need to preserve reflection-discovered constructors or properties.
+Resolved payload metadata is cached per payload type for subsequent serialize/deserialize calls.
 Unsupported shapes fail at compile time. The Native AOT sample publishes the same generated path;
 custom serializers must honor the metadata overloads to retain this property.
 
 The runtime itself does not scan assemblies or use a service locator to discover jobs. Durable
 job names, queue names, extractor keys and serialized contracts are nevertheless versioned data:
-deploy changes compatibly or drain/migrate existing records before removing them.
+deploy changes compatibly or drain/transform durable records before removing them.

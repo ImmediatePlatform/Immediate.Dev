@@ -31,6 +31,7 @@ enum JobState
 	AwaitingContinuation, AwaitingParameters, Scheduled, Pending, Active,
 	Succeeded, Failed, Cancelled, Skipped
 }
+enum JobExecutionState { Active, Succeeded, Failed, Cancelled, Interrupted }
 
 sealed class QueueDefinitionAttribute : Attribute
 {
@@ -89,6 +90,7 @@ for a Snowflake example.
 ```csharp
 interface IJobScheduler<TPayload>
 {
+	ValueTask CancelAsync(JobHandle handle, CancellationToken token = default);
 	ValueTask<JobHandle> EnqueueAsync(TPayload payload, CancellationToken token = default);
 	ValueTask<JobHandle> EnqueueAsync(TPayload payload, string? groupId, CancellationToken token);
 	ValueTask<JobHandle> ScheduleAsync(TPayload payload, TimeSpan delay, CancellationToken token = default);
@@ -167,6 +169,7 @@ public sealed class JobBatch : IAsyncDisposable
 
 interface IJobBatchScheduler
 {
+	ValueTask CancelAsync(BatchHandle handle, CancellationToken token = default);
 	JobBatch Begin();
 	JobBatch Begin(BatchHandle after, ContinuationTrigger on = ContinuationTrigger.Success);
 	ValueTask<BatchHandle> RunAsync(
@@ -233,16 +236,49 @@ sealed record BatchStatus(
 	DateTimeOffset CreatedAt, DateTimeOffset? StartedAt, DateTimeOffset? CompletedAt,
 	double FractionSettled
 );
+
+sealed record JobExecutionRecord
+{
+	static JobExecutionRecord? CreateSynthetic(JobRecord job);
+	string JobId { get; init; }
+	int Attempt { get; init; }
+	JobExecutionState State { get; init; }
+	string? WorkerId { get; init; }
+	DateTimeOffset? AcquiredAt { get; init; }
+	DateTimeOffset? ExecutionStartedAt { get; init; }
+	DateTimeOffset? CompletedAt { get; init; }
+	string? ExecutionTraceId { get; init; }
+	string? ExecutionSpanId { get; init; }
+	string? Error { get; init; }
+	bool IsSynthetic { get; init; }
+}
+
+sealed record JobExecutionQuery
+{
+	const int MaximumTake = 1000;
+	void Validate();
+	string JobId { get; init; }
+	int? Attempt { get; init; }
+	int Skip { get; init; }
+	int Take { get; init; } // 100
+}
 ```
 
 `BatchMemberQuery` and `JobBatchQuery` contain optional state, `Skip`, and `Take = 100`.
 `JobStatus`, `BatchStatus`, `BatchMemberStatus`, `BatchGraph`, `BatchGraphNode` and
 `BatchGraphEdge` are immutable monitoring records. `FractionSettled` includes every terminal
-outcome, including `Skipped`.
+outcome, including `Skipped`. `IJobStorage.QueryJobExecutionsAsync` returns retained executions
+newest first unless `JobExecutionQuery.Attempt` selects an exact one. `IsSynthetic` marks a
+best-effort record reconstructed from the owning `JobRecord` when a separate execution entry is
+unavailable.
 
 ## Dashboard
 
 ```csharp
+IServiceCollection AddImmediateJobsDashboard(
+	this IServiceCollection services,
+	Action<ImmediateJobsDashboardOptions>? configure = null);
+
 RouteGroupBuilder MapImmediateJobsDashboard(
 	this IEndpointRouteBuilder endpoints,
 	Action<ImmediateJobsDashboardOptions>? configure = null);
@@ -251,10 +287,14 @@ RouteGroupBuilder MapImmediateJobsDashboard(
 	Action<ImmediateJobsDashboardOptions>? configure = null);
 ```
 
-`ImmediateJobsDashboardOptions.UpdateInterval` defaults to two seconds.
+Call `AddImmediateJobsDashboard` before building the application. It registers the dashboard's
+generated Immediate.Apis handlers and Immediate.Validations behavior. `MapImmediateJobsDashboard`
+also accepts an optional configuration callback, but service registration is the preferred
+configuration point. `ImmediateJobsDashboardOptions.UpdateInterval` defaults to two seconds.
 `RequireAuthorization(string policy)` and `AddTelemetryLink(string label,
 JobTelemetryLinkKind kind, Func<JobTelemetryLinkContext, Uri?> createUrl)` return the same options
-object. Link kinds are `Trace` and `Logs`.
+object. Link kinds are `Trace` and `Logs`. `JobTelemetryLinkContext.Execution` is `null` for a
+job-level link and contains the exact `JobExecutionRecord` for an execution-level link.
 
 ## Provider registration
 
@@ -286,8 +326,9 @@ for registration and examples.
 
 ## Testing
 
-`CaptureOnlyJobScheduler<T>` exposes `Captures`, `Last`, `Clear()` and virtual scheduling methods;
-each `ScheduledJobCapture<T>` contains `Id`, `Payload`, `RunAt`, and `GroupId`.
+`CaptureOnlyJobScheduler<T>` exposes `Captures`, `Last`, `CancelledIds`, `Clear()` and virtual
+scheduling/cancellation methods; each `ScheduledJobCapture<T>` contains `Id`, `Payload`, `RunAt`,
+and `GroupId`. `Clear()` resets both captures and cancellations.
 `CaptureOnlyRecurringJobScheduler` exposes the same capture pattern with
 `RecurringJobCapture`/`RecurringJobOperation`.
 
@@ -295,20 +336,26 @@ each `ScheduledJobCapture<T>` contains `Id`, `Payload`, `RunAt`, and `GroupId`.
 it exposes `Services`, `Storage`, `TimeProvider`, and `Batches`. Operations are `DrainAsync`, both
 `AdvanceTimeAndDrainAsync` overloads, `QueryJobsAsync`, both `GetJobAsync` overloads, both
 `AssertEnqueuedAsync<T>` overloads, `AssertBatchCommittedAtomicallyAsync`,
-`AssertContinuationReleasedAfterAsync`, `AssertCascadeSkippedAsync`, its compatibility alias
+`AssertContinuationReleasedAfterAsync`, `AssertCascadeSkippedAsync`,
 `AssertCascadeCancelledAsync`, and `RunThroughPipelineAsync<T>`.
 
 ## Custom storage contracts
 
-| Interface              | Atomic responsibilities                                                                                                                       |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `IJobStorage`          | Initialize; enqueue; lease/acquire/renew; persist execution telemetry; complete/fail; query/status; retry/delete/purge; heartbeat and health. |
-| `IRecurringJobStorage` | Upsert/remove/pause/resume schedules; identify due rows; uniquely materialize each occurrence; reconcile obsolete code-defined schedules.     |
-| `IJobGraphStorage`     | Atomically enqueue batches/edges; settle and release/skip dependencies; add mid-run members; monitor/cancel/delete/purge graphs.              |
-| `IJobStorageReplica`   | Restore durable records and mirror explicit acquisitions for the single-server wrapper.                                                       |
+| Interface              | Atomic responsibilities                                                                                                                            |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IJobStorage`          | Initialize; enqueue; lease/acquire/renew; persist/query execution history; complete/fail; status; cancel/retry/delete/purge; heartbeat and health. |
+| `IRecurringJobStorage` | Upsert/remove/pause/resume schedules; identify due rows; uniquely materialize each occurrence; reconcile obsolete code-defined schedules.          |
+| `IJobGraphStorage`     | Atomically enqueue batches/edges; settle and release/skip dependencies; add mid-run members; monitor/cancel/delete/purge graphs.                   |
+| `IJobStorageReplica`   | Restore durable records and mirror explicit acquisitions for the single-server wrapper.                                                            |
 
 `StorageCapabilities` flags are `Queue`, `Recurring` and `Graph`; call
 `storage.GetCapabilities()` to detect the optional interfaces. Low-level `JobRecord`, acquisition,
 definition and graph persistence records are provider contracts, not application scheduling APIs.
 `IJobStorage.RetryAsync` accepts `Failed` and `Scheduled`: a scheduled invocation is moved to
 `Pending` immediately while retaining its attempt count and latest failure details.
+`IJobStorage.CancelAsync` accepts any non-terminal state, while `DeleteAsync` accepts terminal
+states only. Worker-owned telemetry, renewal, completion and failure are fenced by job ID,
+execution number and worker ID; graph expansion is fenced by job ID and execution number. An
+expired or cancelled attempt therefore cannot mutate a newer durable state. Custom providers must
+implement `QueryJobExecutionsAsync(JobExecutionQuery, ...)` and retain execution rows for the
+lifetime of their owning job or batch.

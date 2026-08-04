@@ -74,6 +74,18 @@ abandons the buffer. A batch can commit only once and cannot be modified after c
 alternative, `batches.RunAsync(body, cancellationToken)` creates the buffer, runs the body and
 commits only when the body completes successfully.
 
+Cancel every non-terminal member of a committed batch through the same batch scheduler:
+
+```csharp
+BatchHandle handle = await workflow.StartAsync(importId, cancellationToken);
+await batches.CancelAsync(handle, cancellationToken);
+```
+
+This includes scheduled, active and continuation-waiting members, and the aggregate batch becomes
+`Cancelled` after its members settle. Cancelling an active member records cancellation durably but
+does not forcibly stop handler code already running in process; stale worker completion is fenced
+from changing the terminal result.
+
 Failures before `CommitAsync` begins write nothing. Once commit begins, however, the batch is
 closed even when the call throws, and a transport failure can leave the durable outcome unknown:
 storage may have committed the graph before the caller lost the response. Do not retry the same

@@ -16,9 +16,11 @@ public sealed partial class CleanupSessionsJob(AppDbContext db)
 }
 ```
 
-Cron expressions accept five fields (minute precision) or six fields (seconds first). Time zones
-are IANA identifiers and default to `UTC`. Cron and time-zone values are validated during startup;
-invalid cron is also an analyzer error.
+Cron expressions accept five fields (minute precision), six fields (seconds first), or the
+case-insensitive macros `@yearly`/`@annually`, `@monthly`, `@weekly`, `@daily`/`@midnight`,
+`@hourly`, `@every_minute` and `@every_second`. Time zones are IANA identifiers and default to
+`UTC`. Cron and time-zone values are validated during startup; invalid code-defined cron is also
+an analyzer error.
 
 Inject `CleanupSessionsJob.Scheduler` to trigger a code-defined schedule immediately:
 
@@ -77,14 +79,16 @@ dashboard can trigger, pause and resume existing schedules.
 
 ## Overlap policy
 
-| Policy       | When the previous occurrence is still active                               |
-| ------------ | -------------------------------------------------------------------------- |
-| `Skip`       | Persist the occurrence as terminal `Skipped` history without executing it. |
-| `Queue`      | Materialize it and let it wait.                                            |
-| `Concurrent` | Allow both invocations to execute, subject to other concurrency limits.    |
+| Policy       | When the previous occurrence is still active                                     |
+| ------------ | -------------------------------------------------------------------------------- |
+| `Skip`       | Persist the occurrence as terminal `Skipped` history without executing it.       |
+| `Queue`      | Materialize every occurrence but admit only one invocation of the job at a time. |
+| `Concurrent` | Allow both invocations to execute, subject to other concurrency limits.          |
 
 Materialization is coordinated in durable storage, so `Recurring` capability is required. Redis
-and the SQL providers support it; graph support is unrelated.
+and the SQL providers support it; graph support is unrelated. A malformed persisted schedule is
+logged and skipped for that pass without blocking other recurring schedules or ordinary queued
+jobs.
 
 ## NodaTime
 

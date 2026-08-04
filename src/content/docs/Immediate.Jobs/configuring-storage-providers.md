@@ -24,16 +24,16 @@ implements recurring, graph and fair-queue behavior for development and tests.
 dotnet add package Immediate.Jobs.EntityFrameworkCore --prerelease
 ```
 
-Prefer a dedicated, application-owned `JobsDbContext` so the jobs schema and its migrations stay
-separate from your application's business model. The context can still use the same physical
-database if that suits your deployment:
+Prefer a dedicated, application-owned `JobsDbContext` so the jobs schema stays separate from your
+application's business model. The context can still use the same physical database if that suits
+your deployment:
 
 ```csharp
 // The application's business data uses its own context and model.
 builder.Services.AddDbContext<AppDbContext>(db =>
 	db.UseNpgsql(appConnectionString));
 
-// Immediate.Jobs uses a separate context, model and migration set.
+// Immediate.Jobs uses a separate context and model.
 builder.Services.AddDbContextFactory<JobsDbContext>(db =>
 	db.UseNpgsql(jobsConnectionString));       // PostgreSQL
 // db.UseSqlite(jobsConnectionString);       // SQLite
@@ -62,10 +62,10 @@ public sealed class JobsDbContext(DbContextOptions<JobsDbContext> options) : DbC
 }
 ```
 
-Create and apply EF migrations for `JobsDbContext` in the owning application. `AddImmediateJobs`
-maps six tables, their indexes and constraints; Immediate.Jobs does not apply your migrations.
-`EnsureCreated` is appropriate only for samples or disposable databases. Using an existing
-business `DbContext` is supported, but it couples the jobs schema and migrations to that model.
+The application owns database creation for `JobsDbContext`. `AddImmediateJobs` maps seven tables,
+their indexes and constraints. `EnsureCreated` is appropriate only for samples or disposable
+databases. Using an existing business `DbContext` is supported, but it couples the jobs schema to
+that model.
 
 ## LinqToDB
 
@@ -87,9 +87,9 @@ builder.Services.AddMyAppJobs(options =>
 	options.UseLinqToDB(dataOptions, schema: "background"));
 ```
 
-The application owns `DataOptions`, the matching ADO.NET driver and production migrations. The
-helper supports SQLite (without a named schema), PostgreSQL and SQL Server and creates missing
-tables/indexes for a fresh database. It is not a production upgrade mechanism.
+The application owns `DataOptions`, the matching ADO.NET driver and schema lifecycle. The helper
+supports SQLite (without a named schema), PostgreSQL and SQL Server and creates the tables and
+indexes for a fresh database.
 
 ## Redis
 
@@ -118,11 +118,10 @@ because the provider adds its own Redis Cluster hash tag for atomic Lua operatio
 Redis always selects distributed mode and supports queue plus recurring capabilities. It does not
 support graph workflows or fair queues.
 
-<Callout type="warning" title="Schema ownership">
+<Callout type="warning" title="Preview schema ownership">
 
-Storage initialization is idempotent provider startup, not a substitute for controlled production
-schema evolution. Keep migrations/bootstrap and provider packages at the same preview revision as
-the core package. The batch table now includes a non-null `SkippedCount` column; existing SQL
-schemas created before that field need an application-owned migration that defaults it to zero.
+Storage initialization is idempotent provider startup, not schema creation. Keep every
+Immediate.Jobs provider package at the same preview revision as the core package, and create test
+databases from the current EF model or `CreateImmediateJobsSchemaAsync` helper.
 
 </Callout>

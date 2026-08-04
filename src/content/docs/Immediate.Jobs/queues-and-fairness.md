@@ -62,4 +62,4 @@ acquisition order, not durable priority or a job's retry policy.
 | Redis                 | Not supported; grouped acquisition is rejected                   |
 | Single-server wrapper | Supported when its durable replica has full graph/fair semantics |
 
-Queue and group names are persisted. Renaming either does not migrate existing work.
+Queue and group names are persisted. Renaming either does not rename already-persisted work.
