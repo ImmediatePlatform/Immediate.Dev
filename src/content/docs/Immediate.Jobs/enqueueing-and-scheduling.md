@@ -100,7 +100,18 @@ store and compare `JobHandle.Id` or `BatchHandle.Id`, not parse business meaning
 scope while building a workflow and therefore should not be serialized as a durable business
 contract.
 
-Ordinary schedulers do not expose a cancellation method. Operational cancellation is available
-for a whole batch, while a single terminal job can be deleted and a failed job retried through
-storage operations or the dashboard. Cancellation tokens on scheduling calls cancel the storage
-operation only; they do not become a future execution-cancellation token.
+Use the same generated scheduler to cancel any non-terminal invocation:
+
+```csharp
+JobHandle handle = await scheduler.EnqueueAsync(payload, cancellationToken);
+await scheduler.CancelAsync(handle, cancellationToken);
+```
+
+Cancellation immediately persists `Cancelled`, including for scheduled, pending, continuation-
+waiting and active work. If a worker already owns the invocation, its in-process handler is not
+forcibly interrupted; attempt fencing prevents that worker's later completion or failure from
+overwriting the cancelled record. Cancelling an unknown handle fails as not found, and cancelling
+a terminal invocation fails with `ImmediateJobException`.
+
+The token passed to `CancelAsync` cancels the storage operation only. Likewise, cancellation tokens
+on scheduling calls do not become future execution-cancellation tokens.

@@ -52,7 +52,7 @@ purges history. At shutdown it stops acquisition, cancels active work and waits 
 `ShutdownTimeout` (30 seconds by default).
 
 Provider/schema initialization happens during worker startup. Your application still owns its
-database migrations or bootstrap as described in
+database schema or bootstrap as described in
 [Configuring storage providers](/docs/Immediate.Jobs/configuring-storage-providers). Start the
 entire `IHost` in console and worker-service applications; merely building the service provider
 does not run jobs.

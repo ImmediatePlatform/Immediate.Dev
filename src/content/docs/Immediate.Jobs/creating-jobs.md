@@ -62,7 +62,8 @@ dynamic recurring scheduler.
 derived from the class name (`SendWelcomeEmailJob` becomes `send-welcome-email`). Set an
 explicit name before production and do not casually rename it: old rows retain the old value and
 will fail when no matching definition is registered. Names must contain a letter or digit and be
-unique in the assembly.
+unique in the assembly. Persisted identifiers use ordinal, case-sensitive matching, so casing is
+part of the contract too.
 
 ## Execution policy
 

@@ -16,8 +16,10 @@ builder.Services.AddOpenTelemetry()
 Each execution creates a consumer activity named `job {job.name}` with `job.name`, `job.queue`,
 `job.id` and `job.attempt`. Enqueue trace context is persisted and linked to the execution rather
 than used as its parent, so asynchronous work remains causally visible without pretending to be a
-single synchronous span. The execution trace/span IDs and start time are persisted for dashboard
-links.
+single synchronous span. Every acquired attempt retains its trace/span IDs, timing, worker, outcome
+and full failure text for the lifetime of its owning job or batch. The latest values remain on
+`JobRecord` as the latest-execution projection, while the dashboard can build links for an exact
+`JobExecutionRecord`.
 
 ## Metrics
 

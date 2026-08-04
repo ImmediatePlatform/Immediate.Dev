@@ -48,8 +48,7 @@ exposes `Storage`, `TimeProvider`, `Services` and `Batches`.
 
 For graphs, use `AssertBatchCommittedAtomicallyAsync`,
 `AssertContinuationReleasedAfterAsync` and `AssertCascadeSkippedAsync`.
-`AssertCascadeCancelledAsync` remains as a compatibility alias. Call
-`RunThroughPipelineAsync<TPayload>` when a test already has a record/payload and needs to execute
+Call `RunThroughPipelineAsync<TPayload>` when a test already has a record/payload and needs to execute
 its generated invoker through the real DI/behavior pipeline.
 
 ## Capture scheduling only
@@ -70,12 +69,16 @@ var capture = scheduler.Last!;
 Assert.Equal(handle.Id, capture.Id);
 Assert.Equal(payload, capture.Payload);
 Assert.Equal("tenant-a", capture.GroupId);
+
+await scheduler.CancelAsync(handle, cancellationToken);
+Assert.Contains(handle.Id, scheduler.CancelledIds);
 ```
 
-`Captures` preserves call order, `Last` returns the newest call, and `Clear()` resets it. Captures
-include payload, run time, group ID and generated handle. `CaptureOnlyRecurringJobScheduler`
-records add/update/remove/trigger operations for payloadless dynamic schedules. Override the
-capture scheduler's ID creation when stable IDs make assertions clearer.
+`Captures` preserves call order, `Last` returns the newest call, and `CancelledIds` records
+cancellations of captured handles. `Clear()` resets both collections. Captures include payload,
+run time, group ID and generated handle. `CaptureOnlyRecurringJobScheduler` records
+add/update/remove/trigger operations for payloadless dynamic schedules. Override the capture
+scheduler's ID creation when stable IDs make assertions clearer.
 
 Testing helpers throw `JobTestAssertionException` with job/batch-specific mismatch details. They
 exercise the same generated JSON metadata and storage state machine as production without relying
