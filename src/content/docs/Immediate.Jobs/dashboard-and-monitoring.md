@@ -53,9 +53,20 @@ var app = builder.Build();
 app.MapImmediateJobsDashboard("/jobs");
 ```
 
-Without `RequireAuthorization`, every dashboard endpoint is development-only and returns 403 in
-other environments. Treat the dashboard as an administrative surface: it exposes payloads,
-errors, identifiers and mutations. A named policy applies to UI assets and APIs together.
+Without `RequireAuthorization`, every dashboard endpoint is development-only by default and
+returns 403 in other environments. For a trusted custom development environment, explicitly
+disable this restriction when mapping the dashboard:
+
+```csharp
+app.MapImmediateJobsDashboard("/jobs", options =>
+	_ = options.AllowInAnyEnvironment()
+);
+```
+
+Treat the dashboard as an administrative surface: it exposes payloads, errors, identifiers and
+mutations. Prefer `RequireAuthorization` whenever the dashboard is available outside a trusted
+development environment. A named policy applies to UI assets and APIs together and remains
+authoritative if `AllowInAnyEnvironment` is also configured.
 
 The UI shows queue/state totals, including skipped work, recent history, jobs and details,
 recurring schedules, scheduler servers, batches and workflow graphs. Graph views appear only for
