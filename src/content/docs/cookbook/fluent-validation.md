@@ -110,7 +110,7 @@ The behavior is registered automatically when the generated handler registration
 
 ```csharp title="Program.cs"
 // rest of Program.cs omitted for brevity
-builder.Services.AddHandlers();
+builder.Services.AddFluentValidationExampleHandlers();
 ```
 
 ### Add a validator to the endpoint
