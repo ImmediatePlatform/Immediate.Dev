@@ -130,4 +130,5 @@ and the non-streaming `LoggingBehavior` attaches only to `ValueTask` handlers wh
 `StreamingLoggingBehavior` attaches only to `IAsyncEnumerable` handlers. Neither interferes with the
 other, and neither needs a constraint to stay out of the other's way.
 
-Both are registered by the same `services.AddXxxBehaviors()` call.
+Both are registered automatically alongside the handlers they attach to when
+`services.AddXxxHandlers()` runs.

@@ -167,7 +167,6 @@ Immediate.Cache needs `IMemoryCache`, so two calls rather than one:
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<TodoRepository>();
-builder.Services.AddTodoBehaviors();
 builder.Services.AddTodoHandlers();
 builder.Services.AddMemoryCache();
 builder.Services.AddTodoCaches();

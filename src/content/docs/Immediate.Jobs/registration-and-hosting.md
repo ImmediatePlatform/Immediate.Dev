@@ -5,10 +5,10 @@ order: 9
 group: Guides
 ---
 
-Register the Immediate.Handlers pieces first, then the generated Jobs method:
+Register the Immediate.Handlers pieces first, then the generated Jobs method. Handler registration
+also adds each selected handler's behavior dependencies:
 
 ```csharp title="Program.cs"
-builder.Services.AddMyAppBehaviors();
 builder.Services.AddMyAppHandlers();
 
 builder.Services.AddMyAppJobs(options =>
@@ -23,7 +23,7 @@ builder.Services.AddMyAppJobs(options =>
 registers each selected job's scheduler, invoker, context extractors and definition, all queue
 definitions, then adds the runtime once. It does **not** register the generated Immediate.Handlers
 handlers; without `AddMyAppHandlers`, enqueue succeeds but execution fails when the worker cannot
-resolve the handler. Behaviors still require `AddMyAppBehaviors`.
+resolve the handler or its behaviors.
 
 Generated job schedulers, `IJobBatchScheduler`, `IJobMonitor` and `IJobBatchMonitor` are scoped.
 Definitions, queue definitions, invokers, storage, serializer, ID generator, options and the worker

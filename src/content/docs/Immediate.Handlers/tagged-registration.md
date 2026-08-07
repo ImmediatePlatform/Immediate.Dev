@@ -45,12 +45,10 @@ constructor argument when you need both:
 name unless you are also setting a lifetime:
 
 ```csharp title="Worker/Program.cs"
-builder.Services.AddApplicationBehaviors();
 builder.Services.AddApplicationHandlers(tags: "worker");
 ```
 
 ```csharp title="Api/Program.cs"
-builder.Services.AddApplicationBehaviors();
 builder.Services.AddApplicationHandlers(tags: "web");
 ```
 
@@ -82,11 +80,12 @@ the assembly, and the API host gets everything untagged plus the `"web"` handler
 
 If you want strict separation, tag every handler.
 
-## Behaviors are not filtered
+## Behavior registration follows the handler filter
 
-`AddXxxBehaviors()` takes no tags and registers every behavior referenced anywhere in the assembly.
-Behaviors are transient and only constructed when a handler that uses them is resolved, so an unused
-registration costs nothing.
+Each selected handler registers the concrete behavior types in its generated pipeline. A behavior that
+only applies to a handler excluded by the tag filter is therefore not registered. Shared concrete
+behavior types use `TryAddTransient`, so they are added only once even when several selected handlers
+reference them.
 
 Tags behave the same way across Immediate.Handlers, Immediate.Apis and Immediate.Injections; the shared
 semantics are described on [Tags and conditional

@@ -61,7 +61,6 @@ Each package generates one assembly-level method, named after your assembly:
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMyAppHandlers();   // Immediate.Handlers
-builder.Services.AddMyAppBehaviors();  // Immediate.Handlers — behaviors
 builder.Services.AddMemoryCache();     // required by Immediate.Cache
 builder.Services.AddMyAppCaches();     // Immediate.Cache
 builder.Services.AddMyAppServices();   // Immediate.Injections

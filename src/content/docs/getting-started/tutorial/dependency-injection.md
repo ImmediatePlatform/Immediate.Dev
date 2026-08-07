@@ -35,7 +35,6 @@ Then replace the hand-written line with the generated method:
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddTodoServices();
-builder.Services.AddTodoBehaviors();
 builder.Services.AddTodoHandlers();
 builder.Services.AddMemoryCache();
 builder.Services.AddTodoCaches();

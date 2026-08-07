@@ -184,7 +184,8 @@ per handler is the whole point of constraints.
 
 ## Registering behaviors
 
-Behaviors are registered by `services.AddXxxBehaviors()`, which registers every type referenced in any
-`[Behaviors]` attribute in the assembly, including handler-level and bundle attributes. See
-[Registering with `IServiceCollection`](/docs/Immediate.Handlers/registration) for what lifetime they
-get.
+`services.AddXxxHandlers()` registers each selected handler's concrete behavior dependencies
+automatically. Only behaviors that actually attach to a handler are registered, with their generic
+arguments closed for that handler's request and response types. See [Registering with
+`IServiceCollection`](/docs/Immediate.Handlers/registration) for their lifetime and the exact service
+types.

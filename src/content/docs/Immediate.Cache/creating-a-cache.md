@@ -89,7 +89,6 @@ The name can be overridden with
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMemoryCache();
-builder.Services.AddWebBehaviors();
 builder.Services.AddWebHandlers();
 builder.Services.AddWebCaches();
 ```

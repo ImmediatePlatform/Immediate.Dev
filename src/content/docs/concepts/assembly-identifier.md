@@ -7,13 +7,13 @@ order: 3
 Every ImmediatePlatform generator emits assembly-level registration methods whose names contain
 an identifier derived from your assembly:
 
-| Package              | Generated method                        |
-| -------------------- | --------------------------------------- |
-| Immediate.Handlers   | `AddXxxHandlers()`, `AddXxxBehaviors()` |
-| Immediate.Apis       | `MapXxxEndpoints()`                     |
-| Immediate.Cache      | `AddXxxCaches()`                        |
-| Immediate.Injections | `AddXxxServices()`                      |
-| Immediate.Jobs       | `AddXxxJobs()`                          |
+| Package              | Generated method    |
+| -------------------- | ------------------- |
+| Immediate.Handlers   | `AddXxxHandlers()`  |
+| Immediate.Apis       | `MapXxxEndpoints()` |
+| Immediate.Cache      | `AddXxxCaches()`    |
+| Immediate.Injections | `AddXxxServices()`  |
+| Immediate.Jobs       | `AddXxxJobs()`      |
 
 All five packages read the same source. Set it once and every generated method name changes
 together.

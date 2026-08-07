@@ -44,7 +44,6 @@ Then replace the hand-written routes in `Program.cs` with one call:
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<TodoRepository>();
-builder.Services.AddTodoBehaviors();
 builder.Services.AddTodoHandlers();
 
 var app = builder.Build();

@@ -186,17 +186,45 @@ public static IServiceCollection AddHandlers(
 	ServiceLifetime lifetime = ServiceLifetime.Scoped
 )
 {
-	services.Add(new(typeof(GetUsersQuery.Handler), typeof(GetUsersQuery.Handler), lifetime));
-	services.Add(new(typeof(IHandler<GetUsersQuery.Query, IEnumerable<User>>), typeof(GetUsersQuery.Handler), lifetime));
-	services.Add(new(typeof(GetUsersQuery.HandleBehavior), typeof(GetUsersQuery.HandleBehavior), lifetime));
+	ServiceCollectionDescriptorExtensions.TryAddTransient(
+		services,
+		typeof(LoggingBehavior<GetUsersQuery.Query, IEnumerable<User>>)
+	);
+	ServiceCollectionDescriptorExtensions.TryAdd(
+		services,
+		ServiceDescriptor.Describe(
+			typeof(GetUsersQuery.Handler),
+			typeof(GetUsersQuery.Handler),
+			lifetime
+		)
+	);
+	ServiceCollectionDescriptorExtensions.TryAdd(
+		services,
+		ServiceDescriptor.Describe(
+			typeof(IHandler<GetUsersQuery.Query, IEnumerable<User>>),
+			typeof(GetUsersQuery.Handler),
+			lifetime
+		)
+	);
+	ServiceCollectionDescriptorExtensions.TryAdd(
+		services,
+		ServiceDescriptor.Describe(
+			typeof(GetUsersQuery.HandleBehavior),
+			typeof(GetUsersQuery.HandleBehavior),
+			lifetime
+		)
+	);
 	return services;
 }
 ```
 
-A fourth `services.Add` for the container class itself appears for sealed instance handlers.
+A fourth `TryAdd` descriptor for the container class itself appears for sealed instance handlers.
+Every concrete behavior in this handler's generated pipeline gets a `TryAddTransient` call before the
+handler descriptors.
 
 This is a plain static method, not an extension method. `[EditorBrowsable(Never)]` keeps it out of
-IntelliSense even though it is `public` and callable.
+IntelliSense even though it is `public` and callable. `TryAdd` also makes repeated handler registration
+idempotent and preserves any service registration already present for the same concrete service type.
 
 ## What is emitted per assembly
 
@@ -206,12 +234,6 @@ in the project's `RootNamespace`.
 ```csharp title="IH.ServiceCollectionExtensions.g.cs"
 public static class HandlerServiceCollectionExtensions
 {
-	public static IServiceCollection AddApplicationBehaviors(this IServiceCollection services)
-	{
-		ServiceCollectionDescriptorExtensions.TryAddTransient(services, typeof(LoggingBehavior<,>));
-		return services;
-	}
-
 	public static IServiceCollection AddApplicationHandlers(
 		this IServiceCollection services,
 		ServiceLifetime lifetime = ServiceLifetime.Scoped,
@@ -249,8 +271,8 @@ Everything about registration is visible here:
 - `Intersects` is ordinal, which is why tag matching is case-sensitive with no wildcards.
 - A handler with `[Handler(ServiceLifetime.Singleton)]` has its lifetime emitted as a literal, ignoring
   the `lifetime` parameter.
-- Behaviors go through `TryAddTransient` with the **open generic** definition, ignoring `lifetime`
-  entirely.
+- `AddHandlers` registers each selected handler's **concrete closed** behavior types through
+  `TryAddTransient`, ignoring `lifetime` entirely.
 - `params ReadOnlySpan<string>` is emitted for C# 13 and later; on C# 12 and below the generator emits
   `params string[]` instead.
 
@@ -264,7 +286,6 @@ Some inputs make the generator bail out rather than emit partial results:
 | A `[Behaviors]` entry on a handler is invalid — abstract, bound generic, more than two type parameters, or not a behavior | that handler's file is not emitted                                      |
 | An **assembly-level** `[Behaviors]` entry is invalid                                                                      | **nothing** is emitted, including `IH.ServiceCollectionExtensions.g.cs` |
 
-In the first two rows an IHR diagnostic normally points at the cause. The exception is an `abstract`
-behavior type, which no analyzer flags — see the warning on [Creating
-behaviors](/docs/Immediate.Handlers/creating-behaviors). If `AddXxxHandlers` itself does not exist,
-suspect an invalid assembly-level `[Behaviors]` entry before anything else.
+In the first two rows an IHR diagnostic points at the cause, including
+[IHR0024](/docs/Immediate.Handlers/diagnostics) for an abstract behavior type. If `AddXxxHandlers`
+itself does not exist, suspect an invalid assembly-level `[Behaviors]` entry before anything else.

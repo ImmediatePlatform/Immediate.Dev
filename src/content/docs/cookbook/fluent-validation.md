@@ -106,11 +106,11 @@ using Immediate.Handlers.Shared;
 )]
 ```
 
-If you don't already have behaviors registered in your `Program.cs`, add the following:
+The behavior is registered automatically when the generated handler registrations run:
 
 ```csharp title="Program.cs"
 // rest of Program.cs omitted for brevity
-builder.Services.AddBehaviors();
+builder.Services.AddFluentValidationExampleHandlers();
 ```
 
 ### Add a validator to the endpoint
