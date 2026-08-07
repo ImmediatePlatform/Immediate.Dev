@@ -60,10 +60,9 @@ public sealed partial class GetUsersQuery(UsersService usersService)
 }
 ```
 
-Register the generated handlers and behaviors at startup:
+Register the generated handlers at startup. Their behavior dependencies are registered automatically:
 
 ```csharp title="Program.cs"
-builder.Services.AddApplicationBehaviors();
 builder.Services.AddApplicationHandlers();
 ```
 

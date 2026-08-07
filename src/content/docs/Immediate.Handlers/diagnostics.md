@@ -9,7 +9,7 @@ group: Diagnostics
 	import { Callout } from '$lib/components/docs';
 </script>
 
-Immediate.Handlers ships 20 analyzer diagnostics in the `ImmediateHandler` category, all prefixed
+Immediate.Handlers ships 21 analyzer diagnostics in the `ImmediateHandler` category, all prefixed
 `IHR`. Errors marked _not configurable_ cannot be suppressed or downgraded in `.editorconfig` — they
 describe shapes the generator physically cannot emit code for.
 
@@ -35,6 +35,7 @@ describe shapes the generator physically cannot emit code for.
 | IHR0021 | Behavior has invalid constraints                                                   | Error    | No           |
 | IHR0022 | Non-static handler should not be used directly                                     | Warning  | Yes          |
 | IHR0023 | Invalid assembly identifier                                                        | Error    | No           |
+| IHR0024 | Behaviors must not be abstract                                                     | Error    | No           |
 
 There is no IHR0003, IHR0004 or IHR0009. The first two were never shipped; IHR0009 was removed in 3.0.
 
@@ -146,6 +147,12 @@ per handler is the point of constraints.
 A behavior type parameter carries a `class`, `struct`, `unmanaged`, `notnull` or `new()` constraint.
 Only constraints to a concrete interface, class or record are supported.
 
+### IHR0024 — Behaviors must not be abstract
+
+A type listed in `[Behaviors]` is abstract. Make the behavior concrete so the generated handler can
+request it from dependency injection. This includes generic behavior definitions: the class itself
+must be non-abstract even though its type parameters remain open in the attribute.
+
 ## Consumption and assembly
 
 ### IHR0013 — `IHandler<,>` / `IStreamingHandler<,>` is missing a concrete implementation
@@ -185,11 +192,9 @@ When a behavior silently does not run, work through these in order:
    — including one applied through a bundle attribute — discards the assembly-wide list entirely.
 4. **Tag mismatch.** The handler was filtered out of `AddXxxHandlers(tags: ...)`, so nothing about it is
    registered, pipeline included.
-5. **Abstract behavior class.** If a listed behavior is `abstract`, generation aborts for the affected
-   handler — or for the whole assembly when the attribute is assembly-level — and no IHR diagnostic
-   fires. The symptom is a missing `Handler` class, not a missing behavior.
-6. **`AddXxxBehaviors()` was never called.** The pipeline is compiled in, but the behavior types are not
-   in the container, so resolving the handler throws.
+5. **Abstract behavior class.** [IHR0024](/docs/Immediate.Handlers/diagnostics) reports the invalid entry.
+   Generation aborts for the affected handler, or for the whole assembly when the attribute is
+   assembly-level.
 
 <Callout type="tip">
 

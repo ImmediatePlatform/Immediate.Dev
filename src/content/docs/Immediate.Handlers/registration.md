@@ -11,17 +11,17 @@ sidebar:
 	import { Callout } from '$lib/components/docs';
 </script>
 
-Immediate.Handlers targets `Microsoft.Extensions.DependencyInjection.Abstractions` directly. Two
-generated extension methods do all the work:
+Immediate.Handlers targets `Microsoft.Extensions.DependencyInjection.Abstractions` directly. One
+generated extension method registers the handlers and their behavior dependencies:
 
 ```csharp title="Program.cs"
-builder.Services.AddApplicationBehaviors();
 builder.Services.AddApplicationHandlers();
 ```
 
-`AddApplicationHandlers` registers every `[Handler]` class in the assembly.
-`AddApplicationBehaviors` registers every type referenced by any `[Behaviors]` attribute in the
-assembly — assembly-level, handler-level and bundle attributes alike.
+`AddApplicationHandlers` registers every `[Handler]` class in the assembly. For each handler, it also
+registers the concrete behavior types that survived the pipeline's constraint and handler-kind
+filtering. This covers assembly-level, handler-level and bundle attributes alike; there is no separate
+behavior registration call.
 
 The `Application` in the middle is the assembly identifier: by default the assembly name with `.`, ` `
 and `-` removed, overridable with `[assembly: ImmediateAssemblyIdentifier("...")]`. See [The assembly
@@ -29,8 +29,15 @@ identifier](/docs/concepts/assembly-identifier) for the derivation rules, and no
 used by Immediate.Apis, Immediate.Cache and Immediate.Injections — changing it changes all of them at
 once.
 
-Both methods live on a generated `HandlerServiceCollectionExtensions` class placed in your project's
+The method lives on a generated `HandlerServiceCollectionExtensions` class placed in your project's
 root namespace.
+
+<Callout type="note" title="Upgrading from an earlier release">
+
+Remove any `AddXxxBehaviors()` call from startup. That generated method no longer exists because
+`AddXxxHandlers()` now registers the applicable behavior dependencies itself.
+
+</Callout>
 
 ## Lifetimes
 
@@ -56,9 +63,9 @@ ignores whatever was passed to `AddXxxHandlers`.
 <Callout type="warning" title="Generated behavior registrations are transient">
 
 The lifetime argument applies to handlers only. Generated behavior registrations use
-`TryAddTransient` regardless of what you pass to `AddXxxHandlers`. If you register a behavior
-type yourself _before_ calling `AddXxxBehaviors`, `TryAdd` preserves your registration and its
-lifetime instead. Otherwise, each handler resolution gets fresh behavior instances.
+`TryAddTransient` regardless of what you pass to `AddXxxHandlers`. If you register the same concrete
+closed behavior type yourself _before_ calling `AddXxxHandlers`, `TryAdd` preserves your registration
+and its lifetime instead. Otherwise, each handler resolution gets fresh behavior instances.
 
 </Callout>
 
@@ -66,12 +73,13 @@ lifetime instead. Otherwise, each handler resolution gets fresh behavior instanc
 
 For a handler `Application.GetUsersQuery` with request `Query` and response `IEnumerable<User>`:
 
-| Service type                                       | Implementation type            | Lifetime      |
-| -------------------------------------------------- | ------------------------------ | ------------- |
-| `GetUsersQuery.Handler`                            | `GetUsersQuery.Handler`        | as configured |
-| `IHandler<GetUsersQuery.Query, IEnumerable<User>>` | `GetUsersQuery.Handler`        | as configured |
-| `GetUsersQuery.HandleBehavior`                     | `GetUsersQuery.HandleBehavior` | as configured |
-| `GetUsersQuery` (sealed handlers only)             | `GetUsersQuery`                | as configured |
+| Service type                                              | Implementation type            | Lifetime      |
+| --------------------------------------------------------- | ------------------------------ | ------------- |
+| `GetUsersQuery.Handler`                                   | `GetUsersQuery.Handler`        | as configured |
+| `IHandler<GetUsersQuery.Query, IEnumerable<User>>`        | `GetUsersQuery.Handler`        | as configured |
+| `GetUsersQuery.HandleBehavior`                            | `GetUsersQuery.HandleBehavior` | as configured |
+| `GetUsersQuery` (sealed handlers only)                    | `GetUsersQuery`                | as configured |
+| `LoggingBehavior<GetUsersQuery.Query, IEnumerable<User>>` | itself                         | transient     |
 
 Streaming handlers register `IStreamingHandler<TRequest, TResponse>` in place of `IHandler<,>`.
 
@@ -87,8 +95,14 @@ handler as a singleton and expect reference equality.
 
 </Callout>
 
-Behaviors are registered as their open generic definition, so
-`typeof(LoggingBehavior<,>)` is registered once and the container closes it per handler.
+Behavior registrations are concrete types closed for the handler's request and response. For example,
+the same `LoggingBehavior<,>` attribute entry produces separate
+`LoggingBehavior<GetUsersQuery.Query, IEnumerable<User>>` and
+`LoggingBehavior<CreateUserCommand.Command, ValueTuple>` registrations when it applies to both
+handlers.
+
+All generated descriptors use `TryAdd`, so calling `AddXxxHandlers` repeatedly is idempotent. Existing
+registrations for the same service type are preserved.
 
 ## Registering a single handler
 
@@ -104,8 +118,9 @@ var handler = services.BuildServiceProvider()
 	.GetRequiredService<GetUsersQuery.Handler>();
 ```
 
-Note it is a plain static method rather than an extension method, and it does not register behaviors —
-if the handler's pipeline includes any, register those types yourself.
+It is a plain static method rather than an extension method. It registers the handler's concrete
+behavior dependencies too, so the isolated registration is sufficient for resolving its generated
+pipeline.
 
 ## Registering a subset
 

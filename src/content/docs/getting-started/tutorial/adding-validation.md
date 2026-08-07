@@ -69,13 +69,12 @@ Validation runs because `ValidationBehavior<,>` is in the pipeline. Add it assem
 ```
 
 Put that at the top of `Program.cs`, above the top-level statements, or in an `AssemblyInfo.cs`.
-Then register the behaviors:
+The behavior is registered automatically with the handlers:
 
 ```csharp title="Program.cs" {4}
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<TodoRepository>();
-builder.Services.AddTodoBehaviors();
 builder.Services.AddTodoHandlers();
 ```
 

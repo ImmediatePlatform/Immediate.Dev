@@ -96,11 +96,11 @@ public sealed class ImmediateAssemblyIdentifierAttribute(string identifier) : At
 }
 ```
 
-Replaces the assembly name in the generated `AddXxxHandlers` and `AddXxxBehaviors` method names.
+Replaces the assembly name in the generated `AddXxxHandlers` method name.
 
 ```csharp title="AssemblyAttributes.cs"
 [assembly: ImmediateAssemblyIdentifier("Application")]
-// generates AddApplicationHandlers / AddApplicationBehaviors
+// generates AddApplicationHandlers
 ```
 
 The value must be a valid C# identifier and must not start with `@`; anything else reports
