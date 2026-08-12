@@ -8,13 +8,32 @@ group: Guides
 Recurring jobs are payloadless. A code-defined schedule lives on `[Job]`:
 
 ```csharp
-[Handler, Job(Cron = "0 */5 * * * *", TimeZone = "Europe/Vienna")]
+[Handler, Job(Name = "cleanup-sessions", Cron = "0 */5 * * * *", TimeZone = "Europe/Vienna")]
 public sealed partial class CleanupSessionsJob(AppDbContext db)
 {
 	private ValueTask HandleAsync(EmptyJobRequest request, CancellationToken cancellationToken) =>
 		new(db.DeleteExpiredSessions(cancellationToken));
 }
 ```
+
+For infrastructure that selects a payloadless job by its persisted job name, inject the generated
+root-namespace `RecurringJobs` singleton instead of a specific scheduler:
+
+```csharp
+public sealed class NamedJobOperations(RecurringJobs recurringJobs)
+{
+	public ValueTask RunNowAsync(CancellationToken cancellationToken) =>
+		recurringJobs.TriggerNowAsync("cleanup-sessions", cancellationToken);
+}
+```
+
+This name is the job's `[Job(Name = ...)]` identity, not a dynamic schedule name. Name matching is
+ordinal and case-sensitive. An unknown name throws `ImmediateJobException` before a scope is
+created. For a known name, the dispatcher creates a scope and resolves the generated scheduler; a
+job excluded by the current registration tags also throws `ImmediateJobException`. Payload-bearing
+jobs are not included in this dispatcher. The method completes when the immediate invocation is
+persisted and does not return its `JobHandle`; use the typed scheduler when the caller needs the
+handle.
 
 Cron expressions accept five fields (minute precision), six fields (seconds first), or the
 case-insensitive macros `@yearly`/`@annually`, `@monthly`, `@weekly`, `@daily`/`@midnight`,
@@ -34,10 +53,10 @@ public sealed class CleanupOperations(CleanupSessionsJob.Scheduler scheduler)
 }
 ```
 
-At startup the hosted service upserts every code-defined schedule and removes obsolete
-code-defined rows. Dynamic rows are left alone. This reconciliation means a deploy can change a
-cron expression, but two versions of an application should not intentionally define different
-schedules under the same name.
+At startup, a provider with recurring support upserts every code-defined schedule and removes
+obsolete code-defined rows. Dynamic rows are left alone. A queue-only custom provider skips this
+step. This reconciliation means a deploy can change a cron expression, but two versions of an
+application should not intentionally define different schedules under the same name.
 
 When the persisted cron expression and time zone are unchanged, reconciliation preserves its
 stored `NextRunAt`, including an occurrence that became due while the application was stopped. A

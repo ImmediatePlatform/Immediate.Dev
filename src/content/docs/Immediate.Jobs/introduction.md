@@ -63,7 +63,8 @@ Register handlers and jobs, then inject the generated scoped scheduler:
 
 ```csharp title="Program.cs"
 builder.Services.AddMyAppHandlers();
-builder.Services.AddMyAppJobs(options => options.UseInMemory());
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage.UseInMemory());
 ```
 
 The injected type is `SendWelcomeEmail.Scheduler`. The returned `JobHandle` is an opaque

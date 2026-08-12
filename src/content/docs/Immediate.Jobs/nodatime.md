@@ -24,7 +24,8 @@ Register the integration with Jobs:
 using Immediate.Jobs.NodaTime;
 
 builder.Services.AddMyAppHandlers();
-builder.Services.AddMyAppJobs(options => options.UseInMemory());
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage.UseInMemory());
 builder.Services.AddImmediateJobsNodaTime();
 ```
 

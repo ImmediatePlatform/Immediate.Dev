@@ -175,7 +175,7 @@ poll-backed live view, not a durable event log; clients must refresh after recon
 ## Programmatic monitoring
 
 Inject scoped `IJobMonitor` and call `GetJobAsync`. With a graph provider, inject
-`IJobBatchMonitor` and call `GetStatusAsync`, `QueryMembersAsync`, or `GetGraphAsync`. These are
+`IBatchMonitor` and call `GetStatusAsync`, `QueryMembersAsync`, or `GetGraphAsync`. These are
 read-only contracts suitable for application status endpoints. Custom operational views can query
 newest-first attempts through `IJobStorage.QueryJobExecutionsAsync`; the execution history remains
 with its owning job or batch until that aggregate is deleted or purged.

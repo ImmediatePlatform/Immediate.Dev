@@ -12,7 +12,8 @@ group: Guides
 ## In-memory
 
 ```csharp
-builder.Services.AddMyAppJobs(options => options.UseInMemory());
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage.UseInMemory());
 ```
 
 This is also the default when no storage is selected. It is non-durable and single-node but
@@ -39,8 +40,10 @@ builder.Services.AddDbContextFactory<JobsDbContext>(db =>
 // db.UseSqlite(jobsConnectionString);       // SQLite
 // db.UseSqlServer(jobsConnectionString);    // SQL Server
 
-builder.Services.AddMyAppJobs(options =>
-	options.UseEntityFrameworkCore<JobsDbContext>());
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage
+		.UseEntityFrameworkCore<JobsDbContext>()
+		.UseSingleServer());
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
@@ -99,8 +102,10 @@ await dataOptions.CreateImmediateJobsSchemaAsync(
 	CancellationToken.None
 );
 
-builder.Services.AddMyAppJobs(options =>
-	options.UseLinqToDB(dataOptions, schema: "background"));
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage
+		.UseLinqToDB(dataOptions, schema: "background")
+		.UseSingleServer());
 ```
 
 The application owns `DataOptions`, the matching ADO.NET driver and schema lifecycle. The helper
@@ -116,14 +121,15 @@ dotnet add package Immediate.Jobs.Redis --prerelease
 Pass a configuration string when Jobs should own the connection:
 
 ```csharp
-builder.Services.AddMyAppJobs(options => options.UseRedis(
-	"localhost:6379",
-	redis =>
-	{
-		redis.Database = 1;
-		redis.KeyPrefix = "billing-jobs";
-	}
-));
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage.UseRedis(
+		"localhost:6379",
+		redis =>
+		{
+			redis.Database = 1;
+			redis.KeyPrefix = "billing-jobs";
+		}
+	));
 ```
 
 Or pass an application-owned `IConnectionMultiplexer`; the provider will not dispose it. The
@@ -133,6 +139,11 @@ because the provider adds its own Redis Cluster hash tag for atomic Lua operatio
 
 Redis always selects distributed mode and supports queue plus recurring capabilities. It does not
 support graph workflows or fair queues.
+
+Provider extensions configure `ImmediateJobsStorageBuilder`; applications do not construct the
+built-in storage types directly. With EF Core or LinqToDB, use `UseSingleServer()` for one scheduler
+process or `UseDistributed()` for more than one. If neither is called, Jobs uses single-server
+mode. Redis selects distributed mode itself.
 
 <Callout type="warning" title="Preview schema ownership">
 

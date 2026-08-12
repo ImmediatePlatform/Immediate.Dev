@@ -97,13 +97,14 @@ app.MapTodoEndpoints(tags: ["web"]);
 app.MapTodoEndpoints("/v1", "web");
 ```
 
-`AddXxxJobs` takes its optional options delegate before `tags`. It reads the job's
-Immediate.Handlers `Tags` value; use the same filter for Jobs and Handlers so every selected job
-has a generated handler at execution:
+`AddXxxJobs` takes only its `tags` slice and returns `ImmediateJobsBuilder` for chained
+configuration. It reads the job's Immediate.Handlers `Tags` value; use the same filter for Jobs
+and Handlers so every selected job has a generated handler at execution:
 
 ```csharp
 services.AddTodoHandlers(tags: ["fulfillment"]);
-services.AddTodoJobs(options => options.UseInMemory(), tags: ["fulfillment"]);
+services.AddTodoJobs(tags: ["fulfillment"])
+	.ConfigureStorage(storage => storage.UseInMemory());
 ```
 
 `AddXxxJobs` does not replace `AddXxxHandlers`. Job queue definitions are assembly-wide and remain

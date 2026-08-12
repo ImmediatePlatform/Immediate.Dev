@@ -11,24 +11,61 @@ also adds each selected handler's behavior dependencies:
 ```csharp title="Program.cs"
 builder.Services.AddMyAppHandlers();
 
-builder.Services.AddMyAppJobs(options =>
-{
-	options.UseEntityFrameworkCore<AppDbContext>(); // single-server mode by default
-	options.MaxParallelJobs = 16;
-	options.PollingInterval = TimeSpan.FromSeconds(1);
-}).AddHealthCheck();
+builder.Services.AddMyAppJobs()
+	.Configure(options =>
+	{
+		options.MaxParallelJobs = 16;
+		options.PollingInterval = TimeSpan.FromSeconds(1);
+	})
+	.ConfigureStorage(storage => storage
+		.UseEntityFrameworkCore<AppDbContext>()
+		.UseSingleServer())
+	.AddHealthCheck();
 ```
 
-`MyApp` is the shared [assembly identifier](/docs/concepts/assembly-identifier). `AddMyAppJobs`
-registers each selected job's scheduler, invoker, context extractors and definition, all queue
-definitions, then adds the runtime once. It does **not** register the generated Immediate.Handlers
-handlers; without `AddMyAppHandlers`, enqueue succeeds but execution fails when the worker cannot
-resolve the handler or its behaviors.
+At source revision `ee5f51d`, `AddHealthCheck` needs the temporary options bridge shown in
+[Observability and health](/docs/Immediate.Jobs/observability-and-health#health-checks).
 
-Generated job schedulers, `IJobBatchScheduler`, `IJobMonitor` and `IJobBatchMonitor` are scoped.
-Definitions, queue definitions, invokers, storage, serializer, ID generator, options and the worker
-service are singleton. Every execution creates its own scope for extractors, behaviors, handler
-and dependencies.
+`MyApp` is the shared [assembly identifier](/docs/concepts/assembly-identifier). `AddMyAppJobs`
+accepts optional tags and returns `ImmediateJobsBuilder`. Chain runtime options, fair queues,
+storage, and health checks from that builder.
+
+The generated method lives in the project's `RootNamespace`, matching Immediate.Handlers. Import
+that namespace (for example, `using MyApp;`) when startup code is outside it, including a top-level
+`Program.cs`.
+
+Registration adds the selected schedulers, invokers, context extractors, job definitions, all queue
+definitions, and the generated `RecurringJobs` dispatcher. Calling a generated registration method
+again does not add duplicate jobs or another hosted worker.
+
+`AddMyAppJobs` does **not** register the generated Immediate.Handlers handlers; without
+`AddMyAppHandlers`, enqueue succeeds but execution fails when the worker cannot resolve the handler
+or its behaviors.
+
+Generated job schedulers, `IBatchScheduler`, `IJobMonitor` and `IBatchMonitor` are scoped.
+Definitions, queue definitions, invokers, `RecurringJobs`, storage, serializer, ID generator,
+options and the worker service are singleton. Every execution creates its own scope for extractors,
+behaviors, handler and dependencies.
+
+## Fluent configuration
+
+Use `Configure` with an action, configuration section, or section path for `ImmediateJobsOptions`.
+Use `UseFairQueues` independently for `FairQueueOptions`, and call `ConfigureStorage` at most once:
+
+```csharp
+builder.Services.AddMyAppJobs()
+	.Configure("ImmediateJobs")
+	.UseFairQueues(builder.Configuration.GetSection("ImmediateJobs:FairQueues"))
+	.ConfigureStorage(storage => storage
+		.UseEntityFrameworkCore<AppDbContext>()
+		.UseDistributed())
+	.AddHealthCheck(tags: ["ready"]);
+```
+
+The options are validated when the host starts. If `ConfigureStorage` is omitted, Jobs uses
+in-memory storage. A durable provider defaults to single-server mode when neither
+`UseSingleServer` nor `UseDistributed` is selected. In production, choose one explicitly so it is
+clear whether one or several scheduler processes may run.
 
 ## Tagged registration
 

@@ -41,9 +41,9 @@ await scheduler.ScheduleAtAsync(payload, shipAt, tenantId, cancellationToken);
 ```
 
 Whitespace is normalized to no group. Group IDs longer than 128 characters are rejected. A
-non-empty group is persisted even without `options.UseFairQueues()`; in that case it does not
-affect order and the worker logs one warning. Enabling fair acquisition requires a supporting
-provider; Redis rejects fair acquisition.
+non-empty group is still stored when `UseFairQueues()` was not called on the registration builder,
+but it does not affect order and the worker logs one warning. Fair acquisition requires a provider
+that supports it; Redis does not.
 
 Because schedulers are scoped, a singleton worker creates a scope for each unit of work:
 
@@ -66,7 +66,8 @@ Immediate.Jobs creates job and batch IDs before writing them to storage. The def
 platform uses Snowflake, ULID or another globally unique string format:
 
 ```csharp
-builder.Services.AddMyAppJobs(options => options.UseInMemory())
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage.UseInMemory())
 	.UseIdGenerator<SnowflakeIdGenerator>();
 
 // ISnowflakeService is supplied and registered by your chosen Snowflake implementation.

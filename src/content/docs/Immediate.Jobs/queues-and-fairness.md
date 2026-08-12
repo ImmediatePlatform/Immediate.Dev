@@ -33,15 +33,14 @@ on one scheduler node; zero is unbounded. Node-wide `MaxParallelJobs` and job-le
 Enable fairness globally and put a tenant/customer key on each scheduled invocation:
 
 ```csharp
-builder.Services.AddMyAppJobs(options =>
-{
-	options.UseFairQueues(fair =>
+builder.Services.AddMyAppJobs()
+	.UseFairQueues(fair =>
 	{
 		fair.ConcurrencyShareThreshold = 0.10;
 		fair.MinInflightForNoisy = 30;
 		fair.GroupRoundRobin = true;
-	});
-});
+	})
+	.ConfigureStorage(storage => storage.UseInMemory());
 
 await welcomeEmail.EnqueueAsync(
 	new(userId, "v2"),
@@ -55,11 +54,11 @@ Round-robin interleaves due groups. A group becomes noisy only after it has at l
 capacity; quieter groups are then preferred. Ungrouped jobs remain eligible. Fairness affects
 acquisition order, not durable priority or a job's retry policy.
 
-| Provider/topology     | Fair groups                                                      |
-| --------------------- | ---------------------------------------------------------------- |
-| In-memory             | Supported                                                        |
-| EF Core / LinqToDB    | Supported                                                        |
-| Redis                 | Not supported; grouped acquisition is rejected                   |
-| Single-server wrapper | Supported when its durable replica has full graph/fair semantics |
+| Provider/topology     | Fair groups                                                                       |
+| --------------------- | --------------------------------------------------------------------------------- |
+| In-memory             | Supported                                                                         |
+| EF Core / LinqToDB    | Supported                                                                         |
+| Redis                 | Not supported; grouped acquisition is rejected                                    |
+| Single-server wrapper | Supported when its durable store supports replica, recurring, and graph contracts |
 
 Queue and group names are persisted. Renaming either does not rename already-persisted work.

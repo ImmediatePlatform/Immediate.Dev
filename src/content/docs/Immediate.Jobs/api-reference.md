@@ -8,6 +8,19 @@ group: Reference
 This reference groups the supported application surface. Generated scheduler methods are shown on
 their public base contracts even though application code normally uses `YourJob.Scheduler`.
 
+## Namespaces
+
+| Namespace                          | Surface                                                                     |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| `Immediate.Jobs.Shared`            | Declarations, handles, generated scheduler base, batches and configuration. |
+| `Immediate.Jobs.Shared.Interfaces` | Scheduler, recurring, monitoring, serialization and ID contracts.           |
+| `Immediate.Jobs.Shared.Apis`       | Job, execution, batch and monitoring query/record types.                    |
+| `Immediate.Jobs.Shared.Storage`    | Storage contracts, capability markers and persistence records.              |
+
+Provider extensions remain under `Immediate.Jobs.EntityFrameworkCore`,
+`Immediate.Jobs.LinqToDB`, and `Immediate.Jobs.Redis`. The generated `AddXxxJobs` extension and
+`RecurringJobs` dispatcher are emitted into the consuming project's `RootNamespace`.
+
 ## Declaration attributes and enums
 
 ```csharp
@@ -68,13 +81,9 @@ sealed record BatchHandle
 	string Id { get; }
 }
 
-public abstract class JobContextExtractor
+public abstract class JobContextExtractor<TContext>
 {
 	public abstract string Key { get; }
-}
-
-public abstract class JobContextExtractor<TContext> : JobContextExtractor
-{
 	public abstract TContext? Capture();
 	public abstract void Restore(TContext context);
 }
@@ -103,12 +112,12 @@ interface IJobScheduler<TPayload>
 Every generated `JobScheduler<TPayload>` additionally exposes:
 
 ```csharp
-JobHandle AddToBatch(JobBatch batch, TPayload payload, TimeSpan? delay = null);
+JobHandle AddToBatch(Batch batch, TPayload payload, TimeSpan? delay = null);
 JobHandle AddToBatchInGroup(
-	JobBatch batch, TPayload payload, string? groupId, TimeSpan? delay = null);
-JobHandle AddToBatchAt(JobBatch batch, TPayload payload, DateTimeOffset runAt);
+	Batch batch, TPayload payload, string? groupId, TimeSpan? delay = null);
+JobHandle AddToBatchAt(Batch batch, TPayload payload, DateTimeOffset runAt);
 JobHandle AddToBatchAt(
-	JobBatch batch, TPayload payload, DateTimeOffset runAt, string? groupId);
+	Batch batch, TPayload payload, DateTimeOffset runAt, string? groupId);
 
 ValueTask<JobHandle> ScheduleAfterAsync(
 	JobHandle parent, TPayload payload,
@@ -161,19 +170,25 @@ interface IRecurringJobScheduler : IRecurringJobTrigger
 	ValueTask RemoveRecurringAsync(string name, CancellationToken token = default);
 }
 
-public sealed class JobBatch : IAsyncDisposable
+// Generated in the application's root namespace for all payloadless jobs.
+sealed class RecurringJobs
+{
+	ValueTask TriggerNowAsync(string jobName, CancellationToken token = default);
+}
+
+public sealed class Batch : IAsyncDisposable
 {
 	public string Id { get; }
 	public ValueTask<BatchHandle> CommitAsync(CancellationToken token = default);
 }
 
-interface IJobBatchScheduler
+interface IBatchScheduler
 {
 	ValueTask CancelAsync(BatchHandle handle, CancellationToken token = default);
-	JobBatch Begin();
-	JobBatch Begin(BatchHandle after, ContinuationTrigger on = ContinuationTrigger.Success);
+	Batch Begin();
+	Batch Begin(BatchHandle after, ContinuationTrigger on = ContinuationTrigger.Success);
 	ValueTask<BatchHandle> RunAsync(
-		Func<JobBatch, ValueTask> body, CancellationToken token = default);
+		Func<Batch, ValueTask> body, CancellationToken token = default);
 }
 ```
 
@@ -181,8 +196,25 @@ interface IJobBatchScheduler
 
 ## Runtime configuration
 
-`AddXxxJobs(Action<ImmediateJobsOptions>? configure = null, params ... tags)` returns
-`ImmediateJobsBuilder`.
+`AddXxxJobs(params ... tags)` returns `ImmediateJobsBuilder`. The builder exposes:
+
+```csharp
+ImmediateJobsBuilder Configure(string configurationSectionPath);
+ImmediateJobsBuilder Configure(IConfiguration configurationSection);
+ImmediateJobsBuilder Configure(Action<ImmediateJobsOptions> configure);
+
+ImmediateJobsBuilder UseFairQueues();
+ImmediateJobsBuilder UseFairQueues(string configurationSectionPath);
+ImmediateJobsBuilder UseFairQueues(IConfiguration configurationSection);
+ImmediateJobsBuilder UseFairQueues(Action<FairQueueOptions> configure);
+
+ImmediateJobsBuilder ConfigureStorage(Action<ImmediateJobsStorageBuilder> configure);
+ImmediateJobsBuilder UseIdGenerator<TGenerator>();
+ImmediateJobsBuilder AddHealthCheck(
+	string name = "immediate-jobs",
+	HealthStatus? failureStatus = null,
+	IEnumerable<string>? tags = null);
+```
 
 | `ImmediateJobsOptions` member                    |                                             Default |
 | ------------------------------------------------ | --------------------------------------------------: |
@@ -194,25 +226,23 @@ interface IJobBatchScheduler
 | `SucceededRetention` / `BatchSucceededRetention` |                                            24 hours |
 | `FailedRetention` / `BatchFailedRetention`       |                                              7 days |
 | `PurgeInterval`                                  |                                              1 hour |
-| `StorageMode`                                    |     `InMemory` when no storage provider is selected |
 
-Fluent methods are `UseInMemory()`, `UseStorage(factory)`, `UseSingleServer()`,
-`UseSingleServer(factory)`, `UseDistributed()` and `UseFairQueues(configure)`. `FairQueueOptions`
-has `ConcurrencyShareThreshold = 0.10`, `MinInflightForNoisy = 30`, and
-`GroupRoundRobin = true`. Builder extensions are `UseIdGenerator<TGenerator>()` and
-`AddHealthCheck(name = "immediate-jobs", failureStatus = null, tags = null)`.
+`ImmediateJobsStorageBuilder` exposes `UseInMemory()`, `UseStorage(factory)`,
+`UseSingleServer()`, `UseSingleServer(factory)`, `UseDistributed()`, and
+`UseDistributed(factory)`. `ConfigureStorage` may be called only once. No storage configuration
+means in-memory; selecting a durable factory without an explicit topology means single-server.
+Provider extensions attach to this storage builder, and Redis selects distributed mode itself.
 
-`ImmediateJobsOptions.StorageMode` starts as `SingleServer`, which is the default topology when a
-durable factory does not select another mode. During registration, however, no selected storage
-factory causes Jobs to call `UseInMemory()`; the effective no-provider mode is therefore
-`InMemory`.
+`FairQueueOptions` has `Enabled = false`, `ConcurrencyShareThreshold = 0.10`,
+`MinInflightForNoisy = 30`, and `GroupRoundRobin = true`; every `UseFairQueues` overload enables it.
+Both option types use startup validation.
 
 ## Serialization and telemetry
 
 `IJobSerializer` exposes generic `Serialize`/`Deserialize` pairs both with and without a generated
 `JsonTypeInfo<T>` factory. `SystemTextJsonJobSerializer` uses web defaults and exposes `Options`.
-Generated jobs always call the metadata-factory overload. `JobTelemetry.ActivitySource` and
-`JobTelemetry.Meter` are the public OpenTelemetry entry points.
+Generated jobs always call the metadata-factory overload. Traces and metrics use the stable
+`Immediate.Jobs` activity-source and meter names.
 
 ## Monitoring
 
@@ -222,7 +252,7 @@ interface IJobMonitor
 	ValueTask<JobStatus?> GetJobAsync(string jobId, CancellationToken token = default);
 }
 
-interface IJobBatchMonitor
+interface IBatchMonitor
 {
 	ValueTask<BatchStatus?> GetStatusAsync(string batchId, CancellationToken token = default);
 	ValueTask<IReadOnlyList<BatchMemberStatus>> QueryMembersAsync(
@@ -264,7 +294,7 @@ sealed record JobExecutionQuery
 }
 ```
 
-`BatchMemberQuery` and `JobBatchQuery` contain optional state, `Skip`, and `Take = 100`.
+`BatchMemberQuery` and `BatchQuery` contain optional state, `Skip`, and `Take = 100`.
 `JobStatus`, `BatchStatus`, `BatchMemberStatus`, `BatchGraph`, `BatchGraphNode` and
 `BatchGraphEdge` are immutable monitoring records. `FractionSettled` includes every terminal
 outcome, including `Skipped`. `IJobStorage.QueryJobExecutionsAsync` returns retained executions
@@ -303,17 +333,17 @@ authorization policy remains authoritative. Link kinds are `Trace` and `Logs`.
 ## Provider registration
 
 ```csharp
-ImmediateJobsOptions UseEntityFrameworkCore<TContext>();
+ImmediateJobsStorageBuilder UseEntityFrameworkCore<TContext>();
 ModelBuilder AddImmediateJobs(string? schema = null);
 
-ImmediateJobsOptions UseLinqToDB(DataOptions dataOptions, string? schema = null);
+ImmediateJobsStorageBuilder UseLinqToDB(DataOptions dataOptions, string? schema = null);
 Task CreateImmediateJobsSchemaAsync(
 	this DataOptions dataOptions, string? schema = null,
 	CancellationToken token = default);
 
-ImmediateJobsOptions UseRedis(
+ImmediateJobsStorageBuilder UseRedis(
 	string configuration, Action<RedisJobStorageOptions>? configure = null);
-ImmediateJobsOptions UseRedis(
+ImmediateJobsStorageBuilder UseRedis(
 	IConnectionMultiplexer connection, Action<RedisJobStorageOptions>? configure = null);
 ```
 
@@ -343,6 +373,13 @@ it exposes `Services`, `Storage`, `TimeProvider`, and `Batches`. Operations are 
 `AssertContinuationReleasedAfterAsync`, `AssertCascadeSkippedAsync`,
 `AssertCascadeCancelledAsync`, and `RunThroughPipelineAsync<T>`.
 
+`JobStorageConformanceSuite.GetCases(StorageCapabilities)` returns one
+`JobStorageConformanceTestCase` for each storage behavior. The catalog is not tied to a test
+framework. Each case exposes `Name`, `RequiredCapabilities`, and
+`RunAsync(IServiceProvider, CancellationToken)`. Before a case runs, it checks that exactly one
+`IJobStorage` is registered and that its implemented interfaces match the supplied capability
+flags. Tests that depend on time use a `FakeTimeProvider` registered as `TimeProvider`.
+
 ## Custom storage contracts
 
 | Interface              | Atomic responsibilities                                                                                                                            |
@@ -350,9 +387,10 @@ it exposes `Services`, `Storage`, `TimeProvider`, and `Batches`. Operations are 
 | `IJobStorage`          | Initialize; enqueue; lease/acquire/renew; persist/query execution history; complete/fail; status; cancel/retry/delete/purge; heartbeat and health. |
 | `IRecurringJobStorage` | Upsert/remove/pause/resume schedules; identify due rows; uniquely materialize each occurrence; reconcile obsolete code-defined schedules.          |
 | `IJobGraphStorage`     | Atomically enqueue batches/edges; settle and release/skip dependencies; add mid-run members; monitor/cancel/delete/purge graphs.                   |
+| `IFairQueueStorage`    | Apply fair acquisition when a policy is supplied, including group rotation and protection for quieter groups.                                      |
 | `IJobStorageReplica`   | Restore durable records and mirror explicit acquisitions for the single-server wrapper.                                                            |
 
-`StorageCapabilities` flags are `Queue`, `Recurring` and `Graph`; call
+`StorageCapabilities` flags are `Queue`, `Recurring`, `Graph`, `FairQueues`, and `Replica`; call
 `storage.GetCapabilities()` to detect the optional interfaces. Low-level `JobRecord`, acquisition,
 definition and graph persistence records are provider contracts, not application scheduling APIs.
 `IJobStorage.RetryAsync` accepts `Failed` and `Scheduled`: a scheduled invocation is moved to

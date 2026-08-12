@@ -26,6 +26,7 @@ Immediate.Handlers separately.
 | `IJOB0013` | Error    | Payload graph cannot receive generated JSON metadata; offending request member/type.                         | Use supported concrete values, one-dimensional arrays, `List<T>` or `Dictionary<TKey, TValue>`. |
 | `IJOB0014` | Error    | Context graph cannot receive generated JSON metadata; offending context member/type.                         | Apply the same AOT-safe shape rules as a job payload.                                           |
 | `IJOB0015` | Warning  | `AddToBatchAsync(JobDetails, ..., ContinuationOptions.Detached)`; the `Detached` argument.                   | Use `ScheduleAfter` for detached work or a batch-joining option.                                |
+| `IJOB0016` | Warning  | A `[QueueDefinition]` has no job assigned to it; queue type.                                                 | Remove the unused definition or attach a job with `[UsesQueue<T>]`.                             |
 
 ## Related runtime failures
 
@@ -40,6 +41,9 @@ Some facts depend on runtime values or durable state and cannot be diagnosed at 
   schedules or ordinary job acquisition;
 - graph operations on Redis or another queue-only provider throw `NotSupportedException`;
 - fair acquisition on Redis throws `NotSupportedException` when `UseFairQueues` is enabled;
+- conflicting storage selections or a second `ConfigureStorage` call throw `ImmediateJobException`
+  during registration;
+- invalid runtime or fair-queue options fail validation when the host starts;
 - single-server mode rejects providers without replica, recurring and graph capabilities and
   detects multiple-process replica drift;
 - unknown stored job names fail terminally because no generated definition can execute them;

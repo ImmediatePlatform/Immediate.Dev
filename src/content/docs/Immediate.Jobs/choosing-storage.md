@@ -45,9 +45,16 @@ views.
 
 ## A custom provider
 
-Implement `IJobStorage` for queue capability. Add `IRecurringJobStorage` and/or `IJobGraphStorage`
-only when their atomicity contracts are honored. Implement `IJobStorageReplica` as well to qualify
-for single-server mode. Providers must initialize idempotently, claim due work atomically, enforce
-worker ownership and leases, make recurring materialization unique, paginate monitoring, tolerate
-repeated async disposal, and make graph commit/release/cascade transitions atomic. See the compact
-contract map in [API reference](/docs/Immediate.Jobs/api-reference#custom-storage-contracts).
+Implement `IJobStorage` for queue capability. Add `IRecurringJobStorage`, `IJobGraphStorage`,
+`IFairQueueStorage`, and `IJobStorageReplica` only when each contract is honored. Replica support,
+plus recurring and graph support, qualifies durable storage for the single-server wrapper;
+`InMemoryJobStorage` intentionally does not advertise replica capability.
+
+Initialization and disposal must be safe to repeat. Claims, recurring occurrences, and graph
+changes must be atomic so concurrent workers cannot create duplicates or overwrite each other.
+Providers must also enforce leases and worker ownership, and page monitoring results.
+
+Run the `JobStorageConformanceSuite` from `Immediate.Jobs.Testing` through the provider's public DI
+registration. Select the tests that match its capability flags. See
+[Testing jobs](/docs/Immediate.Jobs/testing-jobs#test-a-storage-provider) and the compact contract
+map in [API reference](/docs/Immediate.Jobs/api-reference#custom-storage-contracts).

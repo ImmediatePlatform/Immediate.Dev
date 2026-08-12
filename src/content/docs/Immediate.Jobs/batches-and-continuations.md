@@ -11,7 +11,7 @@ group: Guides
 
 Batches persist jobs and their dependency edges atomically. They require a graph-capable
 provider; Redis exposes queue and recurring capabilities only. Resolve the scoped
-`IJobBatchScheduler` from DI, normally through constructor injection alongside the generated job
+`IBatchScheduler` from DI, normally through constructor injection alongside the generated job
 schedulers.
 
 ## Atomic workflow graph
@@ -21,7 +21,7 @@ the other parameters are nested scheduler types generated for their correspondin
 
 ```csharp
 public sealed class ImportWorkflow(
-	IJobBatchScheduler batches,
+	IBatchScheduler batches,
 	ImportData.Scheduler import,
 	BuildIndex.Scheduler index,
 	NotifyOwner.Scheduler notify,
@@ -89,7 +89,7 @@ from changing the terminal result.
 Failures before `CommitAsync` begins write nothing. Once commit begins, however, the batch is
 closed even when the call throws, and a transport failure can leave the durable outcome unknown:
 storage may have committed the graph before the caller lost the response. Do not retry the same
-`JobBatch`; an operation that rebuilds and commits another batch needs application-level
+`Batch`; an operation that rebuilds and commits another batch needs application-level
 idempotency or duplicate tracking.
 
 Batch members can carry the same fair-queue group IDs as ordinary scheduled work:
@@ -174,7 +174,7 @@ except for detached scheduling, the current job must belong to a batch. `IJOB001
 
 </Callout>
 
-Monitor a graph through `IJobBatchMonitor.GetStatusAsync`, `QueryMembersAsync` and `GetGraphAsync`.
+Monitor a graph through `IBatchMonitor.GetStatusAsync`, `QueryMembersAsync` and `GetGraphAsync`.
 `BatchStatus` counts succeeded, failed, cancelled and skipped members separately; a batch can
 succeed when every executed member succeeded even if conditional branches were skipped. The
 dashboard exposes the same progress and workflow states alongside batch cancel/delete operations.

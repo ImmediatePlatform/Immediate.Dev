@@ -5,6 +5,10 @@ order: 14
 group: Guides
 ---
 
+<script lang="ts">
+	import { Callout } from '$lib/components/docs';
+</script>
+
 Immediate.Jobs exposes both an `ActivitySource` and `Meter` named `Immediate.Jobs`:
 
 ```csharp
@@ -47,13 +51,40 @@ make these fields queryable.
 ## Health checks
 
 ```csharp
-builder.Services.AddMyAppJobs(options => options.UseEntityFrameworkCore<AppDbContext>())
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage
+		.UseEntityFrameworkCore<AppDbContext>()
+		.UseDistributed())
 	.AddHealthCheck(name: "my-app-jobs", tags: ["ready"]);
 
-app.MapHealthChecks("/health/ready");
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+	Predicate = registration => registration.Tags.Contains("ready"),
+	ResultStatusCodes =
+	{
+		[HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable,
+		[HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable,
+	},
+});
 ```
 
-The check combines scheduler liveness with provider connectivity. Choose a `failureStatus` when
-degraded versus unhealthy behavior matters to orchestration. The Aspire sample uses the same
-OpenTelemetry sources, health registration and dashboard telemetry-link hooks; Immediate.Jobs
-does not require Aspire and does not ship an Aspire-specific runtime package.
+The check combines scheduler liveness with provider connectivity. Filter the readiness endpoint by
+the tag passed to `AddHealthCheck`. The check reports `Degraded` until the scheduler starts, so map
+that status to HTTP 503 when readiness must remain closed during startup.
+
+<Callout type="warning" title="Preview health-check workaround">
+
+At source revision `ee5f51d`, the health check resolves `ImmediateJobsOptions` directly while the
+runtime registers `IOptions<ImmediateJobsOptions>`. Add this bridge until a later preview fixes that
+constructor:
+
+```csharp
+builder.Services.AddSingleton<ImmediateJobsOptions>(services =>
+	services.GetRequiredService<IOptions<ImmediateJobsOptions>>().Value);
+```
+
+</Callout>
+
+The Aspire sample uses the same OpenTelemetry sources, health registration and dashboard
+telemetry-link hooks. Immediate.Jobs does not require Aspire and does not ship an Aspire-specific
+runtime package.
