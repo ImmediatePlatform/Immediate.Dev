@@ -174,18 +174,22 @@ poll-backed live view, not a durable event log; clients must refresh after recon
 
 ## Programmatic monitoring
 
-Inject scoped `IJobMonitor` and call `GetJobAsync`. With a graph provider, inject
-`IBatchMonitor` and call `GetStatusAsync`, `QueryMembersAsync`, or `GetGraphAsync`. These are
-read-only contracts suitable for application status endpoints. Custom operational views can query
-newest-first attempts through `IJobStorage.QueryJobExecutionsAsync`; the execution history remains
-with its owning job or batch until that aggregate is deleted or purged.
+Inject the scoped `JobMonitor` for application status pages and endpoints. It provides read-only
+access to snapshots, jobs, retained executions, batches, batch members, and graphs. Use
+`IJobMonitor` when you want to replace the monitor with a fake in tests. Do not use `IJobStorage`
+for ordinary monitoring. It is intended for storage providers and internal scheduling work.
+
+`QueryExecutionsAsync` returns attempts newest first. Execution history remains with its job or
+batch until that record is deleted or purged. Batch reads return `null` when the provider does not
+support graphs, so non-batch monitoring still works with Redis and other queue-only providers.
 
 Monitoring snapshots include only scheduler servers whose last heartbeat is at most two minutes
 old. SQL providers prune stale server rows on later heartbeats, while Redis expires their hashes.
 
 <Callout type="note">
 
-The dashboard calls storage query APIs directly. Apply paging and authorization to any custom
-monitoring endpoint too; payload and exception data can contain business-sensitive values.
+The dashboard uses `JobMonitor` to load data. It uses storage directly for write actions and live
+streams. Apply paging and authorization to custom monitoring endpoints because payload and
+exception data can contain business-sensitive values.
 
 </Callout>

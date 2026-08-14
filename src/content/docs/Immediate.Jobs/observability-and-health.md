@@ -74,7 +74,7 @@ that status to HTTP 503 when readiness must remain closed during startup.
 
 <Callout type="warning" title="Preview health-check workaround">
 
-At source revision `ee5f51d`, the health check resolves `ImmediateJobsOptions` directly while the
+At source revision `9c8c13b`, the health check resolves `ImmediateJobsOptions` directly while the
 runtime registers `IOptions<ImmediateJobsOptions>`. Add this bridge until a later preview fixes that
 constructor:
 

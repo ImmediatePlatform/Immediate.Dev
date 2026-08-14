@@ -174,7 +174,8 @@ except for detached scheduling, the current job must belong to a batch. `IJOB001
 
 </Callout>
 
-Monitor a graph through `IBatchMonitor.GetStatusAsync`, `QueryMembersAsync` and `GetGraphAsync`.
-`BatchStatus` counts succeeded, failed, cancelled and skipped members separately; a batch can
+Use the scoped `JobMonitor` to read a graph. Call `GetBatchAsync`, `QueryBatchMembersAsync`, or
+`GetBatchGraphAsync`. These methods return `null` when storage does not support graphs.
+`BatchStatus` counts succeeded, failed, cancelled and skipped members separately. A batch can
 succeed when every executed member succeeded even if conditional branches were skipped. The
-dashboard exposes the same progress and workflow states alongside batch cancel/delete operations.
+dashboard shows the same progress and workflow states alongside batch cancel/delete operations.

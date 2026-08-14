@@ -89,8 +89,8 @@ on wall-clock delays.
 ## Test a storage provider
 
 Storage-provider authors can run the shared storage behavior tests through the provider's normal
-public DI registration. Choose the capability flags that exactly match the interfaces implemented
-by the resolved `IJobStorage`. Expose every returned case separately to the test runner:
+public DI registration. Choose the capability flags that match the features supported by the
+resolved `IJobStorage`. Expose every returned case separately to the test runner:
 
 ```csharp
 using Immediate.Jobs.Shared.Storage;
@@ -119,7 +119,9 @@ unique database, schema, key prefix, or similar boundary. `FakeTimeProvider` com
 `Microsoft.Extensions.Time.Testing` in the `Microsoft.Extensions.TimeProvider.Testing` package.
 `GetCases` always includes the queue tests and adds recurring, graph, fair-queue, and replica tests
 selected by `StorageCapabilities`. Before each behavior runs, `RunAsync` checks that the storage
-interfaces exactly match those flags.
+supports the features named by those flags. The `Replica` suite covers `IJobStorageReplica`.
+`IJobGraphStorageReplica` has no capability flag, so providers that support single-server mode
+should add their own tests for startup recovery.
 
 The catalog has no dependency on xUnit, NUnit, MSTest, Testcontainers, an ORM, or a database
 driver. Use a fixture wrapper when cleanup needs the provider, connection, and backend identifier;

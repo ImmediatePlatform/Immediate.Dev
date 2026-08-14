@@ -54,11 +54,11 @@ Round-robin interleaves due groups. A group becomes noisy only after it has at l
 capacity; quieter groups are then preferred. Ungrouped jobs remain eligible. Fairness affects
 acquisition order, not durable priority or a job's retry policy.
 
-| Provider/topology     | Fair groups                                                                       |
-| --------------------- | --------------------------------------------------------------------------------- |
-| In-memory             | Supported                                                                         |
-| EF Core / LinqToDB    | Supported                                                                         |
-| Redis                 | Not supported; grouped acquisition is rejected                                    |
-| Single-server wrapper | Supported when its durable store supports replica, recurring, and graph contracts |
+| Provider/topology     | Fair groups                                                           |
+| --------------------- | --------------------------------------------------------------------- |
+| In-memory             | Supported                                                             |
+| EF Core / LinqToDB    | Supported                                                             |
+| Redis                 | Not supported; grouped acquisition is rejected                        |
+| Single-server wrapper | Supported when its durable store meets all single-server requirements |
 
 Queue and group names are persisted. Renaming either does not rename already-persisted work.

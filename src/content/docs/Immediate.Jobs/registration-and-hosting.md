@@ -23,7 +23,7 @@ builder.Services.AddMyAppJobs()
 	.AddHealthCheck();
 ```
 
-At source revision `ee5f51d`, `AddHealthCheck` needs the temporary options bridge shown in
+At source revision `9c8c13b`, `AddHealthCheck` needs the temporary options bridge shown in
 [Observability and health](/docs/Immediate.Jobs/observability-and-health#health-checks).
 
 `MyApp` is the shared [assembly identifier](/docs/concepts/assembly-identifier). `AddMyAppJobs`
@@ -42,10 +42,10 @@ again does not add duplicate jobs or another hosted worker.
 `AddMyAppHandlers`, enqueue succeeds but execution fails when the worker cannot resolve the handler
 or its behaviors.
 
-Generated job schedulers, `IBatchScheduler`, `IJobMonitor` and `IBatchMonitor` are scoped.
-Definitions, queue definitions, invokers, `RecurringJobs`, storage, serializer, ID generator,
-options and the worker service are singleton. Every execution creates its own scope for extractors,
-behaviors, handler and dependencies.
+Generated job schedulers, `IBatchScheduler`, and `JobMonitor` are scoped. `IJobMonitor` resolves to
+the same scoped monitor. Definitions, queue definitions, invokers, `RecurringJobs`, storage,
+serializer, ID generator, options and the worker service are singleton. Every execution creates
+its own scope for extractors, behaviors, handler and dependencies.
 
 ## Fluent configuration
 

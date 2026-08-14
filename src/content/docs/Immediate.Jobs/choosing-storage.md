@@ -45,10 +45,14 @@ views.
 
 ## A custom provider
 
-Implement `IJobStorage` for queue capability. Add `IRecurringJobStorage`, `IJobGraphStorage`,
-`IFairQueueStorage`, and `IJobStorageReplica` only when each contract is honored. Replica support,
-plus recurring and graph support, qualifies durable storage for the single-server wrapper;
-`InMemoryJobStorage` intentionally does not advertise replica capability.
+Implement `IJobStorage` for queue capability. Add `IRecurringJobStorage`, `IJobGraphStorage`, and
+`IFairQueueStorage` only when the provider supports each feature.
+
+Single-server storage needs two extra interfaces for restart recovery. `IJobStorageReplica`
+acquires the exact job IDs selected by the in-memory queue. `IJobGraphStorageReplica` reads
+incoming continuation edges at startup. A durable provider must implement both interfaces, plus
+recurring and graph support, to run in single-server mode. `InMemoryJobStorage` implements neither
+replica interface.
 
 Initialization and disposal must be safe to repeat. Claims, recurring occurrences, and graph
 changes must be atomic so concurrent workers cannot create duplicates or overwrite each other.

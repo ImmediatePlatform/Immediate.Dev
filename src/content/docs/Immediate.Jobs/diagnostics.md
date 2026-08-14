@@ -44,8 +44,9 @@ Some facts depend on runtime values or durable state and cannot be diagnosed at 
 - conflicting storage selections or a second `ConfigureStorage` call throw `ImmediateJobException`
   during registration;
 - invalid runtime or fair-queue options fail validation when the host starts;
-- single-server mode rejects providers without replica, recurring and graph capabilities and
-  detects multiple-process replica drift;
+- single-server mode requires `IJobStorageReplica`, `IJobGraphStorageReplica`, recurring, and graph
+  support;
+- single-server mode detects multiple-process replica drift;
 - unknown stored job names fail terminally because no generated definition can execute them;
 - unknown context slices are logged and skipped so rolling deployments can continue;
 - dashboard route/paging validation returns HTTP 400 Validation Problem Details;
