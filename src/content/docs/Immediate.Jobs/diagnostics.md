@@ -1,13 +1,12 @@
 ---
 title: Diagnostics
-description: Current Immediate.Jobs analyzer errors and warnings, their locations and remediations.
+description: Look up Immediate.Jobs analyzer errors, warnings and common runtime failures.
 order: 18
 group: Diagnostics
 ---
 
-Immediate.Jobs currently uses one zero-padded diagnostic sequence. The analyzer package exposes
-the following IDs; method-shape, `partial` and other handler diagnostics come from
-Immediate.Handlers separately.
+The Immediate.Jobs analyzer reports the IDs below. Immediate.Handlers separately reports invalid
+handler methods, missing `partial` modifiers and other handler problems.
 
 | ID         | Severity | Trigger and location                                                                                         | Fix                                                                                             |
 | ---------- | -------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
@@ -30,15 +29,15 @@ Immediate.Handlers separately.
 
 ## Related runtime failures
 
-Some facts depend on runtime values or durable state and cannot be diagnosed at compile time:
+Some problems depend on settings or stored data, so an analyzer cannot catch them:
 
 - duplicate context extractor keys throw `ImmediateJobException` while capturing;
 - negative delays and over-128-character group IDs throw argument exceptions;
 - mapping the dashboard without first calling `AddImmediateJobsDashboard` throws
   `InvalidOperationException`;
-- invalid dynamic cron/time zones fail when adding/updating the schedule;
-- malformed persisted recurring schedules are logged individually without blocking other
-  schedules or ordinary job acquisition;
+- an invalid dynamic cron expression or time zone fails when the schedule is added or updated;
+- Jobs logs and skips a malformed stored recurring schedule without blocking other schedules or
+  queued jobs;
 - graph operations on Redis or another queue-only provider throw `NotSupportedException`;
 - fair acquisition on Redis throws `NotSupportedException` when `UseFairQueues` is enabled;
 - conflicting storage selections or a second `ConfigureStorage` call throw `ImmediateJobException`
@@ -46,10 +45,10 @@ Some facts depend on runtime values or durable state and cannot be diagnosed at 
 - invalid runtime, fair-queue, dashboard, or Redis options fail validation when the host starts;
 - single-server mode requires `IJobStorageReplica`, `IJobGraphStorageReplica`, recurring, and graph
   support;
-- single-server mode detects multiple-process replica drift;
-- unknown stored job names fail terminally because no generated definition can execute them;
-- unknown context slices are logged and skipped so rolling deployments can continue;
-- dashboard route/paging validation returns HTTP 400 Validation Problem Details;
+- single-server mode stops if it detects another scheduler process using the same durable storage;
+- an unknown stored job name fails because no generated job definition can run it;
+- Jobs logs and skips unknown context data so rolling deployments can continue;
+- invalid dashboard route or paging values return HTTP 400 with validation details;
 - dashboard mutations return HTTP 404 for an unknown job, batch or recurring schedule;
 - retry/delete/cancel operations reject incompatible lifecycle states with
   `ImmediateJobException` (HTTP 409 in the dashboard).

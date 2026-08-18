@@ -1,20 +1,15 @@
 ---
 title: Dashboard and monitoring
-description: Secure the embedded dashboard and use its HTTP and programmatic monitoring and management APIs.
+description: Secure the dashboard and monitor or manage jobs through its UI, API and JobMonitor.
 order: 13
 group: Guides
 ---
-
-<script lang="ts">
-	import { Callout } from '$lib/components/docs';
-</script>
 
 ```bash
 dotnet add package Immediate.Jobs.Dashboard --prerelease
 ```
 
-Configure and register the dashboard before building the application. Then map the embedded UI and
-JSON/SSE API:
+Configure and register the dashboard before building the application. Then map its UI and API:
 
 ```csharp
 using Immediate.Jobs.Dashboard;
@@ -53,8 +48,8 @@ var app = builder.Build();
 app.MapImmediateJobsDashboard("/jobs");
 ```
 
-Dashboard options use the .NET options system and are validated when the host starts.
-Configure them only through `AddImmediateJobsDashboard`; the mapping call now selects the path.
+Jobs validates dashboard settings when the host starts. Set them through
+`AddImmediateJobsDashboard`; the mapping call only selects the URL path.
 
 Without `RequireAuthorization`, every dashboard endpoint is development-only by default and
 returns 403 in other environments. For a trusted custom development environment, explicitly
@@ -70,32 +65,29 @@ var app = builder.Build();
 app.MapImmediateJobsDashboard("/jobs");
 ```
 
-Treat the dashboard as an administrative surface: it exposes payloads, errors, identifiers and
-mutations. Prefer `RequireAuthorization` whenever the dashboard is available outside a trusted
-development environment. A named policy applies to UI assets and APIs together and remains
-authoritative if `AllowInAnyEnvironment` is also configured.
+Treat the dashboard as an administrative tool because it exposes job inputs, failures, IDs and
+actions that change job state. Use `RequireAuthorization` whenever it is available outside a
+trusted development environment. The policy protects both the UI and API. If you also call
+`AllowInAnyEnvironment`, the policy still applies.
 
-The UI shows queue/state totals, including skipped work, recent history, jobs and details,
-recurring schedules, scheduler servers, batches and workflow graphs. Graph views appear only for
-graph-capable storage.
+The UI shows queue and state totals, recent history, job details, recurring schedules, scheduler
+servers and batches. It also shows workflow graphs when storage supports them.
 
 ## Dashboard UI
 
 ### Inspect jobs
 
-The Jobs view lists durable invocations and their current state. Select a job to open its dedicated
-detail route with payload data and a newest-first, collapsible timeline of retained executions.
-Each execution records its attempt, state, worker, acquisition/start/completion times, trace/span
-identifiers and full failure text. Failed jobs offer **Retry**; scheduled first attempts and delayed
-retries offer **Run now**, which moves the existing invocation to `Pending` without changing its
-attempt or failure history. Every non-terminal job offers a confirmation-backed **Cancel** action.
+The Jobs view lists saved jobs and their current state. Select a job to see its payload and saved
+attempts, newest first. Each attempt includes its state, worker, timing, trace IDs and failure text.
+Failed jobs offer **Retry**. Scheduled jobs and delayed retries offer **Run now**, which moves the
+same job to `Pending` without changing its attempt count or failure history. Jobs that have not
+finished offer **Cancel** with a confirmation step.
 
 ### Follow batch workflows
 
-The Batches view visualizes the jobs in a batch and the continuations between them. Progress and
-workflow nodes distinguish skipped conditional branches from explicitly cancelled work. Select a
-node to inspect that job without losing the surrounding workflow context. Executing batches offer
-a confirmation-backed **Cancel** action from their workflow details.
+The Batches view shows the jobs in a batch and their dependencies. It distinguishes skipped
+branches from cancelled work. Select a job without leaving the workflow view. A running batch
+offers **Cancel** with a confirmation step.
 
 <figure class="not-prose my-8">
     <img
@@ -117,15 +109,14 @@ a confirmation-backed **Cancel** action from their workflow details.
         class="hidden w-full rounded-xl border border-border shadow-sm dark:block"
     />
     <figcaption class="mt-3 text-center text-sm text-muted-foreground">
-        A batch workflow graph with continuation relationships and job details available in place.
+        A batch workflow showing each job and its dependencies.
     </figcaption>
 </figure>
 
 ## Telemetry links
 
-`AddTelemetryLink` adds application-defined destinations to job and execution details. The
-dashboard evaluates its synchronous URL factory through the job-level or exact-execution telemetry
-endpoint and supplies a `JobTelemetryLinkContext`.
+`AddTelemetryLink` adds application-defined links to job and execution details. For each link, the
+dashboard calls your URL function with a `JobTelemetryLinkContext`.
 
 | Argument    | Purpose                                                                                               |
 | ----------- | ----------------------------------------------------------------------------------------------------- |
@@ -133,15 +124,14 @@ endpoint and supplies a `JobTelemetryLinkContext`.
 | `kind`      | `Trace` or `Logs`; controls how the dashboard identifies the link.                                    |
 | `createUrl` | Builds the destination from `context.Job` and optional `context.Execution`; return `null` to hide it. |
 
-For a job-level request, `context.Execution` is `null` and the execution fields on `context.Job`
-describe the latest attempt. For an exact-execution request, `context.Execution` contains the
-selected retained record; `context.Job.Attempt`, `ExecutionTraceId`, `ExecutionSpanId` and
-`ExecutionStartedAt` also represent that same attempt. Use `Execution` for per-attempt trace/log
-links, and use `Job.Id` when a destination should search across every retry.
+For a job link, `context.Execution` is `null` and the execution fields on `context.Job` describe
+the latest attempt. For an attempt link, `context.Execution` and the execution fields on
+`context.Job` both describe the selected attempt. Use `Execution` for links to one attempt. Use
+`Job.Id` when a destination should search across every retry.
 
-Factories may return HTTP(S) or dashboard-relative URLs. Other absolute URI schemes are rejected
-when the endpoint evaluates the link. Return `null` before an execution trace exists or whenever a
-destination does not apply to the current record.
+The URL function may return HTTP(S) or dashboard-relative URLs. Other absolute URI schemes are
+rejected. Return `null` before an execution trace exists or whenever a destination does not apply
+to the current record.
 
 ## HTTP endpoints
 
@@ -149,57 +139,57 @@ All paths below are relative to the mapped prefix.
 
 | Method and path                                                      | Purpose                                                                  |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `GET /api/overview`                                                  | Monitoring snapshot and storage capabilities.                            |
+| `GET /api/overview`                                                  | Current counts and supported storage features.                           |
 | `GET /api/jobs`                                                      | Filter by `state`, `queue`, `search`; `skip`; `take` 1–200 (default 50). |
-| `GET /api/jobs/{jobId}`                                              | Latest durable record.                                                   |
-| `GET /api/jobs/{jobId}/executions`                                   | Retained attempts newest first; `skip`; `take` 1–200 (default 50).       |
-| `GET /api/jobs/{jobId}/telemetry-links`                              | Configured job-level trace/log destinations.                             |
-| `GET /api/jobs/{jobId}/executions/{executionNumber}/telemetry-links` | Configured destinations for one retained execution.                      |
-| `POST /api/jobs/{jobId}/cancel`                                      | Cancel non-terminal work.                                                |
+| `GET /api/jobs/{jobId}`                                              | Latest saved record.                                                     |
+| `GET /api/jobs/{jobId}/executions`                                   | Saved attempts newest first; `skip`; `take` 1–200 (default 50).          |
+| `GET /api/jobs/{jobId}/telemetry-links`                              | Configured trace and log links for a job.                                |
+| `GET /api/jobs/{jobId}/executions/{executionNumber}/telemetry-links` | Configured links for one saved attempt.                                  |
+| `POST /api/jobs/{jobId}/cancel`                                      | Cancel a job that has not finished.                                      |
 | `POST /api/jobs/{jobId}/retry`                                       | Retry failed work or run scheduled work now.                             |
 | `GET /api/recurring`                                                 | Recurring schedules.                                                     |
-| `POST /api/recurring/{name}/trigger`                                 | Materialize an immediate invocation.                                     |
+| `POST /api/recurring/{name}/trigger`                                 | Start one run now.                                                       |
 | `POST /api/recurring/{name}/pause` / `resume`                        | Change schedule state.                                                   |
-| `GET /api/servers`                                                   | Worker heartbeat snapshots.                                              |
+| `GET /api/servers`                                                   | Recently active workers.                                                 |
 | `GET /api/batches`                                                   | Filter by `state`, `skip`, `take` 1–500 (default 100).                   |
-| `GET /api/batches/{id}`                                              | Aggregate status.                                                        |
-| `GET /api/batches/{id}/members`                                      | Filtered/paged member status.                                            |
-| `GET /api/batches/{id}/graph`                                        | Dependency graph.                                                        |
-| `POST /api/batches/{id}/cancel`                                      | Cascade-cancel unsettled members.                                        |
-| `DELETE /api/batches/{id}`                                           | Delete a terminal graph.                                                 |
+| `GET /api/batches/{id}`                                              | Batch status.                                                            |
+| `GET /api/batches/{id}/members`                                      | Filter and page through jobs in a batch.                                 |
+| `GET /api/batches/{id}/graph`                                        | Jobs and dependencies in a batch.                                        |
+| `POST /api/batches/{id}/cancel`                                      | Cancel jobs in a batch that have not finished.                           |
+| `DELETE /api/batches/{id}`                                           | Delete a completed batch.                                                |
 | `GET /api/events`                                                    | SSE `state` snapshots at `UpdateInterval`.                               |
 | `GET /api/batches/{id}/stream`                                       | SSE `status` and `graph` events on change.                               |
 
-Successful cancel, retry, pause, resume and batch mutations return `204`; recurring trigger returns
-`202`. A request returns `400` Validation Problem Details for invalid route or paging values, `404`
-when its job, execution, batch or recurring schedule does not exist (or the provider lacks the
-required capability), and `409` when a mutation targets a resource whose lifecycle state does not
-allow the operation.
+Actions return these status codes:
 
-SSE sends `retry: 3000`, disables proxy buffering and ends when the request is aborted. It is a
-poll-backed live view, not a durable event log; clients must refresh after reconnecting.
+| Status | Meaning                                                                     |
+| ------ | --------------------------------------------------------------------------- |
+| `202`  | A recurring run was accepted.                                               |
+| `204`  | A cancel, retry, pause, resume or batch action succeeded.                   |
+| `400`  | A route or paging value is invalid.                                         |
+| `404`  | The item does not exist, or storage does not support the requested feature. |
+| `409`  | The item's current state does not allow the action.                         |
 
-## Programmatic monitoring and management
+Live endpoints use server-sent events (SSE). They send `retry: 3000`, disable proxy buffering and
+close when the request is aborted. The server checks for changes on a timer instead of keeping an
+event log, so clients should reload after reconnecting.
 
-Inject the scoped `JobMonitor` for application status pages and administrative endpoints. It reads
-snapshots, jobs, retained executions, batches, batch members, and graphs. It can also cancel or
-retry jobs, cancel or delete batches, and pause, resume, or trigger recurring schedules.
+## Use JobMonitor in code
 
-`IJobMonitor` exposes only the read methods. Use it when a test needs a small fake and no management
-commands. Do not use `IJobStorage` for application monitoring or management. That contract is for
-storage providers and internal scheduling work.
+Inject the scoped `JobMonitor` for custom status pages and administrative endpoints. It reads
+snapshots, jobs, saved attempts, batches, batch members and workflow graphs. It can also cancel or
+retry jobs, cancel or delete batches, and pause, resume or trigger recurring schedules.
+The dashboard uses this same service.
+
+`IJobMonitor` exposes only the read methods. Use it when code needs no management commands or a test
+needs a simple replacement. Do not use `IJobStorage` for application monitoring or management. It
+is for storage providers and the Jobs runtime.
 
 `QueryExecutionsAsync` returns attempts newest first. Execution history remains with its job or
 batch until that record is deleted or purged. Batch reads return `null` when the provider does not
 support graphs, so non-batch monitoring still works with Redis and other queue-only providers.
 
 Monitoring snapshots include only scheduler servers whose last heartbeat is at most two minutes
-old. SQL providers prune stale server rows on later heartbeats, while Redis expires their hashes.
-
-<Callout type="note">
-
-The dashboard uses `JobMonitor` for reads, write actions, and the polling behind live streams.
-Apply paging and authorization to custom endpoints because payload and exception data can contain
+old. SQL providers remove stale server rows on later heartbeats, while Redis expires them. Apply
+paging and authorization to custom endpoints because payload and failure data can contain
 business-sensitive values.
-
-</Callout>

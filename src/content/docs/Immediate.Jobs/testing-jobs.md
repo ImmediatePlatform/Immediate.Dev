@@ -1,6 +1,6 @@
 ---
 title: Testing jobs
-description: Test scheduling and execution deterministically with fake time, draining, captures and workflow assertions.
+description: Test scheduling and execution with a controllable clock, captured calls and workflow assertions.
 order: 15
 group: Guides
 ---
@@ -11,7 +11,7 @@ dotnet add package Immediate.Jobs.Testing --prerelease
 
 ## Execute with fake time
 
-`JobTestHarness` builds an in-memory, full-capability scheduler around a
+`JobTestHarness` builds an in-memory scheduler with every feature and a controllable
 `FakeTimeProvider`. Register the generated jobs and their dependencies:
 
 ```csharp
@@ -41,21 +41,22 @@ await harness.AdvanceTimeAndDrainAsync(TimeSpan.FromMinutes(10), cancellationTok
 Assert.Equal(JobState.Succeeded, (await harness.GetJobAsync(handle, cancellationToken)).State);
 ```
 
-`DrainAsync` runs everything due without wall-clock sleeps. `AdvanceTimeAndDrainAsync` accepts a
-`TimeSpan` or absolute `DateTimeOffset`. `QueryJobsAsync` and `GetJobAsync` inspect durable records;
-`AssertEnqueuedAsync<TPayload>` validates state and deserializes the payload. The harness also
-exposes `Storage`, `TimeProvider`, `Services` and `Batches`. Register generated jobs in the callback,
-but do not call `ConfigureStorage`; the harness installs its own in-memory provider and fake clock
-after application registrations.
+`DrainAsync` runs every due job immediately. `AdvanceTimeAndDrainAsync` moves the clock by a
+`TimeSpan` or to a `DateTimeOffset`, then runs due jobs. `QueryJobsAsync` and `GetJobAsync` read saved
+job records. `AssertEnqueuedAsync<TPayload>` checks the state and payload. The harness also exposes
+`Storage`, `TimeProvider`, `Services` and `Batches`.
+
+Register generated jobs in the callback, but do not call `ConfigureStorage`. The harness installs
+its own in-memory provider and fake clock after application registrations.
 
 For graphs, use `AssertBatchCommittedAtomicallyAsync`,
 `AssertContinuationReleasedAfterAsync` and `AssertCascadeSkippedAsync`.
-Call `RunThroughPipelineAsync<TPayload>` when a test already has a record/payload and needs to execute
-its generated invoker through the real DI/behavior pipeline.
+Call `RunThroughPipelineAsync<TPayload>` when a test already has a record and payload and needs to
+run the generated handler with its registered behaviors and dependencies.
 
 ## Capture scheduling only
 
-Use `CaptureOnlyJobScheduler<TPayload>` when the subject should decide _what_ to schedule but no
+Use `CaptureOnlyJobScheduler<TPayload>` when a test only needs to verify what was scheduled and no
 worker should run:
 
 ```csharp
@@ -82,15 +83,14 @@ run time, group ID and generated handle. `CaptureOnlyRecurringJobScheduler` reco
 add/update/remove/trigger operations for payloadless dynamic schedules. Override the capture
 scheduler's ID creation when stable IDs make assertions clearer.
 
-Testing helpers throw `JobTestAssertionException` with job/batch-specific mismatch details. They
-exercise the same generated JSON metadata and storage state machine as production without relying
-on wall-clock delays.
+Failed checks throw `JobTestAssertionException` with details about the job or batch. The helpers
+use the same serialization and execution paths as production while the fake clock avoids delays.
 
 ## Test a storage provider
 
-Storage-provider authors can run the shared storage behavior tests through the provider's normal
-public DI registration. Choose the capability flags that match the features supported by the
-resolved `IJobStorage`. Expose every returned case separately to the test runner:
+Storage-provider authors can run the shared behavior tests with the same registration an
+application would use. Choose the `StorageCapabilities` flags that match the provider and expose
+each returned case separately to the test runner:
 
 ```csharp
 using Immediate.Jobs.Shared.Storage;
@@ -113,23 +113,25 @@ public async Task StorageConforms(JobStorageConformanceTestCase testCase)
 }
 ```
 
-Create a fresh service provider for every case. It must resolve exactly one `IJobStorage` and
-register a `FakeTimeProvider` as `TimeProvider`. Give each case separate backend data by using a
-unique database, schema, key prefix, or similar boundary. `FakeTimeProvider` comes from
-`Microsoft.Extensions.Time.Testing` in the `Microsoft.Extensions.TimeProvider.Testing` package.
-`GetCases` always includes the queue tests and adds recurring, graph, fair-queue, and replica tests
-selected by `StorageCapabilities`. Before each behavior runs, `RunAsync` checks that the storage
-supports the features named by those flags. The `Replica` suite covers `IJobStorageReplica`.
-`IJobGraphStorageReplica` has no capability flag. Providers that support single-server mode should
-also run the applicable cases through their public single-server registration. This verifies both
-replica interfaces through the single-server wrapper.
+For each case:
 
-The graph suite checks that a stale execution cannot change a newer attempt. It also checks
-continuations added after a parent finishes and invalid dynamic batch relationships. Rejected
-changes must not leave partial data behind.
+- create a fresh service provider that resolves exactly one `IJobStorage`;
+- register `FakeTimeProvider` as `TimeProvider`;
+- use separate data, such as a unique database, schema or key prefix.
 
-The catalog has no dependency on xUnit, NUnit, MSTest, Testcontainers, an ORM, or a database
-driver. Use a fixture wrapper when cleanup needs the provider, connection, and backend identifier;
-dispose the service provider before deleting its isolated data. Keep provider-specific tests for
-migrations, database-specific behavior, Redis layout and scripts, connection ownership, and
-simulated backend failures.
+`FakeTimeProvider` comes from `Microsoft.Extensions.Time.Testing` in the
+`Microsoft.Extensions.TimeProvider.Testing` package. `GetCases` always includes queue tests. It
+adds recurring, graph, fair-queue and replica tests based on `StorageCapabilities`, and verifies
+the provider reports those features before each test runs.
+
+The `Replica` flag covers `IJobStorageReplica`; `IJobGraphStorageReplica` has no separate flag. For
+a provider that supports single-server mode, also run the relevant cases through its
+single-server registration. This tests both replica interfaces.
+
+The graph tests verify that an older execution cannot add work after a newer attempt starts. They
+also cover continuations added after a parent finishes and jobs added with a batch ID that does not
+match the running batch. A rejected addition must not leave partial data behind.
+
+The suite does not choose a test framework or database tooling. Keep separate provider tests for
+migrations, database-specific behavior, Redis key layout and scripts, connection ownership and
+backend failures. Dispose the service provider before deleting its test data.

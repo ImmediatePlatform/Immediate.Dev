@@ -1,6 +1,6 @@
 ---
 title: Configuring storage providers
-description: Configure in-memory, EF Core, LinqToDB and Redis storage and own their schemas correctly.
+description: Configure built-in storage providers and manage their database schemas.
 order: 11
 group: Guides
 ---
@@ -16,8 +16,8 @@ builder.Services.AddMyAppJobs()
 	.ConfigureStorage(storage => storage.UseInMemory());
 ```
 
-This is also the default when no storage is selected. It is non-durable and single-node but
-implements recurring, graph and fair-queue behavior for development and tests.
+This is also the default when no storage is selected. It keeps data in one process and loses it on
+restart, but it supports every job feature. Use it for development and tests.
 
 ## Entity Framework Core
 
@@ -108,9 +108,9 @@ builder.Services.AddMyAppJobs()
 		.UseSingleServer());
 ```
 
-The application owns `DataOptions`, the matching ADO.NET driver and schema lifecycle. The helper
-supports SQLite (without a named schema), PostgreSQL and SQL Server and creates the tables and
-indexes for a fresh database.
+The application owns `DataOptions`, the matching ADO.NET driver and the database schema. The
+helper supports SQLite (without a named schema), PostgreSQL and SQL Server. It creates the tables
+and indexes for a new database.
 
 ## Redis
 
@@ -134,23 +134,21 @@ builder.Services.AddMyAppJobs()
 
 Or pass an application-owned `IConnectionMultiplexer`; the provider will not dispose it. The
 configuration-string overload owns and disposes its connection. `Database` defaults to `-1`
-(server default), and `KeyPrefix` defaults to `immediate-jobs`. Prefixes cannot contain braces
-because the provider adds its own Redis Cluster hash tag for atomic Lua operations. Redis options
-use the .NET options system. An empty or brace-containing key prefix fails validation when the host
-starts.
+(server default), and `KeyPrefix` defaults to `immediate-jobs`. Jobs reserves braces for Redis
+Cluster key grouping, so a prefix cannot contain them. Jobs validates these options at startup and
+rejects an empty or brace-containing prefix.
 
 Redis always selects distributed mode and supports queue plus recurring capabilities. It does not
 support graph workflows or fair queues.
 
-Provider extensions configure `ImmediateJobsStorageBuilder`; applications do not construct the
-built-in storage types directly. With EF Core or LinqToDB, use `UseSingleServer()` for one scheduler
-process or `UseDistributed()` for more than one. If neither is called, Jobs uses single-server
-mode. Redis selects distributed mode itself.
+Configure providers inside `ConfigureStorage`. With EF Core or LinqToDB, choose
+`UseSingleServer()` for one scheduler process or `UseDistributed()` for more than one. Jobs
+defaults to single-server mode when neither is selected. Redis always uses distributed mode.
 
-<Callout type="warning" title="Preview schema ownership">
+<Callout type="warning" title="Database setup during preview">
 
-Storage initialization is idempotent provider startup, not schema creation. Keep every
-Immediate.Jobs provider package at the same preview revision as the core package, and create test
-databases from the current EF model or `CreateImmediateJobsSchemaAsync` helper.
+Starting Jobs does not create or update a database schema. Keep every Immediate.Jobs provider
+package at the same preview version as the core package. Create test databases from the current EF
+model or with `CreateImmediateJobsSchemaAsync`.
 
 </Callout>

@@ -42,7 +42,7 @@ await scheduler.ScheduleAtAsync(payload, shipAt, tenantId, cancellationToken);
 
 Whitespace is normalized to no group. Group IDs longer than 128 characters are rejected. A
 non-empty group is still stored when `UseFairQueues()` was not called on the registration builder,
-but it does not affect order and the worker logs one warning. Fair acquisition requires a provider
+but it does not affect order and the worker logs one warning. Fair scheduling requires a provider
 that supports it; Redis does not.
 
 Because schedulers are scoped, a singleton worker creates a scope for each unit of work:

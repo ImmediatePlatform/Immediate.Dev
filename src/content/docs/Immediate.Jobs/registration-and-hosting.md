@@ -1,6 +1,6 @@
 ---
 title: Registration and hosting
-description: Register handlers, behaviors, generated jobs, storage and the hosted worker correctly.
+description: Register handlers, jobs, storage and the worker service.
 order: 9
 group: Guides
 ---
@@ -24,31 +24,34 @@ builder.Services.AddMyAppJobs()
 ```
 
 `MyApp` is the shared [assembly identifier](/docs/concepts/assembly-identifier). `AddMyAppJobs`
-accepts optional tags and returns `ImmediateJobsBuilder`. Chain runtime options, fair queues,
-storage, and health checks from that builder.
+accepts optional tags and returns `ImmediateJobsBuilder`. Use that builder to configure runtime
+settings, fair queues, storage and health checks.
 
 The generated method lives in the project's `RootNamespace`, matching Immediate.Handlers. Import
 that namespace (for example, `using MyApp;`) when startup code is outside it, including a top-level
 `Program.cs`.
 
-Registration adds the selected schedulers, invokers, context extractors, job definitions, all queue
-definitions, and the generated `RecurringJobs` dispatcher. Calling a generated registration method
-again does not add duplicate jobs or another hosted worker.
+Registration adds the selected jobs, every queue definition and the generated `RecurringJobs`
+service. Calling the method again does not duplicate jobs or add another worker.
 
 `AddMyAppJobs` does **not** register the generated Immediate.Handlers handlers; without
 `AddMyAppHandlers`, enqueue succeeds but execution fails when the worker cannot resolve the handler
 or its behaviors.
 
-Generated job schedulers, `IBatchScheduler`, and `JobMonitor` are scoped. `IJobMonitor` resolves to
-the same scoped monitor but exposes only its read methods. Definitions, queue definitions,
-invokers, `RecurringJobs`, storage, serializer, ID generator, options and the worker service are
-singleton. Every execution creates its own scope for extractors, behaviors, handler and
-dependencies.
+The main service lifetimes are:
+
+| Lifetime  | Services                                                                                                               |
+| --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Scoped    | Generated job schedulers, `IBatchScheduler`, `JobMonitor` and its read-only `IJobMonitor` interface.                   |
+| Singleton | Job and queue definitions, generated invokers, `RecurringJobs`, storage, serializer, ID generator, options and worker. |
+
+Each job run gets a new scope for its context extractors, behaviors, handler and dependencies.
 
 ## Fluent configuration
 
-Use `Configure` with an action, configuration section, or section path for `ImmediateJobsOptions`.
-Use `UseFairQueues` independently for `FairQueueOptions`, and call `ConfigureStorage` at most once:
+`Configure` accepts an action, a configuration section or a section path for
+`ImmediateJobsOptions`. `UseFairQueues` configures fair-queue settings separately. Call
+`ConfigureStorage` at most once:
 
 ```csharp
 builder.Services.AddMyAppJobs()
@@ -75,19 +78,18 @@ builder.Services.AddMyAppJobs(tags: ["fulfillment"]);
 ```
 
 With no tags, all jobs are registered. With tags, an untagged job is always included and a tagged
-job is included when any requested tag matches. Pass the same host slice to `AddMyAppHandlers` so
-the selected job definitions have matching generated handlers. Queue definitions are
-assembly-wide and are registered regardless of selected job tags.
+job is included when any requested tag matches. Pass the same tags to `AddMyAppHandlers` so every
+selected job has its generated handler. Queue definitions are registered for the whole assembly,
+regardless of the selected job tags.
 
-## Hosted-service lifecycle
+## Worker startup and shutdown
 
-The worker starts with the host. It initializes storage, reconciles recurring definitions,
-recovers eligible work, polls/acquires jobs, renews leases, emits heartbeats and periodically
-purges history. At shutdown it stops acquisition, cancels active work and waits up to
-`ShutdownTimeout` (30 seconds by default).
+The worker starts with the host. It prepares storage, restores saved work, starts jobs when they
+are due, renews their leases, reports its health and removes old history. At shutdown, it stops
+taking new work, cancels active jobs and waits up to `ShutdownTimeout` (30 seconds by default).
 
-Provider/schema initialization happens during worker startup. Your application still owns its
-database schema or bootstrap as described in
+The storage provider starts with the worker, but the application still creates and updates its
+database schema as described in
 [Configuring storage providers](/docs/Immediate.Jobs/configuring-storage-providers). Start the
 entire `IHost` in console and worker-service applications; merely building the service provider
 does not run jobs.

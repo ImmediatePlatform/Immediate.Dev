@@ -1,6 +1,6 @@
 ---
 title: Queues and fairness
-description: Define queues and combine priority, concurrency and fair-group scheduling.
+description: Define queues, limit concurrency, set priority and share capacity across groups.
 order: 6
 group: Guides
 ---
@@ -49,16 +49,16 @@ await welcomeEmail.EnqueueAsync(
 );
 ```
 
-Round-robin interleaves due groups. A group becomes noisy only after it has at least
-`MinInflightForNoisy` active jobs and exceeds `ConcurrencyShareThreshold` of the queue's effective
-capacity; quieter groups are then preferred. Ungrouped jobs remain eligible. Fairness affects
-acquisition order, not durable priority or a job's retry policy.
+Round-robin alternates between groups that have work ready. A group becomes noisy after it reaches
+`MinInflightForNoisy` active jobs and uses more than `ConcurrencyShareThreshold` of the queue's
+capacity. Jobs then favors quieter groups. Jobs without a group remain eligible. Fairness changes
+which ready job runs next; it does not change priority or retry rules.
 
-| Provider/topology     | Fair groups                                                           |
-| --------------------- | --------------------------------------------------------------------- |
-| In-memory             | Supported                                                             |
-| EF Core / LinqToDB    | Supported                                                             |
-| Redis                 | Not supported; grouped acquisition is rejected                        |
-| Single-server wrapper | Supported when its durable store meets all single-server requirements |
+| Storage and mode   | Fair groups                                                     |
+| ------------------ | --------------------------------------------------------------- |
+| In-memory          | Supported                                                       |
+| EF Core / LinqToDB | Supported                                                       |
+| Redis              | Not supported; enabling fair queues causes an error             |
+| Single-server      | Supported when its durable provider meets the mode requirements |
 
 Queue and group names are persisted. Renaming either does not rename already-persisted work.

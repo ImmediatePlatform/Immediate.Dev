@@ -67,8 +67,8 @@ builder.Services.AddMyAppJobs()
 	.ConfigureStorage(storage => storage.UseInMemory());
 ```
 
-The injected type is `SendWelcomeEmail.Scheduler`. The returned `JobHandle` is an opaque
-identifier for monitoring and continuations—not evidence that the job completed.
+The injected type is `SendWelcomeEmail.Scheduler`. The returned `JobHandle` identifies the saved
+job for monitoring and continuations. It does not mean the job has finished.
 
 <Callout type="danger" title="Delivery is at least once">
 

@@ -1,6 +1,6 @@
 ---
 title: Batches and continuations
-description: Build atomic job graphs, chains, fan-out/fan-in and dynamically expanded workflows.
+description: Create batches, continuations, parallel branches and workflows that add jobs while running.
 order: 7
 group: Guides
 ---
@@ -9,15 +9,13 @@ group: Guides
 	import { Callout } from '$lib/components/docs';
 </script>
 
-Batches persist jobs and their dependency edges atomically. They require a graph-capable
-provider; Redis exposes queue and recurring capabilities only. Resolve the scoped
-`IBatchScheduler` from DI, normally through constructor injection alongside the generated job
-schedulers.
+Batches save jobs and their dependencies in one operation. They require storage with graph
+support, which Redis does not provide. Inject the scoped `IBatchScheduler` alongside the generated
+job schedulers.
 
-## Atomic workflow graph
+## Create a batch
 
-The constructor below makes every receiver explicit: `batches` is the runtime batch scheduler;
-the other parameters are nested scheduler types generated for their corresponding job classes.
+Inject `IBatchScheduler` and the generated scheduler for each job in the workflow:
 
 ```csharp
 public sealed class ImportWorkflow(
@@ -65,9 +63,9 @@ public sealed class ImportWorkflow(
 }
 ```
 
-Within an open batch, `AddToBatch` and `AddToBatchAt` only buffer records. Continuations built from
-their handles remain in the same buffer. `CommitAsync` performs one atomic graph write and returns
-a `BatchHandle`; nothing becomes visible before commit.
+Within an open batch, `AddToBatch` and `AddToBatchAt` keep jobs in memory. Continuations created
+from their handles stay in the same batch. `CommitAsync` saves the entire batch in one operation
+and returns a `BatchHandle`. Nothing is visible before the commit.
 
 `Begin()` returns the in-memory buffer shown above. Always dispose it: disposal without commit
 abandons the buffer. A batch can commit only once and cannot be modified after commit. As an
@@ -81,16 +79,15 @@ BatchHandle handle = await workflow.StartAsync(importId, cancellationToken);
 await batches.CancelAsync(handle, cancellationToken);
 ```
 
-This includes scheduled, active and continuation-waiting members, and the aggregate batch becomes
-`Cancelled` after its members settle. Cancelling an active member records cancellation durably but
-does not forcibly stop handler code already running in process; stale worker completion is fenced
-from changing the terminal result.
+This includes scheduled, active and continuation-waiting jobs. The batch becomes `Cancelled` after
+every job reaches a final state. Cancelling an active job saves the cancellation but does not
+forcibly stop handler code that is already running. If that code finishes later, it cannot
+overwrite the cancelled result.
 
-Failures before `CommitAsync` begins write nothing. Once commit begins, however, the batch is
-closed even when the call throws, and a transport failure can leave the durable outcome unknown:
-storage may have committed the graph before the caller lost the response. Do not retry the same
-`Batch`; an operation that rebuilds and commits another batch needs application-level
-idempotency or duplicate tracking.
+A failure before `CommitAsync` begins saves nothing. Once the commit begins, the batch closes even
+if the call throws. If the storage connection fails during the commit, the caller may not know
+whether the batch was saved. Do not reuse the same `Batch`. If you create another batch, guard
+against running the work twice.
 
 Batch members can carry the same fair-queue group IDs as ordinary scheduled work:
 
@@ -102,9 +99,9 @@ var grouped = import.AddToBatchInGroup(batch, new(importId), tenantId);
 var groupedAt = import.AddToBatchAt(batch, new(importId), runAt, tenantId);
 ```
 
-`AddToBatchInGroup` also accepts an optional delay. Whitespace group IDs are normalized to no
-group, the 128-character limit still applies, and the configured provider must support fair
-acquisition for the group to affect dispatch order.
+`AddToBatchInGroup` also accepts an optional delay. A blank group ID means no group, and group IDs
+cannot exceed 128 characters. The group changes scheduling order only when the storage provider
+supports fair queues.
 
 ## Chains, fan-out and fan-in
 
@@ -178,5 +175,5 @@ Use the scoped `JobMonitor` to read a graph. Call `GetBatchAsync`, `QueryBatchMe
 `GetBatchGraphAsync`. These methods return `null` when storage does not support graphs.
 `BatchStatus` counts succeeded, failed, cancelled and skipped members separately. A batch can
 succeed when every executed member succeeded even if conditional branches were skipped. The
-concrete monitor also provides `CancelBatchAsync` for unsettled members and `DeleteBatchAsync` for
-a terminal graph. The dashboard uses the same operations.
+concrete monitor also provides `CancelBatchAsync` for jobs that have not finished and
+`DeleteBatchAsync` for a completed batch. The dashboard offers the same actions.

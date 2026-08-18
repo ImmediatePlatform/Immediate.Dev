@@ -97,9 +97,9 @@ app.MapTodoEndpoints(tags: ["web"]);
 app.MapTodoEndpoints("/v1", "web");
 ```
 
-`AddXxxJobs` takes only its `tags` slice and returns `ImmediateJobsBuilder` for chained
-configuration. It reads the job's Immediate.Handlers `Tags` value; use the same filter for Jobs
-and Handlers so every selected job has a generated handler at execution:
+`AddXxxJobs` accepts `tags` and returns `ImmediateJobsBuilder` for other settings. It reads the same
+Immediate.Handlers `Tags` value. Pass the same tags to both registration methods so every
+registered job also has its handler:
 
 ```csharp
 services.AddTodoHandlers(tags: ["fulfillment"]);
@@ -107,8 +107,8 @@ services.AddTodoJobs(tags: ["fulfillment"])
 	.ConfigureStorage(storage => storage.UseInMemory());
 ```
 
-`AddXxxJobs` does not replace `AddXxxHandlers`. Job queue definitions are assembly-wide and remain
-registered even when job tags filter which job definitions and schedulers are added.
+`AddXxxJobs` does not replace `AddXxxHandlers`. Queue definitions are registered for the whole
+assembly even when tags limit which jobs are added.
 
 ## Where to go next
 

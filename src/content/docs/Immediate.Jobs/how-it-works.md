@@ -21,12 +21,12 @@ For each job it emits `IJ.<Namespace>.<Class>.g.cs` containing:
 - a generated `JsonSerializerContext`/resolver for payload and context types;
 - registrations for the scheduler, invoker, extractors and definition.
 
-At assembly level, `IJ.ServiceCollectionExtensions.g.cs` contains `AddXxxJobs` plus the
-name-addressable `RecurringJobs` dispatcher for payloadless jobs. Both are placed in the project's
-`RootNamespace`. The registration method returns `ImmediateJobsBuilder`. Repeated registration
-does not add another hosted worker or duplicate queue and job registrations. Tags still control
-which jobs are added. The assembly identifier and tags follow the same conventions as the other
-platform generators.
+At assembly level, `IJ.ServiceCollectionExtensions.g.cs` contains `AddXxxJobs` and the generated
+`RecurringJobs` service. `AddXxxJobs` registers jobs and returns `ImmediateJobsBuilder`.
+`RecurringJobs` can trigger payloadless jobs by name. Both types are placed in the project's
+`RootNamespace`. Calling the registration method again does not duplicate jobs, queues or the
+hosted worker. The assembly identifier and tags follow the same conventions as the other platform
+generators.
 
 ## Enqueue data flow
 

@@ -1,6 +1,6 @@
 ---
 title: Observability and health
-description: Export Immediate.Jobs traces, metrics and structured logs, and register scheduler health checks.
+description: Export traces, metrics and logs, and add scheduler health checks.
 order: 14
 group: Guides
 ---
@@ -64,12 +64,10 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 });
 ```
 
-The check combines scheduler liveness with provider connectivity. Filter the readiness endpoint by
-the tag passed to `AddHealthCheck`. The check reports `Degraded` until the scheduler starts, so map
-that status to HTTP 503 when readiness must remain closed during startup.
-It reads the same validated `ImmediateJobsOptions` as the worker, so no extra options registration
-is needed.
+The check covers both the worker and its storage connection. Filter the readiness endpoint by the
+tag passed to `AddHealthCheck`. It reports `Degraded` until the worker starts, so map that status to
+HTTP 503 when the application should not receive traffic during startup. No extra options
+registration is needed; the check and worker use the same validated settings.
 
-The Aspire sample uses the same OpenTelemetry sources, health registration and dashboard
-telemetry-link hooks. Immediate.Jobs does not require Aspire and does not ship an Aspire-specific
-runtime package.
+The Aspire sample shows the same tracing, metrics, health-check and dashboard-link setup. Aspire is
+optional; Immediate.Jobs does not ship a separate Aspire runtime package.

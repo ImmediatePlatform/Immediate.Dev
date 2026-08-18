@@ -1,25 +1,25 @@
 ---
 title: API reference
-description: Application-facing Immediate.Jobs attributes, schedulers, options, monitoring, management, providers and testing contracts.
+description: Public APIs for defining, scheduling, monitoring, managing, storing and testing jobs.
 order: 16
 group: Reference
 ---
 
-This reference groups the supported application surface. Generated scheduler methods are shown on
-their public base contracts even though application code normally uses `YourJob.Scheduler`.
+This page lists the public APIs most applications use. Generated scheduler methods appear on their
+public base contracts, although application code normally calls `YourJob.Scheduler`.
 
 ## Namespaces
 
-| Namespace                          | Surface                                                                     |
-| ---------------------------------- | --------------------------------------------------------------------------- |
-| `Immediate.Jobs.Shared`            | Declarations, handles, generated scheduler base, batches and configuration. |
-| `Immediate.Jobs.Shared.Interfaces` | Scheduler, recurring, monitoring, serialization and ID contracts.           |
-| `Immediate.Jobs.Shared.Apis`       | `JobMonitor` plus job, execution, batch and monitoring data types.          |
-| `Immediate.Jobs.Shared.Storage`    | Storage contracts, capability markers and persistence records.              |
+| Namespace                          | Contains                                                          |
+| ---------------------------------- | ----------------------------------------------------------------- |
+| `Immediate.Jobs.Shared`            | Job declarations, handles, schedulers, batches and configuration. |
+| `Immediate.Jobs.Shared.Interfaces` | Scheduling, recurring jobs, monitoring, serialization and IDs.    |
+| `Immediate.Jobs.Shared.Apis`       | `JobMonitor` and the records returned by monitoring calls.        |
+| `Immediate.Jobs.Shared.Storage`    | Contracts for custom storage providers.                           |
 
-Provider extensions remain under `Immediate.Jobs.EntityFrameworkCore`,
-`Immediate.Jobs.LinqToDB`, and `Immediate.Jobs.Redis`. The generated `AddXxxJobs` extension and
-`RecurringJobs` dispatcher are emitted into the consuming project's `RootNamespace`.
+Storage-provider extensions use `Immediate.Jobs.EntityFrameworkCore`, `Immediate.Jobs.LinqToDB`,
+and `Immediate.Jobs.Redis`. The generated `AddXxxJobs` and `RecurringJobs` types are placed in the
+application project's `RootNamespace`.
 
 ## Declaration attributes and enums
 
@@ -229,27 +229,28 @@ ImmediateJobsBuilder AddHealthCheck(
 
 `ImmediateJobsStorageBuilder` exposes `UseInMemory()`, `UseStorage(factory)`,
 `UseSingleServer()`, `UseSingleServer(factory)`, `UseDistributed()`, and
-`UseDistributed(factory)`. `ConfigureStorage` may be called only once. No storage configuration
-means in-memory; selecting a durable factory without an explicit topology means single-server.
-Provider extensions attach to this storage builder, and Redis selects distributed mode itself. The
-builder's `Services` property exposes the `IServiceCollection` for provider-specific registration.
+`UseDistributed(factory)`. Call `ConfigureStorage` at most once. If you omit it, Jobs uses
+in-memory storage. A durable provider uses single-server mode unless you select a mode explicitly.
+Redis always uses distributed mode. Provider extensions can use the builder's `Services` property
+to register services with the application's `IServiceCollection`.
 
-`FairQueueOptions` has `Enabled = false`, `ConcurrencyShareThreshold = 0.10`,
-`MinInflightForNoisy = 30`, and `GroupRoundRobin = true`; every `UseFairQueues` overload enables it.
-Both option types use startup validation.
+`FairQueueOptions` defaults to `Enabled = false`, `ConcurrencyShareThreshold = 0.10`,
+`MinInflightForNoisy = 30`, and `GroupRoundRobin = true`. Calling any `UseFairQueues` overload sets
+`Enabled` to `true`. Jobs validates `ImmediateJobsOptions` and `FairQueueOptions` at startup.
 
 ## Serialization and telemetry
 
-`IJobSerializer` exposes generic `Serialize`/`Deserialize` pairs both with and without a generated
-`JsonTypeInfo<T>` factory. `SystemTextJsonJobSerializer` uses web defaults and exposes `Options`.
-Generated jobs always call the metadata-factory overload. Traces and metrics use the stable
-`Immediate.Jobs` activity-source and meter names.
+`IJobSerializer` exposes generic `Serialize` and `Deserialize` overloads with or without generated
+`JsonTypeInfo<T>`. `SystemTextJsonJobSerializer` uses web defaults and exposes `Options`. Generated
+jobs use the overloads with generated JSON metadata. The activity source and meter are both named
+`Immediate.Jobs`.
 
 ## Monitoring and management
 
-`JobMonitor` is the main monitoring and management API for application code. It has a scoped
-lifetime. `IJobMonitor` exposes its read-only subset and resolves to the same instance. Inject the
-interface when a test needs only those reads.
+`JobMonitor` is the scoped service for reading status and managing stored jobs, batches and
+recurring schedules. `IJobMonitor` contains only the read methods and resolves to the same scoped
+instance. Use the interface when a component does not need management commands or when a test
+needs a simple replacement.
 
 ```csharp
 interface IJobMonitor
@@ -305,26 +306,28 @@ ValueTask ResumeRecurringAsync(string name, CancellationToken token = default);
 ValueTask TriggerRecurringAsync(string name, CancellationToken token = default);
 ```
 
-`JobQuery` can filter by ID, state, queue name, job name, or job-name search text.
-`JobExecutionQuery` requires a job ID and can select one attempt. That attempt must be positive.
-`BatchQuery` and `BatchMemberQuery` can filter by state. IDs and text filters cannot be empty.
-Every query has `Skip` and `Take`; `Skip` must be zero or greater, and `Take` must be from 1 through
-1,000. The default `Take` is 100.
+Query objects enforce these rules:
+
+- `JobQuery` can filter by ID, state, queue name, job name or search text for job names.
+- `JobExecutionQuery` requires a job ID. An optional attempt number must be positive.
+- `BatchQuery` and `BatchMemberQuery` can filter by state.
+- IDs and text filters cannot be blank.
+- `Skip` must be zero or greater. `Take` must be from 1 through 1,000 and defaults to 100.
 
 `JobStatus`, `BatchStatus`, `BatchMemberStatus`, `BatchGraph`, `BatchGraphNode` and
-`BatchGraphEdge` are immutable monitoring records. `FractionSettled` includes every terminal
-outcome, including `Skipped`. `QueryExecutionsAsync` returns retained executions newest first
-unless `JobExecutionQuery.Attempt` selects one. `IsSynthetic` marks a best-effort record rebuilt
-from the owning `JobRecord` when a separate execution entry is unavailable.
+`BatchGraphEdge` are read-only monitoring records. `FractionSettled` counts every finished result,
+including `Skipped`. `QueryExecutionsAsync` returns saved attempts newest first unless
+`JobExecutionQuery.Attempt` selects one. `IsSynthetic` is `true` when Jobs rebuilt execution data
+from the owning `JobRecord` because no separate execution record was available.
 
-`GetSnapshotAsync` includes the detected storage capabilities. `GetJobAsync` adds the current
-generated job definition's `MaxAttempts` value when the definition is available. Batch reads
+`GetSnapshotAsync` reports the features supported by the current storage provider. `GetJobAsync`
+includes the current job definition's `MaxAttempts` when that definition is available. Batch reads
 return `null` when storage does not support graphs. `GetBatchAsync` and `GetBatchGraphAsync` also
 return `null` when the batch does not exist.
 
-`CancelJobAsync` cancels non-terminal work. `RetryJobAsync` retries failed work or runs scheduled
-work now. Batch commands require graph storage. Recurring commands require recurring storage and
-use the persisted schedule name. All command identifiers and names must contain text.
+`CancelJobAsync` cancels a job that has not finished. `RetryJobAsync` retries a failed job or runs
+a scheduled job now. Batch commands require graph storage. Recurring commands require recurring
+storage and use the saved schedule name. Blank IDs and names are rejected.
 
 ## Dashboard
 
@@ -339,17 +342,17 @@ RouteGroupBuilder MapImmediateJobsDashboard(
 	this IEndpointRouteBuilder endpoints, string prefix);
 ```
 
-Call `AddImmediateJobsDashboard` before building the application. It registers the dashboard's
-generated Immediate.Apis handlers and Immediate.Validations behavior. Configure dashboard options
-in that registration call; `MapImmediateJobsDashboard` only selects the default or custom path.
-Options are validated when the host starts. `ImmediateJobsDashboardOptions.UpdateInterval` defaults
-to two seconds.
+Call `AddImmediateJobsDashboard` before building the application. It registers the services and
+endpoints used by the dashboard. Configure dashboard options in that call;
+`MapImmediateJobsDashboard` only selects the default or custom path. Jobs validates the settings
+when the host starts. `ImmediateJobsDashboardOptions.UpdateInterval` defaults to two seconds.
+
 `AllowInAnyEnvironment()`, `RequireAuthorization(string policy)` and
 `AddTelemetryLink(string label, JobTelemetryLinkKind kind,
 Func<JobTelemetryLinkContext, Uri?> createUrl)` return the same options object. Without an
 authorization policy, dashboard endpoints are restricted to the `Development` environment by
-default; `AllowInAnyEnvironment()` explicitly disables that restriction. A configured
-authorization policy remains authoritative. Link kinds are `Trace` and `Logs`.
+default. `AllowInAnyEnvironment()` removes that environment restriction. If you also configure an
+authorization policy, the policy still applies. Link kinds are `Trace` and `Logs`.
 `JobTelemetryLinkContext.Execution` is `null` for a job-level link and contains the exact
 `JobExecutionRecord` for an execution-level link.
 
@@ -396,36 +399,40 @@ it exposes `Services`, `Storage`, `TimeProvider`, and `Batches`. Operations are 
 `AssertContinuationReleasedAfterAsync`, `AssertCascadeSkippedAsync`,
 `AssertCascadeCancelledAsync`, and `RunThroughPipelineAsync<T>`.
 
-`JobStorageConformanceSuite.GetCases(StorageCapabilities)` returns one
-`JobStorageConformanceTestCase` for each storage behavior. The catalog is not tied to a test
+`JobStorageConformanceSuite.GetCases(StorageCapabilities)` returns an independent
+`JobStorageConformanceTestCase` for each selected storage behavior. The suite works with any test
 framework. Each case exposes `Name`, `RequiredCapabilities`, and
-`RunAsync(IServiceProvider, CancellationToken)`. Before a case runs, it checks the storage
-registration and its feature flags. Tests that depend on time use a `FakeTimeProvider` registered
-as `TimeProvider`.
+`RunAsync(IServiceProvider, CancellationToken)`. It checks the storage registration and reported
+features before running. Tests that depend on time require a `FakeTimeProvider` registered as
+`TimeProvider`.
 
 ## Custom storage contracts
 
-| Interface                 | Purpose                                                                                                                                            |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `IJobStorage`             | Initialize; enqueue; lease/acquire/renew; persist/query execution history; complete/fail; status; cancel/retry/delete/purge; heartbeat and health. |
-| `IRecurringJobStorage`    | Upsert/remove/pause/resume schedules; identify due rows; uniquely materialize each occurrence; reconcile obsolete code-defined schedules.          |
-| `IJobGraphStorage`        | Atomically enqueue batches/edges; settle and release/skip dependencies; add mid-run members; monitor/cancel/delete/purge graphs.                   |
-| `IFairQueueStorage`       | Apply fair acquisition when a policy is supplied, including group rotation and protection for quieter groups.                                      |
-| `IJobStorageReplica`      | Acquire the exact job IDs selected by the single-server in-memory queue.                                                                           |
-| `IJobGraphStorageReplica` | Read incoming continuation edges during single-server startup recovery.                                                                            |
+| Interface                 | Purpose                                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------------------- |
+| `IJobStorage`             | Store, claim, renew, finish, retry, cancel, delete and query jobs; report worker health.           |
+| `IRecurringJobStorage`    | Store schedules, find due runs, create each run once and remove obsolete code-defined schedules.   |
+| `IJobGraphStorage`        | Store and update batches and continuations; add jobs while a batch runs; query and manage batches. |
+| `IFairQueueStorage`       | Share available work fairly across groups.                                                         |
+| `IJobStorageReplica`      | Claim the exact job IDs selected by the single-server in-memory queue.                             |
+| `IJobGraphStorageReplica` | Load incoming continuation links when a single-server worker starts.                               |
 
 `StorageCapabilities` flags are `Queue`, `Recurring`, `Graph`, `FairQueues`, and `Replica`. Call
-`storage.GetCapabilities()` to detect these features. `Replica` represents `IJobStorageReplica`.
-Single-server storage also requires `IJobGraphStorageReplica`, `IRecurringJobStorage`, and
-`IJobGraphStorage`.
+`storage.GetCapabilities()` to report these features. `Replica` represents only
+`IJobStorageReplica`. Single-server storage also requires `IJobGraphStorageReplica`,
+`IRecurringJobStorage`, and `IJobGraphStorage`.
 
-Low-level `JobRecord`, acquisition, definition and graph persistence records are provider
-contracts, not application scheduling or monitoring APIs.
-`IJobStorage.RetryAsync` accepts `Failed` and `Scheduled`: a scheduled invocation is moved to
-`Pending` immediately while retaining its attempt count and latest failure details.
-`IJobStorage.CancelAsync` accepts any non-terminal state, while `DeleteAsync` accepts terminal
-states only. Worker-owned telemetry, renewal, completion and failure are fenced by job ID,
-execution number and worker ID; graph expansion is fenced by job ID and execution number. An
-expired or cancelled attempt therefore cannot mutate a newer durable state. Custom providers must
-implement `QueryJobExecutionsAsync(JobExecutionQuery, ...)` and retain execution rows for the
-lifetime of their owning job or batch.
+`JobRecord` and the other storage record types are for provider authors, not ordinary scheduling
+or monitoring code.
+
+`IJobStorage.RetryAsync` accepts `Failed` and `Scheduled`. A scheduled job moves to `Pending`
+immediately without changing its attempt count or latest failure details.
+
+`IJobStorage.CancelAsync` accepts jobs that have not finished. `DeleteAsync` accepts only final
+states. Storage must reject updates from an older attempt after its lease expires or it is
+cancelled. Worker updates match the job ID, execution number and worker ID. Graph changes match the
+job ID and execution number.
+
+Custom providers must implement
+`QueryJobExecutionsAsync(JobExecutionQuery, ...)` and keep execution records until the owning job
+or batch is deleted or purged.

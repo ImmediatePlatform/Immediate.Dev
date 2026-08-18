@@ -1,6 +1,6 @@
 ---
 title: Recurring jobs
-description: Define and manage recurring schedules with cron expressions, time zones and overlap policies.
+description: Create recurring schedules, run them on demand and control overlapping runs.
 order: 4
 group: Guides
 ---
@@ -16,8 +16,8 @@ public sealed partial class CleanupSessionsJob(AppDbContext db)
 }
 ```
 
-For infrastructure that selects a payloadless job by its persisted job name, inject the generated
-root-namespace `RecurringJobs` singleton instead of a specific scheduler:
+Use the generated `RecurringJobs` service when code needs to run a payloadless job by name instead
+of using its scheduler type:
 
 ```csharp
 public sealed class NamedJobOperations(RecurringJobs recurringJobs)
@@ -27,13 +27,10 @@ public sealed class NamedJobOperations(RecurringJobs recurringJobs)
 }
 ```
 
-This name is the job's `[Job(Name = ...)]` identity, not a dynamic schedule name. Name matching is
-ordinal and case-sensitive. An unknown name throws `ImmediateJobException` before a scope is
-created. For a known name, the dispatcher creates a scope and resolves the generated scheduler; a
-job excluded by the current registration tags also throws `ImmediateJobException`. Payload-bearing
-jobs are not included in this dispatcher. The method completes when the immediate invocation is
-persisted and does not return its `JobHandle`; use the typed scheduler when the caller needs the
-handle.
+`TriggerNowAsync` matches `[Job(Name = ...)]` exactly and is case-sensitive. It throws
+`ImmediateJobException` for an unknown name or a job excluded by registration tags. Only
+payloadless jobs are available. The method returns after saving the new run but does not return its
+`JobHandle`; use the typed scheduler when the caller needs that handle.
 
 Cron expressions accept five fields (minute precision), six fields (seconds first), or the
 case-insensitive macros `@yearly`/`@annually`, `@monthly`, `@weekly`, `@daily`/`@midnight`,
@@ -53,14 +50,14 @@ public sealed class CleanupOperations(CleanupSessionsJob.Scheduler scheduler)
 }
 ```
 
-At startup, a provider with recurring support upserts every code-defined schedule and removes
-obsolete code-defined rows. Dynamic rows are left alone. A queue-only custom provider skips this
-step. This reconciliation means a deploy can change a cron expression, but two versions of an
-application should not intentionally define different schedules under the same name.
+At startup, Jobs saves or updates every code-defined schedule when storage supports recurring
+jobs. It removes old code-defined schedules but leaves dynamic schedules alone. A queue-only
+provider skips this work. This lets a deployment change a cron expression. Do not run two versions
+of an application that define different schedules under the same name.
 
-When the persisted cron expression and time zone are unchanged, reconciliation preserves its
-stored `NextRunAt`, including an occurrence that became due while the application was stopped. A
-changed cron expression or time zone recomputes the next occurrence from the current time.
+If the saved cron expression and time zone are unchanged, Jobs keeps `NextRunAt`, including a run
+that became due while the application was stopped. If either setting changes, Jobs calculates the
+next run from the current time.
 
 ## Dynamic schedules
 
@@ -92,14 +89,13 @@ public sealed class TenantScheduleManager(TenantCleanupJob.Scheduler tenantClean
 }
 ```
 
-`AddOrUpdateRecurringAsync` is durable and idempotently replaces the named dynamic schedule.
-`TriggerNowAsync` creates an immediate invocation without moving the next cron occurrence. The
-dashboard can trigger, pause and resume existing schedules.
+`AddOrUpdateRecurringAsync` saves the schedule and replaces an existing schedule with the same
+name. `TriggerNowAsync` starts a run now without moving the next cron occurrence. The dashboard can
+also trigger, pause and resume schedules.
 
-## Manage persisted schedules
+## Manage stored schedules
 
-Use the concrete `JobMonitor` when administrative code needs to act on an existing schedule by its
-persisted schedule name:
+Use `JobMonitor` to pause, resume or trigger a stored schedule by its schedule name:
 
 ```csharp
 public sealed class RecurringScheduleOperations(JobMonitor jobs)
@@ -115,27 +111,26 @@ public sealed class RecurringScheduleOperations(JobMonitor jobs)
 }
 ```
 
-`JobMonitor.TriggerRecurringAsync` takes a schedule name. By contrast,
-`RecurringJobs.TriggerNowAsync` takes a generated job name. The difference matters when a dynamic
-schedule name, such as `tenant-42-cleanup`, differs from its job name, such as `tenant-cleanup`.
-Triggering creates an immediate invocation without moving the next cron occurrence.
+`JobMonitor.TriggerRecurringAsync` takes a schedule name. `RecurringJobs.TriggerNowAsync` takes the
+job name from `[Job(Name = ...)]`. These names can differ: a dynamic schedule named
+`tenant-42-cleanup` can run the job named `tenant-cleanup`. Both methods start a run without moving
+the next cron occurrence.
 
 ## Overlap policy
 
-| Policy       | When the previous occurrence is still active                                     |
-| ------------ | -------------------------------------------------------------------------------- |
-| `Skip`       | Persist the occurrence as terminal `Skipped` history without executing it.       |
-| `Queue`      | Materialize every occurrence but admit only one invocation of the job at a time. |
-| `Concurrent` | Allow both invocations to execute, subject to other concurrency limits.          |
+| Policy       | When the previous run is still active                                  |
+| ------------ | ---------------------------------------------------------------------- |
+| `Skip`       | Record the new run as `Skipped` without executing it.                  |
+| `Queue`      | Create every run, but execute only one instance of this job at a time. |
+| `Concurrent` | Allow runs to overlap, subject to other concurrency limits.            |
 
-Materialization is coordinated in durable storage, so `Recurring` capability is required. Redis
-and the SQL providers support it; graph support is unrelated. A malformed persisted schedule is
-logged and skipped for that pass without blocking other recurring schedules or ordinary queued
-jobs.
+Recurring schedules need storage with recurring support so multiple workers do not create the same
+run. Redis and the SQL providers support them; graph support is unrelated. Jobs logs and skips a
+malformed stored schedule without blocking other schedules or queued jobs.
 
 ## NodaTime
 
 Install `Immediate.Jobs.NodaTime` to configure NodaTime payload serialization and use `Duration`,
 `Instant` and `DateTimeZone` scheduling overloads. See the dedicated
-[NodaTime guide](/docs/Immediate.Jobs/nodatime) for registration, examples and the complete package
-surface.
+[NodaTime guide](/docs/Immediate.Jobs/nodatime) for registration, examples and the full API
+reference.
