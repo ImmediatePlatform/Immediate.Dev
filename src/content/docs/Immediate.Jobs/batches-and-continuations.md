@@ -178,4 +178,5 @@ Use the scoped `JobMonitor` to read a graph. Call `GetBatchAsync`, `QueryBatchMe
 `GetBatchGraphAsync`. These methods return `null` when storage does not support graphs.
 `BatchStatus` counts succeeded, failed, cancelled and skipped members separately. A batch can
 succeed when every executed member succeeded even if conditional branches were skipped. The
-dashboard shows the same progress and workflow states alongside batch cancel/delete operations.
+concrete monitor also provides `CancelBatchAsync` for unsettled members and `DeleteBatchAsync` for
+a terminal graph. The dashboard uses the same operations.

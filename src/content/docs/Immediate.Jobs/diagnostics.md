@@ -34,8 +34,8 @@ Some facts depend on runtime values or durable state and cannot be diagnosed at 
 
 - duplicate context extractor keys throw `ImmediateJobException` while capturing;
 - negative delays and over-128-character group IDs throw argument exceptions;
-- a non-positive dashboard update interval throws `InvalidOperationException`, and mapping the
-  dashboard without first calling `AddImmediateJobsDashboard` also throws;
+- mapping the dashboard without first calling `AddImmediateJobsDashboard` throws
+  `InvalidOperationException`;
 - invalid dynamic cron/time zones fail when adding/updating the schedule;
 - malformed persisted recurring schedules are logged individually without blocking other
   schedules or ordinary job acquisition;
@@ -43,7 +43,7 @@ Some facts depend on runtime values or durable state and cannot be diagnosed at 
 - fair acquisition on Redis throws `NotSupportedException` when `UseFairQueues` is enabled;
 - conflicting storage selections or a second `ConfigureStorage` call throw `ImmediateJobException`
   during registration;
-- invalid runtime or fair-queue options fail validation when the host starts;
+- invalid runtime, fair-queue, dashboard, or Redis options fail validation when the host starts;
 - single-server mode requires `IJobStorageReplica`, `IJobGraphStorageReplica`, recurring, and graph
   support;
 - single-server mode detects multiple-process replica drift;

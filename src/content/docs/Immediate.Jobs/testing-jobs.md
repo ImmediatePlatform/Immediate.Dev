@@ -120,8 +120,13 @@ unique database, schema, key prefix, or similar boundary. `FakeTimeProvider` com
 `GetCases` always includes the queue tests and adds recurring, graph, fair-queue, and replica tests
 selected by `StorageCapabilities`. Before each behavior runs, `RunAsync` checks that the storage
 supports the features named by those flags. The `Replica` suite covers `IJobStorageReplica`.
-`IJobGraphStorageReplica` has no capability flag, so providers that support single-server mode
-should add their own tests for startup recovery.
+`IJobGraphStorageReplica` has no capability flag. Providers that support single-server mode should
+also run the applicable cases through their public single-server registration. This verifies both
+replica interfaces through the single-server wrapper.
+
+The graph suite checks that a stale execution cannot change a newer attempt. It also checks
+continuations added after a parent finishes and invalid dynamic batch relationships. Rejected
+changes must not leave partial data behind.
 
 The catalog has no dependency on xUnit, NUnit, MSTest, Testcontainers, an ORM, or a database
 driver. Use a fixture wrapper when cleanup needs the provider, connection, and backend identifier;

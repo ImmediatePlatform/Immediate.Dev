@@ -1,6 +1,6 @@
 ---
 title: Dashboard and monitoring
-description: Secure the embedded dashboard and use its HTTP and programmatic monitoring APIs.
+description: Secure the embedded dashboard and use its HTTP and programmatic monitoring and management APIs.
 order: 13
 group: Guides
 ---
@@ -13,8 +13,8 @@ group: Guides
 dotnet add package Immediate.Jobs.Dashboard --prerelease
 ```
 
-Register the dashboard's generated API handlers before building the application, then map the
-embedded UI and JSON/SSE API:
+Configure and register the dashboard before building the application. Then map the embedded UI and
+JSON/SSE API:
 
 ```csharp
 using Immediate.Jobs.Dashboard;
@@ -53,14 +53,21 @@ var app = builder.Build();
 app.MapImmediateJobsDashboard("/jobs");
 ```
 
+Dashboard options use the .NET options system and are validated when the host starts.
+Configure them only through `AddImmediateJobsDashboard`; the mapping call now selects the path.
+
 Without `RequireAuthorization`, every dashboard endpoint is development-only by default and
 returns 403 in other environments. For a trusted custom development environment, explicitly
-disable this restriction when mapping the dashboard:
+disable this restriction during service registration:
 
 ```csharp
-app.MapImmediateJobsDashboard("/jobs", options =>
-	_ = options.AllowInAnyEnvironment()
-);
+builder.Services.AddImmediateJobsDashboard(options =>
+{
+	_ = options.AllowInAnyEnvironment();
+});
+
+var app = builder.Build();
+app.MapImmediateJobsDashboard("/jobs");
 ```
 
 Treat the dashboard as an administrative surface: it exposes payloads, errors, identifiers and
@@ -172,12 +179,15 @@ allow the operation.
 SSE sends `retry: 3000`, disables proxy buffering and ends when the request is aborted. It is a
 poll-backed live view, not a durable event log; clients must refresh after reconnecting.
 
-## Programmatic monitoring
+## Programmatic monitoring and management
 
-Inject the scoped `JobMonitor` for application status pages and endpoints. It provides read-only
-access to snapshots, jobs, retained executions, batches, batch members, and graphs. Use
-`IJobMonitor` when you want to replace the monitor with a fake in tests. Do not use `IJobStorage`
-for ordinary monitoring. It is intended for storage providers and internal scheduling work.
+Inject the scoped `JobMonitor` for application status pages and administrative endpoints. It reads
+snapshots, jobs, retained executions, batches, batch members, and graphs. It can also cancel or
+retry jobs, cancel or delete batches, and pause, resume, or trigger recurring schedules.
+
+`IJobMonitor` exposes only the read methods. Use it when a test needs a small fake and no management
+commands. Do not use `IJobStorage` for application monitoring or management. That contract is for
+storage providers and internal scheduling work.
 
 `QueryExecutionsAsync` returns attempts newest first. Execution history remains with its job or
 batch until that record is deleted or purged. Batch reads return `null` when the provider does not
@@ -188,8 +198,8 @@ old. SQL providers prune stale server rows on later heartbeats, while Redis expi
 
 <Callout type="note">
 
-The dashboard uses `JobMonitor` to load data. It uses storage directly for write actions and live
-streams. Apply paging and authorization to custom monitoring endpoints because payload and
-exception data can contain business-sensitive values.
+The dashboard uses `JobMonitor` for reads, write actions, and the polling behind live streams.
+Apply paging and authorization to custom endpoints because payload and exception data can contain
+business-sensitive values.
 
 </Callout>

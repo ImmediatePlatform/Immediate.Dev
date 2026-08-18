@@ -135,7 +135,9 @@ builder.Services.AddMyAppJobs()
 Or pass an application-owned `IConnectionMultiplexer`; the provider will not dispose it. The
 configuration-string overload owns and disposes its connection. `Database` defaults to `-1`
 (server default), and `KeyPrefix` defaults to `immediate-jobs`. Prefixes cannot contain braces
-because the provider adds its own Redis Cluster hash tag for atomic Lua operations.
+because the provider adds its own Redis Cluster hash tag for atomic Lua operations. Redis options
+use the .NET options system. An empty or brace-containing key prefix fails validation when the host
+starts.
 
 Redis always selects distributed mode and supports queue plus recurring capabilities. It does not
 support graph workflows or fair queues.

@@ -5,10 +5,6 @@ order: 14
 group: Guides
 ---
 
-<script lang="ts">
-	import { Callout } from '$lib/components/docs';
-</script>
-
 Immediate.Jobs exposes both an `ActivitySource` and `Meter` named `Immediate.Jobs`:
 
 ```csharp
@@ -71,19 +67,8 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 The check combines scheduler liveness with provider connectivity. Filter the readiness endpoint by
 the tag passed to `AddHealthCheck`. The check reports `Degraded` until the scheduler starts, so map
 that status to HTTP 503 when readiness must remain closed during startup.
-
-<Callout type="warning" title="Preview health-check workaround">
-
-At source revision `9c8c13b`, the health check resolves `ImmediateJobsOptions` directly while the
-runtime registers `IOptions<ImmediateJobsOptions>`. Add this bridge until a later preview fixes that
-constructor:
-
-```csharp
-builder.Services.AddSingleton<ImmediateJobsOptions>(services =>
-	services.GetRequiredService<IOptions<ImmediateJobsOptions>>().Value);
-```
-
-</Callout>
+It reads the same validated `ImmediateJobsOptions` as the worker, so no extra options registration
+is needed.
 
 The Aspire sample uses the same OpenTelemetry sources, health registration and dashboard
 telemetry-link hooks. Immediate.Jobs does not require Aspire and does not ship an Aspire-specific

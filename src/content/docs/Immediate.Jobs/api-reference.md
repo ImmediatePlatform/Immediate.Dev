@@ -1,6 +1,6 @@
 ---
 title: API reference
-description: Application-facing Immediate.Jobs attributes, schedulers, options, monitoring, providers and testing contracts.
+description: Application-facing Immediate.Jobs attributes, schedulers, options, monitoring, management, providers and testing contracts.
 order: 16
 group: Reference
 ---
@@ -231,7 +231,8 @@ ImmediateJobsBuilder AddHealthCheck(
 `UseSingleServer()`, `UseSingleServer(factory)`, `UseDistributed()`, and
 `UseDistributed(factory)`. `ConfigureStorage` may be called only once. No storage configuration
 means in-memory; selecting a durable factory without an explicit topology means single-server.
-Provider extensions attach to this storage builder, and Redis selects distributed mode itself.
+Provider extensions attach to this storage builder, and Redis selects distributed mode itself. The
+builder's `Services` property exposes the `IServiceCollection` for provider-specific registration.
 
 `FairQueueOptions` has `Enabled = false`, `ConcurrencyShareThreshold = 0.10`,
 `MinInflightForNoisy = 30`, and `GroupRoundRobin = true`; every `UseFairQueues` overload enables it.
@@ -244,10 +245,11 @@ Both option types use startup validation.
 Generated jobs always call the metadata-factory overload. Traces and metrics use the stable
 `Immediate.Jobs` activity-source and meter names.
 
-## Monitoring
+## Monitoring and management
 
-`JobMonitor` is the main read API for application code. It has a scoped lifetime. Inject
-`IJobMonitor` instead when an interface makes testing easier; it resolves to the same instance.
+`JobMonitor` is the main monitoring and management API for application code. It has a scoped
+lifetime. `IJobMonitor` exposes its read-only subset and resolves to the same instance. Inject the
+interface when a test needs only those reads.
 
 ```csharp
 interface IJobMonitor
@@ -291,6 +293,18 @@ sealed record JobExecutionRecord
 }
 ```
 
+The concrete `JobMonitor` also exposes these management methods:
+
+```csharp
+ValueTask CancelJobAsync(string jobId, CancellationToken token = default);
+ValueTask RetryJobAsync(string jobId, CancellationToken token = default);
+ValueTask CancelBatchAsync(string batchId, CancellationToken token = default);
+ValueTask DeleteBatchAsync(string batchId, CancellationToken token = default);
+ValueTask PauseRecurringAsync(string name, CancellationToken token = default);
+ValueTask ResumeRecurringAsync(string name, CancellationToken token = default);
+ValueTask TriggerRecurringAsync(string name, CancellationToken token = default);
+```
+
 `JobQuery` can filter by ID, state, queue name, job name, or job-name search text.
 `JobExecutionQuery` requires a job ID and can select one attempt. That attempt must be positive.
 `BatchQuery` and `BatchMemberQuery` can filter by state. IDs and text filters cannot be empty.
@@ -308,6 +322,10 @@ generated job definition's `MaxAttempts` value when the definition is available.
 return `null` when storage does not support graphs. `GetBatchAsync` and `GetBatchGraphAsync` also
 return `null` when the batch does not exist.
 
+`CancelJobAsync` cancels non-terminal work. `RetryJobAsync` retries failed work or runs scheduled
+work now. Batch commands require graph storage. Recurring commands require recurring storage and
+use the persisted schedule name. All command identifiers and names must contain text.
+
 ## Dashboard
 
 ```csharp
@@ -316,17 +334,16 @@ IServiceCollection AddImmediateJobsDashboard(
 	Action<ImmediateJobsDashboardOptions>? configure = null);
 
 RouteGroupBuilder MapImmediateJobsDashboard(
-	this IEndpointRouteBuilder endpoints,
-	Action<ImmediateJobsDashboardOptions>? configure = null);
+	this IEndpointRouteBuilder endpoints);
 RouteGroupBuilder MapImmediateJobsDashboard(
-	this IEndpointRouteBuilder endpoints, string prefix,
-	Action<ImmediateJobsDashboardOptions>? configure = null);
+	this IEndpointRouteBuilder endpoints, string prefix);
 ```
 
 Call `AddImmediateJobsDashboard` before building the application. It registers the dashboard's
-generated Immediate.Apis handlers and Immediate.Validations behavior. `MapImmediateJobsDashboard`
-also accepts an optional configuration callback, but service registration is the preferred
-configuration point. `ImmediateJobsDashboardOptions.UpdateInterval` defaults to two seconds.
+generated Immediate.Apis handlers and Immediate.Validations behavior. Configure dashboard options
+in that registration call; `MapImmediateJobsDashboard` only selects the default or custom path.
+Options are validated when the host starts. `ImmediateJobsDashboardOptions.UpdateInterval` defaults
+to two seconds.
 `AllowInAnyEnvironment()`, `RequireAuthorization(string policy)` and
 `AddTelemetryLink(string label, JobTelemetryLinkKind kind,
 Func<JobTelemetryLinkContext, Uri?> createUrl)` return the same options object. Without an

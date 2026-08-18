@@ -23,9 +23,6 @@ builder.Services.AddMyAppJobs()
 	.AddHealthCheck();
 ```
 
-At source revision `9c8c13b`, `AddHealthCheck` needs the temporary options bridge shown in
-[Observability and health](/docs/Immediate.Jobs/observability-and-health#health-checks).
-
 `MyApp` is the shared [assembly identifier](/docs/concepts/assembly-identifier). `AddMyAppJobs`
 accepts optional tags and returns `ImmediateJobsBuilder`. Chain runtime options, fair queues,
 storage, and health checks from that builder.
@@ -43,9 +40,10 @@ again does not add duplicate jobs or another hosted worker.
 or its behaviors.
 
 Generated job schedulers, `IBatchScheduler`, and `JobMonitor` are scoped. `IJobMonitor` resolves to
-the same scoped monitor. Definitions, queue definitions, invokers, `RecurringJobs`, storage,
-serializer, ID generator, options and the worker service are singleton. Every execution creates
-its own scope for extractors, behaviors, handler and dependencies.
+the same scoped monitor but exposes only its read methods. Definitions, queue definitions,
+invokers, `RecurringJobs`, storage, serializer, ID generator, options and the worker service are
+singleton. Every execution creates its own scope for extractors, behaviors, handler and
+dependencies.
 
 ## Fluent configuration
 

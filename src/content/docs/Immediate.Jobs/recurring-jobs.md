@@ -96,6 +96,30 @@ public sealed class TenantScheduleManager(TenantCleanupJob.Scheduler tenantClean
 `TriggerNowAsync` creates an immediate invocation without moving the next cron occurrence. The
 dashboard can trigger, pause and resume existing schedules.
 
+## Manage persisted schedules
+
+Use the concrete `JobMonitor` when administrative code needs to act on an existing schedule by its
+persisted schedule name:
+
+```csharp
+public sealed class RecurringScheduleOperations(JobMonitor jobs)
+{
+	public ValueTask PauseAsync(string name, CancellationToken cancellationToken) =>
+		jobs.PauseRecurringAsync(name, cancellationToken);
+
+	public ValueTask ResumeAsync(string name, CancellationToken cancellationToken) =>
+		jobs.ResumeRecurringAsync(name, cancellationToken);
+
+	public ValueTask RunNowAsync(string name, CancellationToken cancellationToken) =>
+		jobs.TriggerRecurringAsync(name, cancellationToken);
+}
+```
+
+`JobMonitor.TriggerRecurringAsync` takes a schedule name. By contrast,
+`RecurringJobs.TriggerNowAsync` takes a generated job name. The difference matters when a dynamic
+schedule name, such as `tenant-42-cleanup`, differs from its job name, such as `tenant-cleanup`.
+Triggering creates an immediate invocation without moving the next cron occurrence.
+
 ## Overlap policy
 
 | Policy       | When the previous occurrence is still active                                     |
