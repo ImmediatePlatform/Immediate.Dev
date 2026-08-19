@@ -124,6 +124,9 @@ For each case:
 adds recurring, graph, fair-queue and replica tests based on `StorageCapabilities`, and verifies
 the provider reports those features before each test runs.
 
+`AllCasesByName` provides a case-insensitive lookup of every known case. A test runner can use it
+when it stores a case name and later needs the matching `JobStorageConformanceTestCase`.
+
 The `Replica` flag covers `IJobStorageReplica`; `IJobGraphStorageReplica` has no separate flag. For
 a provider that supports single-server mode, also run the relevant cases through its
 single-server registration. This tests both replica interfaces.

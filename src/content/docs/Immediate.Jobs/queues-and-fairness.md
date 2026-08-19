@@ -34,12 +34,12 @@ Enable fairness globally and put a tenant/customer key on each scheduled invocat
 
 ```csharp
 builder.Services.AddMyAppJobs()
-	.UseFairQueues(fair =>
+	.UseFairQueues(options => options.Configure(fair =>
 	{
 		fair.ConcurrencyShareThreshold = 0.10;
 		fair.MinInflightForNoisy = 30;
 		fair.GroupRoundRobin = true;
-	})
+	}))
 	.ConfigureStorage(storage => storage.UseInMemory());
 
 await welcomeEmail.EnqueueAsync(

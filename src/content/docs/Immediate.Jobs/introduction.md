@@ -34,8 +34,8 @@ main package in the project that declares the handlers:
 dotnet add package Immediate.Jobs --prerelease
 ```
 
-Choose a durable provider before production; in-memory storage is the automatic default when no
-provider is selected.
+Select storage during registration. Use in-memory storage for development and tests. Choose a
+durable provider before production.
 
 ## Your first job
 
@@ -84,10 +84,10 @@ possible. Immediate.Jobs does not include a transactional outbox.
 <CardGrid cols={2}>
 	<LinkCard title="Create jobs" description="Declaration rules, payloads, names, retries and timeouts." href="/docs/Immediate.Jobs/creating-jobs" />
 	<LinkCard title="Schedule work" description="Immediate, delayed, absolute and grouped scheduling." href="/docs/Immediate.Jobs/enqueueing-and-scheduling" />
-	<LinkCard title="Recurring jobs" description="Cron schedules, time zones, reconciliation and manual triggers." href="/docs/Immediate.Jobs/recurring-jobs" />
-	<LinkCard title="Build workflows" description="Atomic batches, chains, fan-out/fan-in and dynamic expansion." href="/docs/Immediate.Jobs/batches-and-continuations" />
-	<LinkCard title="Choose storage" description="Durability, topology and provider capability tradeoffs." href="/docs/Immediate.Jobs/choosing-storage" />
+	<LinkCard title="Recurring jobs" description="Cron schedules, time zones, saved schedules and manual runs." href="/docs/Immediate.Jobs/recurring-jobs" />
+	<LinkCard title="Build workflows" description="Batches, dependencies, parallel branches and jobs added at runtime." href="/docs/Immediate.Jobs/batches-and-continuations" />
+	<LinkCard title="Choose storage" description="Durability, worker count and supported features." href="/docs/Immediate.Jobs/choosing-storage" />
 	<LinkCard title="Operate jobs" description="Delivery guarantees, dashboard, telemetry and health checks." href="/docs/Immediate.Jobs/delivery-guarantees" />
-	<LinkCard title="Test jobs" description="Fake time, deterministic draining, capture-only schedulers and assertions." href="/docs/Immediate.Jobs/testing-jobs" />
-	<LinkCard title="API reference" description="Application-facing contracts, options and companion packages." href="/docs/Immediate.Jobs/api-reference" />
+	<LinkCard title="Test jobs" description="Controllable time, captured scheduling calls and assertions." href="/docs/Immediate.Jobs/testing-jobs" />
+	<LinkCard title="API reference" description="Public types, options and companion packages." href="/docs/Immediate.Jobs/api-reference" />
 </CardGrid>

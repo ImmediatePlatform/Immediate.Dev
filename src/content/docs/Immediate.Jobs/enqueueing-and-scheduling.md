@@ -90,7 +90,7 @@ public sealed class SnowflakeIdGenerator(ISnowflakeService snowflakes) : IIdGene
 `UseIdGenerator<TGenerator>()` registers `TGenerator` as a singleton, so its implementation and
 dependencies must be thread-safe. With distributed storage, configure Snowflake worker/node IDs
 so separate application instances cannot generate the same value. `IdKind` lets the generator
-distinguish individual job invocations—including recurring occurrences—from atomic batches.
+distinguish job runs, including recurring runs, from batches.
 
 Treat the result as opaque even when your generator adds a readable prefix. Applications should
 store and compare `JobHandle.Id` or `BatchHandle.Id`, not parse business meaning from their format.
@@ -110,9 +110,9 @@ await scheduler.CancelAsync(handle, cancellationToken);
 
 Cancellation immediately persists `Cancelled`, including for scheduled, pending, continuation-
 waiting and active work. If a worker already owns the invocation, its in-process handler is not
-forcibly interrupted; attempt fencing prevents that worker's later completion or failure from
-overwriting the cancelled record. Cancelling an unknown handle fails as not found, and cancelling
-a terminal invocation fails with `ImmediateJobException`.
+forcibly interrupted. Storage rejects that worker's later completion or failure, so it cannot
+overwrite the cancelled record. Cancelling an unknown handle fails as not found. Cancelling a
+finished invocation fails with `ImmediateJobException`.
 
 The token passed to `CancelAsync` cancels the storage operation only. Likewise, cancellation tokens
 on scheduling calls do not become future execution-cancellation tokens.

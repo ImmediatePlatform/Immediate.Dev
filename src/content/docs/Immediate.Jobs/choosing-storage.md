@@ -34,7 +34,7 @@ them.
 
 ## Tradeoffs
 
-- In-memory is fastest and deterministic, but a restart loses pending jobs and history.
+- In-memory is fast and predictable in tests, but a restart loses pending jobs and history.
 - Single-server selects work in memory and writes every change to SQL. It restores that state after
   a restart but cannot fail over to another process.
 - Distributed SQL coordinates workers through the database. It supports multiple processes and
@@ -52,9 +52,9 @@ claims the exact job IDs selected by the in-memory queue. `IJobGraphStorageRepli
 continuation links at startup. A provider must implement both interfaces, plus recurring and graph
 support, to use single-server mode.
 
-Starting or disposing the provider more than once must be safe. It must save claims, recurring
-runs and graph changes as single operations so workers cannot create duplicates or overwrite each
-other. It must also enforce leases and worker ownership, and return monitoring results in pages.
+Starting or disposing the provider more than once must be safe. It must save each claim, recurring
+run and graph change in one operation so workers cannot create duplicates or overwrite each other.
+It must also enforce leases and worker ownership, and return monitoring results in pages.
 
 Run the `JobStorageConformanceSuite` from `Immediate.Jobs.Testing` with the same service
 registration an application would use. Select the tests that match the provider's features. See

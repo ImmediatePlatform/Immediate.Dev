@@ -90,7 +90,7 @@ public abstract class JobContextExtractor<TContext>
 ```
 
 `IIdGenerator.CreateId(IdKind kind)` creates `Job` and `Batch` IDs. The default returns a GUID in
-the `N` format. `ImmediateJobsBuilder.UseIdGenerator<TGenerator>()` replaces it with a singleton,
+the `N` format. `IImmediateJobsBuilder.UseIdGenerator<TGenerator>()` replaces it with a singleton,
 thread-safe generator; see [Custom identifiers](/docs/Immediate.Jobs/enqueueing-and-scheduling#custom-identifiers)
 for a Snowflake example.
 
@@ -196,21 +196,24 @@ interface IBatchScheduler
 
 ## Runtime configuration
 
-`AddXxxJobs(params ... tags)` returns `ImmediateJobsBuilder`. The builder exposes:
+`AddXxxJobs(params ... tags)` returns `IImmediateJobsBuilder`. The interface exposes:
 
 ```csharp
-ImmediateJobsBuilder Configure(string configurationSectionPath);
-ImmediateJobsBuilder Configure(IConfiguration configurationSection);
-ImmediateJobsBuilder Configure(Action<ImmediateJobsOptions> configure);
+IServiceCollection Services { get; }
 
-ImmediateJobsBuilder UseFairQueues();
-ImmediateJobsBuilder UseFairQueues(string configurationSectionPath);
-ImmediateJobsBuilder UseFairQueues(IConfiguration configurationSection);
-ImmediateJobsBuilder UseFairQueues(Action<FairQueueOptions> configure);
+IImmediateJobsBuilder ConfigureWorkers(Action<ImmediateJobsOptions> configure);
+IImmediateJobsBuilder ConfigureWorkers(
+	Action<OptionsBuilder<ImmediateJobsOptions>> configure);
+IImmediateJobsBuilder DisableWorkers();
 
-ImmediateJobsBuilder ConfigureStorage(Action<ImmediateJobsStorageBuilder> configure);
-ImmediateJobsBuilder UseIdGenerator<TGenerator>();
-ImmediateJobsBuilder AddHealthCheck(
+IImmediateJobsBuilder UseFairQueues();
+IImmediateJobsBuilder UseFairQueues(
+	Action<OptionsBuilder<FairQueueOptions>> configure);
+
+IImmediateJobsBuilder ConfigureStorage(
+	Action<IImmediateJobsStorageBuilder> configure);
+IImmediateJobsBuilder UseIdGenerator<TGenerator>();
+IImmediateJobsBuilder AddHealthCheck(
 	string name = "immediate-jobs",
 	HealthStatus? failureStatus = null,
 	IEnumerable<string>? tags = null);
@@ -218,6 +221,7 @@ ImmediateJobsBuilder AddHealthCheck(
 
 | `ImmediateJobsOptions` member                    |                                             Default |
 | ------------------------------------------------ | --------------------------------------------------: |
+| `IsJobSchedulingServiceEnabled`                  |                                              `true` |
 | `MaxParallelJobs`                                | `Math.Clamp(Environment.ProcessorCount * 4, 8, 32)` |
 | `AcquisitionBatchSize`                           |                                                `32` |
 | `PollingInterval`                                |                                            1 second |
@@ -227,16 +231,19 @@ ImmediateJobsBuilder AddHealthCheck(
 | `FailedRetention` / `BatchFailedRetention`       |                                              7 days |
 | `PurgeInterval`                                  |                                              1 hour |
 
-`ImmediateJobsStorageBuilder` exposes `UseInMemory()`, `UseStorage(factory)`,
-`UseSingleServer()`, `UseSingleServer(factory)`, `UseDistributed()`, and
-`UseDistributed(factory)`. Call `ConfigureStorage` at most once. If you omit it, Jobs uses
-in-memory storage. A durable provider uses single-server mode unless you select a mode explicitly.
-Redis always uses distributed mode. Provider extensions can use the builder's `Services` property
-to register services with the application's `IServiceCollection`.
+`IImmediateJobsStorageBuilder` exposes `Services`, `UseInMemory()`, `UseStorage(factory)`,
+`UseStorage<TJobStorage>()`, `UseSingleServer()`, `UseSingleServer(factory)`, `UseDistributed()`,
+and `UseDistributed(factory)`. Call `ConfigureStorage` exactly once and select a provider. A
+durable provider uses single-server mode unless you select a mode explicitly. Redis always uses
+distributed mode. Provider extensions can use `Services` to add their dependencies.
+
+`DisableWorkers()` sets `IsJobSchedulingServiceEnabled` to `false`. The hosted worker exits without
+initializing storage or executing jobs. Registration, schedulers and storage remain available.
 
 `FairQueueOptions` defaults to `Enabled = false`, `ConcurrencyShareThreshold = 0.10`,
-`MinInflightForNoisy = 30`, and `GroupRoundRobin = true`. Calling any `UseFairQueues` overload sets
-`Enabled` to `true`. Jobs validates `ImmediateJobsOptions` and `FairQueueOptions` at startup.
+`MinInflightForNoisy = 30`, and `GroupRoundRobin = true`. `UseFairQueues` sets `Enabled` to `true`.
+The `OptionsBuilder<T>` overloads support configuration binding. Jobs validates
+`ImmediateJobsOptions` and `FairQueueOptions` at startup.
 
 ## Serialization and telemetry
 
@@ -332,9 +339,16 @@ storage and use the saved schedule name. Blank IDs and names are rejected.
 ## Dashboard
 
 ```csharp
-IServiceCollection AddImmediateJobsDashboard(
-	this IServiceCollection services,
-	Action<ImmediateJobsDashboardOptions>? configure = null);
+IImmediateJobsDashboardBuilder AddImmediateJobsDashboard(
+	this IImmediateJobsBuilder builder);
+IImmediateJobsDashboardBuilder ConfigureDashboard(
+	Action<ImmediateJobsDashboardOptions> configure);
+IImmediateJobsDashboardBuilder ConfigureDashboard(
+	Action<OptionsBuilder<ImmediateJobsDashboardOptions>> configure);
+IImmediateJobsDashboardBuilder AddTelemetryLink(
+	string label,
+	JobTelemetryLinkKind kind,
+	Func<JobTelemetryLinkContext, Uri?> createUrl);
 
 RouteGroupBuilder MapImmediateJobsDashboard(
 	this IEndpointRouteBuilder endpoints);
@@ -342,38 +356,38 @@ RouteGroupBuilder MapImmediateJobsDashboard(
 	this IEndpointRouteBuilder endpoints, string prefix);
 ```
 
-Call `AddImmediateJobsDashboard` before building the application. It registers the services and
-endpoints used by the dashboard. Configure dashboard options in that call;
-`MapImmediateJobsDashboard` only selects the default or custom path. Jobs validates the settings
-when the host starts. `ImmediateJobsDashboardOptions.UpdateInterval` defaults to two seconds.
+Chain `AddImmediateJobsDashboard` from the jobs registration before building the application.
+`ConfigureDashboard` sets options. `MapImmediateJobsDashboard` only selects the default or custom
+path. Jobs validates the settings when the host starts.
 
-`AllowInAnyEnvironment()`, `RequireAuthorization(string policy)` and
-`AddTelemetryLink(string label, JobTelemetryLinkKind kind,
-Func<JobTelemetryLinkContext, Uri?> createUrl)` return the same options object. Without an
-authorization policy, dashboard endpoints are restricted to the `Development` environment by
-default. `AllowInAnyEnvironment()` removes that environment restriction. If you also configure an
-authorization policy, the policy still applies. Link kinds are `Trace` and `Logs`.
+`ImmediateJobsDashboardOptions.UpdateInterval` defaults to two seconds.
+`RestrictToDevelopmentEnvironment` defaults to `true`, and `AuthorizationPolicy` defaults to
+`null`. A named policy replaces the environment check. With no policy, setting the restriction to
+`false` makes the dashboard available in every environment. Link kinds are `Trace` and `Logs`.
 `JobTelemetryLinkContext.Execution` is `null` for a job-level link and contains the exact
 `JobExecutionRecord` for an execution-level link.
 
 ## Provider registration
 
 ```csharp
-ImmediateJobsStorageBuilder UseEntityFrameworkCore<TContext>();
+IImmediateJobsStorageBuilder UseEntityFrameworkCore<TContext>();
 ModelBuilder AddImmediateJobs(string? schema = null);
 
-ImmediateJobsStorageBuilder UseLinqToDB(DataOptions dataOptions, string? schema = null);
-Task CreateImmediateJobsSchemaAsync(
-	this DataOptions dataOptions, string? schema = null,
-	CancellationToken token = default);
+IImmediateJobsStorageBuilder UseLinqToDB<TContext>(string? schema = null);
+Task CreateImmediateJobsSchemaAsync<TContext>(
+	this TContext context, string? schema = null,
+	CancellationToken cancellationToken = default);
 
-ImmediateJobsStorageBuilder UseRedis(
-	string configuration, Action<RedisJobStorageOptions>? configure = null);
-ImmediateJobsStorageBuilder UseRedis(
-	IConnectionMultiplexer connection, Action<RedisJobStorageOptions>? configure = null);
+IImmediateJobsRedisBuilder UseRedis();
+IImmediateJobsRedisBuilder ConfigureRedis(
+	Action<RedisJobStorageOptions> configure);
+IImmediateJobsRedisBuilder ConfigureRedis(
+	Action<OptionsBuilder<RedisJobStorageOptions>> configure);
 ```
 
-`RedisJobStorageOptions` exposes `Database = -1` and `KeyPrefix = "immediate-jobs"`.
+`UseLinqToDB<TContext>` requires a registered `DataConnection` type. The schema helper extends that
+connection type. `UseRedis` requires a registered `IConnectionMultiplexer` and selects distributed
+mode. `RedisJobStorageOptions` exposes `Database = -1` and `KeyPrefix = "immediate-jobs"`.
 
 ## NodaTime
 
@@ -404,7 +418,8 @@ it exposes `Services`, `Storage`, `TimeProvider`, and `Batches`. Operations are 
 framework. Each case exposes `Name`, `RequiredCapabilities`, and
 `RunAsync(IServiceProvider, CancellationToken)`. It checks the storage registration and reported
 features before running. Tests that depend on time require a `FakeTimeProvider` registered as
-`TimeProvider`.
+`TimeProvider`. `JobStorageConformanceSuite.AllCasesByName` is a case-insensitive map of every known
+case by name.
 
 ## Custom storage contracts
 

@@ -12,7 +12,7 @@ also adds each selected handler's behavior dependencies:
 builder.Services.AddMyAppHandlers();
 
 builder.Services.AddMyAppJobs()
-	.Configure(options =>
+	.ConfigureWorkers(options =>
 	{
 		options.MaxParallelJobs = 16;
 		options.PollingInterval = TimeSpan.FromSeconds(1);
@@ -24,7 +24,7 @@ builder.Services.AddMyAppJobs()
 ```
 
 `MyApp` is the shared [assembly identifier](/docs/concepts/assembly-identifier). `AddMyAppJobs`
-accepts optional tags and returns `ImmediateJobsBuilder`. Use that builder to configure runtime
+accepts optional tags and returns `IImmediateJobsBuilder`. Use that builder to configure worker
 settings, fair queues, storage and health checks.
 
 The generated method lives in the project's `RootNamespace`, matching Immediate.Handlers. Import
@@ -49,24 +49,24 @@ Each job run gets a new scope for its context extractors, behaviors, handler and
 
 ## Fluent configuration
 
-`Configure` accepts an action, a configuration section or a section path for
-`ImmediateJobsOptions`. `UseFairQueues` configures fair-queue settings separately. Call
-`ConfigureStorage` at most once:
+`ConfigureWorkers` accepts either a direct options action or an
+`OptionsBuilder<ImmediateJobsOptions>` action. Use the second form to bind configuration.
+`UseFairQueues` has the same binding option. Call `ConfigureStorage` exactly once:
 
 ```csharp
 builder.Services.AddMyAppJobs()
-	.Configure("ImmediateJobs")
-	.UseFairQueues(builder.Configuration.GetSection("ImmediateJobs:FairQueues"))
+	.ConfigureWorkers(options => options.BindConfiguration("ImmediateJobs"))
+	.UseFairQueues(options => options.BindConfiguration("ImmediateJobs:FairQueues"))
 	.ConfigureStorage(storage => storage
 		.UseEntityFrameworkCore<AppDbContext>()
 		.UseDistributed())
 	.AddHealthCheck(tags: ["ready"]);
 ```
 
-The options are validated when the host starts. If `ConfigureStorage` is omitted, Jobs uses
-in-memory storage. A durable provider defaults to single-server mode when neither
-`UseSingleServer` nor `UseDistributed` is selected. In production, choose one explicitly so it is
-clear whether one or several scheduler processes may run.
+Jobs validates these options when the host starts. Use `UseInMemory()` for in-memory storage. A
+durable provider defaults to single-server mode when neither `UseSingleServer` nor
+`UseDistributed` is selected. In production, choose a mode explicitly so the registration shows
+whether one or several scheduler processes may run.
 
 ## Tagged registration
 
@@ -74,7 +74,8 @@ Jobs participate in the shared `[Handler(Tags = [...])]` model:
 
 ```csharp
 builder.Services.AddMyAppHandlers(tags: ["fulfillment"]);
-builder.Services.AddMyAppJobs(tags: ["fulfillment"]);
+builder.Services.AddMyAppJobs(tags: ["fulfillment"])
+	.ConfigureStorage(storage => storage.UseInMemory());
 ```
 
 With no tags, all jobs are registered. With tags, an untagged job is always included and a tagged
@@ -93,3 +94,7 @@ database schema as described in
 [Configuring storage providers](/docs/Immediate.Jobs/configuring-storage-providers). Start the
 entire `IHost` in console and worker-service applications; merely building the service provider
 does not run jobs.
+
+Call `DisableWorkers()` when an application should enqueue or display jobs but a separate process
+will execute them. Job registration and storage remain available, but the hosted worker exits
+without preparing storage or starting jobs. The application must still call `ConfigureStorage`.

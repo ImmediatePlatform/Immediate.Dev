@@ -160,8 +160,8 @@ work relates to the current job's existing continuations:
 | `BesideContinuations`           | Current batch    | Unchanged; the new job forms a parallel branch.                  |
 | `BeforeContinuations` (default) | Current batch    | They also wait for the new job, creating an additive dependency. |
 
-The `BeforeContinuations` splice keeps each existing dependency on the current job and adds a
-dependency on the new job. Existing continuations therefore wait for both jobs.
+With `BeforeContinuations`, each existing follow-up job waits for both the current job and the new
+job.
 
 <Callout type="warning">
 

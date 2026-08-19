@@ -43,9 +43,10 @@ Filtering happens where you register, not where you declare:
 
 ```csharp title="Program.cs"
 // Worker host — background handlers and their services only
-services.AddTodoHandlers(tags: "worker");
+services.AddTodoHandlers(tags: ["worker", "fulfillment"]);
 services.AddTodoServices("worker");
-services.AddTodoJobs(tags: ["fulfillment"]);
+services.AddTodoJobs(tags: ["fulfillment"])
+	.ConfigureStorage(storage => storage.UseInMemory());
 
 // Web host — HTTP endpoints only
 app.MapTodoEndpoints(tags: "web");
@@ -97,7 +98,7 @@ app.MapTodoEndpoints(tags: ["web"]);
 app.MapTodoEndpoints("/v1", "web");
 ```
 
-`AddXxxJobs` accepts `tags` and returns `ImmediateJobsBuilder` for other settings. It reads the same
+`AddXxxJobs` accepts `tags` and returns `IImmediateJobsBuilder` for other settings. It reads the same
 Immediate.Handlers `Tags` value. Pass the same tags to both registration methods so every
 registered job also has its handler:
 

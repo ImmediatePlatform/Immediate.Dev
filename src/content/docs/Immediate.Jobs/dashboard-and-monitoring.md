@@ -17,58 +17,60 @@ using Immediate.Jobs.Dashboard;
 var traceExplorer = new Uri("https://traces.example/");
 var logExplorer = new Uri("https://logs.example/");
 
-builder.Services.AddImmediateJobsDashboard(options =>
-{
-	_ = options.RequireAuthorization("operations");
-	_ = options.AddTelemetryLink(
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage.UseInMemory())
+	.AddImmediateJobsDashboard()
+	.ConfigureDashboard(options => options.AuthorizationPolicy = "operations")
+	.AddTelemetryLink(
 		"View execution trace",
 		JobTelemetryLinkKind.Trace,
 		context => context.Execution?.ExecutionTraceId is { } traceId
 			? new(traceExplorer, $"trace/{traceId}")
 			: null
-	);
-	_ = options.AddTelemetryLink(
+	)
+	.AddTelemetryLink(
 		"View execution logs",
 		JobTelemetryLinkKind.Logs,
 		context => context.Execution is { } execution
 			? new(logExplorer,
 				$"search?jobId={Uri.EscapeDataString(context.Job.Id)}&attempt={execution.Attempt}")
 			: null
-	);
-	_ = options.AddTelemetryLink(
+	)
+	.AddTelemetryLink(
 		"View all retry logs",
 		JobTelemetryLinkKind.Logs,
 		context => context.Execution is null
 			? new(logExplorer, $"search?jobId={Uri.EscapeDataString(context.Job.Id)}")
 			: null
 	);
-});
 
 var app = builder.Build();
 app.MapImmediateJobsDashboard("/jobs");
 ```
 
-Jobs validates dashboard settings when the host starts. Set them through
-`AddImmediateJobsDashboard`; the mapping call only selects the URL path.
+Chain `AddImmediateJobsDashboard` from the generated jobs registration. Set dashboard options with
+`ConfigureDashboard`; the mapping call only selects the URL path. `ConfigureDashboard` also accepts
+an `OptionsBuilder<ImmediateJobsDashboardOptions>` action for configuration binding. Jobs validates
+the settings when the host starts.
 
-Without `RequireAuthorization`, every dashboard endpoint is development-only by default and
-returns 403 in other environments. For a trusted custom development environment, explicitly
-disable this restriction during service registration:
+By default, every dashboard endpoint is limited to the `Development` environment and returns 403
+elsewhere. Setting `AuthorizationPolicy` uses that policy instead of the environment check. For a
+trusted custom development environment, you can remove the default restriction without setting a
+policy:
 
 ```csharp
-builder.Services.AddImmediateJobsDashboard(options =>
-{
-	_ = options.AllowInAnyEnvironment();
-});
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage.UseInMemory())
+	.AddImmediateJobsDashboard()
+	.ConfigureDashboard(options => options.RestrictToDevelopmentEnvironment = false);
 
 var app = builder.Build();
 app.MapImmediateJobsDashboard("/jobs");
 ```
 
 Treat the dashboard as an administrative tool because it exposes job inputs, failures, IDs and
-actions that change job state. Use `RequireAuthorization` whenever it is available outside a
-trusted development environment. The policy protects both the UI and API. If you also call
-`AllowInAnyEnvironment`, the policy still applies.
+actions that change job state. Set `AuthorizationPolicy` whenever the dashboard is available
+outside a trusted development environment. The policy protects both the UI and API.
 
 The UI shows queue and state totals, recent history, job details, recurring schedules, scheduler
 servers and batches. It also shows workflow graphs when storage supports them.

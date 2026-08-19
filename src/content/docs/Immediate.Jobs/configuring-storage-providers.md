@@ -16,8 +16,8 @@ builder.Services.AddMyAppJobs()
 	.ConfigureStorage(storage => storage.UseInMemory());
 ```
 
-This is also the default when no storage is selected. It keeps data in one process and loses it on
-restart, but it supports every job feature. Use it for development and tests.
+Select in-memory storage explicitly. It keeps data in one process and loses it on restart, but it
+supports every job feature. Use it for development and tests.
 
 ## Entity Framework Core
 
@@ -93,24 +93,36 @@ dotnet add package Immediate.Jobs.LinqToDB --prerelease
 ```
 
 ```csharp
+using LinqToDB;
+using LinqToDB.Data;
+using LinqToDB.Extensions.DependencyInjection;
+
 var dataOptions = new DataOptions().UsePostgreSQL(connectionString);
 // new DataOptions().UseSQLite(connectionString);
 // new DataOptions().UseSqlServer(connectionString);
 
-await dataOptions.CreateImmediateJobsSchemaAsync(
-	schema: "background", // must be null for SQLite
-	CancellationToken.None
-);
+builder.Services.AddLinqToDBContext<JobsDataConnection>(() => dataOptions);
+
+await using (var connection = new JobsDataConnection(dataOptions))
+{
+	await connection.CreateImmediateJobsSchemaAsync(
+		schema: "background", // must be null for SQLite
+		CancellationToken.None
+	);
+}
 
 builder.Services.AddMyAppJobs()
 	.ConfigureStorage(storage => storage
-		.UseLinqToDB(dataOptions, schema: "background")
+		.UseLinqToDB<JobsDataConnection>(schema: "background")
 		.UseSingleServer());
+
+public sealed class JobsDataConnection(DataOptions options) : DataConnection(options);
 ```
 
-The application owns `DataOptions`, the matching ADO.NET driver and the database schema. The
-helper supports SQLite (without a named schema), PostgreSQL and SQL Server. It creates the tables
-and indexes for a new database.
+Register the `DataConnection` type with dependency injection. Jobs resolves it when storage work
+starts. The application owns `DataOptions`, the matching ADO.NET driver and the database schema.
+The helper supports SQLite (without a named schema), PostgreSQL and SQL Server. It creates the
+tables and indexes for a new database.
 
 ## Redis
 
@@ -118,32 +130,39 @@ and indexes for a new database.
 dotnet add package Immediate.Jobs.Redis --prerelease
 ```
 
-Pass a configuration string when Jobs should own the connection:
+Register an `IConnectionMultiplexer`, then select Redis storage:
 
 ```csharp
+using StackExchange.Redis;
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+	ConnectionMultiplexer.Connect("localhost:6379"));
+
 builder.Services.AddMyAppJobs()
-	.ConfigureStorage(storage => storage.UseRedis(
-		"localhost:6379",
-		redis =>
+	.ConfigureStorage(storage => storage
+		.UseRedis()
+		.ConfigureRedis(redis =>
 		{
 			redis.Database = 1;
 			redis.KeyPrefix = "billing-jobs";
-		}
-	));
+		}));
 ```
 
-Or pass an application-owned `IConnectionMultiplexer`; the provider will not dispose it. The
-configuration-string overload owns and disposes its connection. `Database` defaults to `-1`
-(server default), and `KeyPrefix` defaults to `immediate-jobs`. Jobs reserves braces for Redis
-Cluster key grouping, so a prefix cannot contain them. Jobs validates these options at startup and
-rejects an empty or brace-containing prefix.
+The provider uses the registered connection and does not dispose it. The dependency injection
+container disposes the connection in this example because it creates the singleton. If you
+register an existing instance, its owner must dispose it. `Database` defaults to `-1` (server
+default), and `KeyPrefix` defaults to `immediate-jobs`. The prefix cannot contain `{` or `}` because
+Jobs uses those characters internally. Jobs validates these options at startup.
+
+`ConfigureRedis` also accepts an `OptionsBuilder<RedisJobStorageOptions>` action. Use it when you
+need configuration binding.
 
 Redis always selects distributed mode and supports queue plus recurring capabilities. It does not
 support graph workflows or fair queues.
 
-Configure providers inside `ConfigureStorage`. With EF Core or LinqToDB, choose
-`UseSingleServer()` for one scheduler process or `UseDistributed()` for more than one. Jobs
-defaults to single-server mode when neither is selected. Redis always uses distributed mode.
+Call `ConfigureStorage` exactly once. With EF Core or LinqToDB, choose `UseSingleServer()` for one
+scheduler process or `UseDistributed()` for more than one. Jobs defaults to single-server mode
+when neither is selected. Redis always uses distributed mode.
 
 <Callout type="warning" title="Database setup during preview">
 

@@ -40,6 +40,7 @@ Some problems depend on settings or stored data, so an analyzer cannot catch the
   queued jobs;
 - graph operations on Redis or another queue-only provider throw `NotSupportedException`;
 - fair acquisition on Redis throws `NotSupportedException` when `UseFairQueues` is enabled;
+- omitting `ConfigureStorage` fails validation when the host starts;
 - conflicting storage selections or a second `ConfigureStorage` call throw `ImmediateJobException`
   during registration;
 - invalid runtime, fair-queue, dashboard, or Redis options fail validation when the host starts;
