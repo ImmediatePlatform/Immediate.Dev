@@ -33,14 +33,14 @@ builder.Services.AddMyAppJobs()
 		JobTelemetryLinkKind.Logs,
 		context => context.Execution is { } execution
 			? new(logExplorer,
-				$"search?jobId={Uri.EscapeDataString(context.Job.JobId.JobId)}&attempt={execution.Attempt}")
+				$"search?jobHandle={Uri.EscapeDataString(context.Job.JobHandle.Value)}&attempt={execution.Attempt}")
 			: null
 	)
 	.AddTelemetryLink(
 		"View all retry logs",
 		JobTelemetryLinkKind.Logs,
 		context => context.Execution is null
-			? new(logExplorer, $"search?jobId={Uri.EscapeDataString(context.Job.JobId.JobId)}")
+			? new(logExplorer, $"search?jobHandle={Uri.EscapeDataString(context.Job.JobHandle.Value)}")
 			: null
 	);
 
@@ -129,8 +129,8 @@ dashboard calls your URL function with a `JobTelemetryLinkContext`.
 For a job link, `context.Execution` is `null` and the execution fields on `context.Job` describe
 the latest attempt. For an attempt link, `context.Execution` and the execution fields on
 `context.Job` both describe the selected attempt. Use `Execution` for links to one attempt. Use
-`Job.JobId` when a destination should search across every retry. Its `JobId` property is the raw
-string expected by URL builders.
+`Job.JobHandle` when a destination should search across every retry. Its `Value` property is the
+raw string expected by URL builders.
 
 The URL function may return HTTP(S) or dashboard-relative URLs. Other absolute URI schemes are
 rejected. Return `null` before an execution trace exists or whenever a destination does not apply
@@ -140,32 +140,32 @@ to the current record.
 
 All paths below are relative to the mapped prefix.
 
-Dashboard JSON names job identifiers `jobId` and batch identifiers `batchId`. Their values remain
+Dashboard JSON names job identifiers `jobHandle` and batch identifiers `batchHandle`. Their values remain
 opaque strings on the wire even though the .NET monitoring records use `JobHandle` and
 `BatchHandle`.
 
-| Method and path                                                      | Purpose                                                                  |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `GET /api/overview`                                                  | Current counts and supported storage features.                           |
-| `GET /api/jobs`                                                      | Filter by `state`, `queue`, `search`; `skip`; `take` 1–200 (default 50). |
-| `GET /api/jobs/{jobId}`                                              | Latest saved record.                                                     |
-| `GET /api/jobs/{jobId}/executions`                                   | Saved attempts newest first; `skip`; `take` 1–200 (default 50).          |
-| `GET /api/jobs/{jobId}/telemetry-links`                              | Configured trace and log links for a job.                                |
-| `GET /api/jobs/{jobId}/executions/{executionNumber}/telemetry-links` | Configured links for one saved attempt.                                  |
-| `POST /api/jobs/{jobId}/cancel`                                      | Cancel a job that has not finished.                                      |
-| `POST /api/jobs/{jobId}/retry`                                       | Retry failed work or run scheduled work now.                             |
-| `GET /api/recurring`                                                 | Recurring schedules.                                                     |
-| `POST /api/recurring/{name}/trigger`                                 | Start one run now.                                                       |
-| `POST /api/recurring/{name}/pause` / `resume`                        | Change schedule state.                                                   |
-| `GET /api/servers`                                                   | Recently active workers.                                                 |
-| `GET /api/batches`                                                   | Filter by `state`, `skip`, `take` 1–500 (default 100).                   |
-| `GET /api/batches/{id}`                                              | Batch status.                                                            |
-| `GET /api/batches/{id}/members`                                      | Filter and page through jobs in a batch.                                 |
-| `GET /api/batches/{id}/graph`                                        | Jobs and dependencies in a batch.                                        |
-| `POST /api/batches/{id}/cancel`                                      | Cancel jobs in a batch that have not finished.                           |
-| `DELETE /api/batches/{id}`                                           | Delete a completed batch.                                                |
-| `GET /api/events`                                                    | SSE `state` snapshots at `UpdateInterval`.                               |
-| `GET /api/batches/{id}/stream`                                       | SSE `status` and `graph` events on change.                               |
+| Method and path                                                          | Purpose                                                                  |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `GET /api/overview`                                                      | Current counts and supported storage features.                           |
+| `GET /api/jobs`                                                          | Filter by `state`, `queue`, `search`; `skip`; `take` 1–200 (default 50). |
+| `GET /api/jobs/{jobHandle}`                                              | Latest saved record.                                                     |
+| `GET /api/jobs/{jobHandle}/executions`                                   | Saved attempts newest first; `skip`; `take` 1–200 (default 50).          |
+| `GET /api/jobs/{jobHandle}/telemetry-links`                              | Configured trace and log links for a job.                                |
+| `GET /api/jobs/{jobHandle}/executions/{executionNumber}/telemetry-links` | Configured links for one saved attempt.                                  |
+| `POST /api/jobs/{jobHandle}/cancel`                                      | Cancel a job that has not finished.                                      |
+| `POST /api/jobs/{jobHandle}/retry`                                       | Retry failed work or run scheduled work now.                             |
+| `GET /api/recurring`                                                     | Recurring schedules.                                                     |
+| `POST /api/recurring/{name}/trigger`                                     | Start one run now.                                                       |
+| `POST /api/recurring/{name}/pause` / `resume`                            | Change schedule state.                                                   |
+| `GET /api/servers`                                                       | Recently active workers.                                                 |
+| `GET /api/batches`                                                       | Filter by `state`, `skip`, `take` 1–500 (default 100).                   |
+| `GET /api/batches/{batchHandle}`                                         | Batch status.                                                            |
+| `GET /api/batches/{batchHandle}/members`                                 | Filter and page through jobs in a batch.                                 |
+| `GET /api/batches/{batchHandle}/graph`                                   | Jobs and dependencies in a batch.                                        |
+| `POST /api/batches/{batchHandle}/cancel`                                 | Cancel jobs in a batch that have not finished.                           |
+| `DELETE /api/batches/{batchHandle}`                                      | Delete a completed batch.                                                |
+| `GET /api/events`                                                        | SSE `state` snapshots at `UpdateInterval`.                               |
+| `GET /api/batches/{batchHandle}/stream`                                  | SSE `status` and `graph` events on change.                               |
 
 Actions return these status codes:
 

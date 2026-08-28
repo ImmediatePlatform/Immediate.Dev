@@ -52,7 +52,7 @@ write to the in-memory buffer. They return `BatchJobHandle`, which keeps each de
 its batch. `CommitAsync` saves the jobs and edges in one operation and returns a `BatchHandle`.
 Nothing is visible before the commit.
 
-`BatchJobHandle.JobId` returns the durable `JobHandle` after a successful commit. Reading it before
+`BatchJobHandle.JobHandle` returns the durable `JobHandle` after a successful commit. Reading it before
 commit throws `InvalidOperationException`. This keeps in-progress batch handles out of APIs that
 accept already durable jobs and batches.
 

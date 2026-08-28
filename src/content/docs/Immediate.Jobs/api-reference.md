@@ -66,33 +66,33 @@ record struct EmptyJobRequest : IJobRequest;
 
 sealed record JobDetails
 {
-	JobHandle JobId { get; }
+	JobHandle JobHandle { get; }
 	string JobName { get; }
 	string QueueName { get; }
 	int Attempt { get; }
 	DateTimeOffset CreatedAt { get; }
 	DateTimeOffset ScheduledAt { get; }
-	BatchHandle? BatchId { get; }
+	BatchHandle? BatchHandle { get; }
 }
 
 closed record ContinuationHandle;
 
 sealed record JobHandle : ContinuationHandle
 {
-	required string JobId { get; init; }
+	required string Value { get; init; }
 	static JobHandle? FromString(string? value);
 }
 
 sealed record BatchHandle : ContinuationHandle
 {
-	required string BatchId { get; init; }
+	required string Value { get; init; }
 	static BatchHandle? FromString(string? value);
 }
 
 sealed class BatchJobHandle
 {
 	Batch Batch { get; }
-	JobHandle JobId { get; }
+	JobHandle JobHandle { get; }
 }
 
 public abstract class JobContextExtractor<TContext>
@@ -104,7 +104,7 @@ public abstract class JobContextExtractor<TContext>
 ```
 
 `JobHandle` and `BatchHandle` serialize as their string identifier. `BatchJobHandle` belongs to an
-open batch and cannot cross that boundary. Its `JobId` throws until the batch commits.
+open batch and cannot cross that boundary. Its `JobHandle` throws until the batch commits.
 
 `IIdGenerator.CreateId(IdKind kind)` creates `Job` and `Batch` IDs. The default returns a GUID in
 the `N` format. `IImmediateJobsBuilder.UseIdGenerator<TGenerator>()` replaces it with a singleton,
@@ -215,7 +215,7 @@ sealed class RecurringJobs
 sealed class Batch : IAsyncDisposable
 {
 	bool IsCommitted { get; }
-	BatchHandle BatchId { get; }
+	BatchHandle BatchHandle { get; }
 	ValueTask<BatchHandle> CommitAsync(CancellationToken token = default);
 }
 
@@ -307,19 +307,19 @@ interface IJobMonitor
 	ValueTask<IReadOnlyList<JobRecord>> QueryJobsAsync(
 		JobQuery query, CancellationToken token = default);
 	ValueTask<IReadOnlyList<JobExecutionRecord>> QueryExecutionsAsync(
-		JobHandle jobId, JobExecutionQuery query, CancellationToken token = default);
-	ValueTask<JobStatus?> GetJobAsync(JobHandle jobId, CancellationToken token = default);
+		JobHandle jobHandle, JobExecutionQuery query, CancellationToken token = default);
+	ValueTask<JobStatus?> GetJobAsync(JobHandle jobHandle, CancellationToken token = default);
 	ValueTask<IReadOnlyList<BatchStatus>?> QueryBatchesAsync(
 		BatchQuery query, CancellationToken token = default);
-	ValueTask<BatchStatus?> GetBatchAsync(BatchHandle batchId, CancellationToken token = default);
+	ValueTask<BatchStatus?> GetBatchAsync(BatchHandle batchHandle, CancellationToken token = default);
 	ValueTask<IReadOnlyList<BatchMemberStatus>?> QueryBatchMembersAsync(
-		BatchHandle batchId, BatchMemberQuery query, CancellationToken token = default);
+		BatchHandle batchHandle, BatchMemberQuery query, CancellationToken token = default);
 	ValueTask<BatchGraph?> GetBatchGraphAsync(
-		BatchHandle batchId, CancellationToken token = default);
+		BatchHandle batchHandle, CancellationToken token = default);
 }
 
 sealed record BatchStatus(
-	BatchHandle BatchId, BatchState State,
+	BatchHandle BatchHandle, BatchState State,
 	int Total, int Succeeded, int Failed, int Cancelled, int Skipped, int Remaining,
 	DateTimeOffset CreatedAt, DateTimeOffset? StartedAt, DateTimeOffset? CompletedAt,
 	double FractionSettled
@@ -328,7 +328,7 @@ sealed record BatchStatus(
 sealed record JobExecutionRecord
 {
 	static JobExecutionRecord? CreateSynthetic(JobRecord job);
-	JobHandle JobId { get; init; }
+	JobHandle JobHandle { get; init; }
 	int Attempt { get; init; }
 	JobExecutionState State { get; init; }
 	string? WorkerId { get; init; }
@@ -345,10 +345,10 @@ sealed record JobExecutionRecord
 The concrete `JobMonitor` also exposes these management methods:
 
 ```csharp
-ValueTask CancelJobAsync(JobHandle jobId, CancellationToken token = default);
-ValueTask RetryJobAsync(JobHandle jobId, CancellationToken token = default);
-ValueTask CancelBatchAsync(BatchHandle batchId, CancellationToken token = default);
-ValueTask DeleteBatchAsync(BatchHandle batchId, CancellationToken token = default);
+ValueTask CancelJobAsync(JobHandle jobHandle, CancellationToken token = default);
+ValueTask RetryJobAsync(JobHandle jobHandle, CancellationToken token = default);
+ValueTask CancelBatchAsync(BatchHandle batchHandle, CancellationToken token = default);
+ValueTask DeleteBatchAsync(BatchHandle batchHandle, CancellationToken token = default);
 ValueTask PauseRecurringAsync(string name, CancellationToken token = default);
 ValueTask ResumeRecurringAsync(string name, CancellationToken token = default);
 ValueTask TriggerRecurringAsync(string name, CancellationToken token = default);

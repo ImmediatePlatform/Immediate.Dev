@@ -98,14 +98,14 @@ string properties.
 
 ## Handles and cancellation
 
-`JobHandle.JobId` contains the generated invocation identifier. `BatchHandle.BatchId` does the same
+`JobHandle.Value` contains the generated invocation identifier. `BatchHandle.Value` does the same
 for a committed batch. Both are immutable records and serialize to their string identifier. Use
 `JobHandle.FromString(value)` or `BatchHandle.FromString(value)` at a route, database or message
 boundary that provides a raw string.
 
 Both types derive from `ContinuationHandle`, so one continuation API accepts either a job or a
 batch as its parent. Jobs added to an open batch return `BatchJobHandle` instead. That handle keeps
-the in-memory batch association needed to build dependencies. Its `JobId` becomes available only
+the in-memory batch association needed to build dependencies. Its `JobHandle` becomes available only
 after the batch commits.
 
 Use the same generated scheduler to cancel any non-terminal invocation:

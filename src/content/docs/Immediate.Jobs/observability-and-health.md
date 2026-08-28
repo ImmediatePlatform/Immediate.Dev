@@ -38,7 +38,7 @@ heartbeats. Compare duration by job name and outcome.
 
 ## Structured logs
 
-Worker logs carry the scope properties `JobName`, `QueueName`, `JobId` and `Attempt`. Events cover
+Worker logs carry the scope properties `JobName`, `QueueName`, `JobHandle` and `Attempt`. Events cover
 scheduler iteration failure, shutdown-drain timeout, unhandled worker errors, completion, retry,
 attempt exhaustion and features that storage does not support. Include scopes in your logging
 output when you want to search these fields.
