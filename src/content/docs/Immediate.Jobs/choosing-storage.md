@@ -1,53 +1,62 @@
 ---
 title: Choosing storage
-description: Choose an Immediate.Jobs topology and provider by durability, scale and capability.
+description: Choose storage by durability, worker count and supported job features.
 order: 10
 group: Guides
 ---
 
-Storage choice has two dimensions: the provider holds records; the topology decides whether memory
-or that provider is authoritative.
+Choose both a storage provider and a mode. The provider stores job data. The mode controls whether
+workers coordinate through memory or through the provider.
 
-| Topology       | Authority                               |   Processes | Durability               | Use for                                   |
-| -------------- | --------------------------------------- | ----------: | ------------------------ | ----------------------------------------- |
-| `InMemory`     | Process memory                          |         One | None                     | Unit tests, local demos, disposable work. |
-| `SingleServer` | Memory with synchronous durable replica | Exactly one | Durable restart recovery | Low-latency single-instance services.     |
-| `Distributed`  | Durable provider                        | One or more | Durable coordination     | Scale-out and high availability.          |
+| Mode           | Where jobs are coordinated       | Worker processes | Survives restart | Use for                                   |
+| -------------- | -------------------------------- | ---------------- | ---------------- | ----------------------------------------- |
+| `InMemory`     | Current process                  | One              | No               | Unit tests, local demos, disposable work. |
+| `SingleServer` | Memory backed by durable storage | Exactly one      | Yes              | Low-latency single-instance services.     |
+| `Distributed`  | Storage provider                 | One or more      | Yes              | Scale-out and high availability.          |
 
-Calling a durable provider selects single-server mode unless you explicitly call
-`UseDistributed()`. `UseRedis` always selects distributed mode. Never point two processes at the
-same single-server replica: each believes its private memory is authoritative and drift detection
-will fail.
+A durable SQL provider uses single-server mode unless you call `UseDistributed()`. Redis always
+uses distributed mode. Do not connect two scheduler processes to the same single-server storage;
+the mode expects exactly one process and fails when it detects another.
 
-## Capability matrix
+## Supported features
 
-| Provider     | Queue | Recurring | Graph | Fair groups | Topologies                 |
+| Provider     | Queue | Recurring | Graph | Fair groups | Modes                      |
 | ------------ | :---: | :-------: | :---: | :---------: | -------------------------- |
 | In-memory    |   ✓   |     ✓     |   ✓   |      ✓      | In-memory only             |
 | EF Core SQL  |   ✓   |     ✓     |   ✓   |      ✓      | Single-server, distributed |
 | LinqToDB SQL |   ✓   |     ✓     |   ✓   |      ✓      | Single-server, distributed |
 | Redis        |   ✓   |     ✓     |   —   |      —      | Distributed                |
 
-Queue capability includes ordinary scheduling, execution history and job monitoring. Recurring
-adds durable schedule reconciliation/materialization. Graph adds atomic batches, dependencies,
-continuations and batch monitoring. The dashboard hides or returns 404 for unsupported graph
-views.
+Queue support includes scheduling, execution history and job monitoring. Recurring support stores
+schedules and creates runs when they are due. Graph support adds batches, dependencies,
+continuations and batch monitoring. The dashboard hides graph views when storage does not support
+them.
 
 ## Tradeoffs
 
-- In-memory is fastest and deterministic, but a restart loses pending jobs and history.
-- Single-server acquires from memory and writes every transition to a full-capability SQL replica.
-  Startup restores the durable snapshot. It cannot provide multi-process failover.
-- Distributed SQL coordinates leases, recurring schedules, graph transitions and fair-group
-  cursors in the database and is the full-featured scale-out option.
+- In-memory is fast and predictable in tests, but a restart loses pending jobs and history.
+- Single-server selects work in memory and writes every change to SQL. It restores that state after
+  a restart but cannot fail over to another process.
+- Distributed SQL coordinates workers through the database. It supports multiple processes and
+  all job features.
 - Redis offers efficient distributed queues and recurring work, but not batches, continuations or
-  fair-group acquisition.
+  fair queues.
 
 ## A custom provider
 
-Implement `IJobStorage` for queue capability. Add `IRecurringJobStorage` and/or `IJobGraphStorage`
-only when their atomicity contracts are honored. Implement `IJobStorageReplica` as well to qualify
-for single-server mode. Providers must initialize idempotently, claim due work atomically, enforce
-worker ownership and leases, make recurring materialization unique, paginate monitoring, tolerate
-repeated async disposal, and make graph commit/release/cascade transitions atomic. See the compact
-contract map in [API reference](/docs/Immediate.Jobs/api-reference#custom-storage-contracts).
+Implement `IJobStorage` to support queues. Add `IRecurringJobStorage`, `IJobGraphStorage`, and
+`IFairQueueStorage` only for features the provider supports.
+
+Single-server storage needs two extra interfaces for restart recovery. `IJobStorageReplica`
+claims the exact job IDs selected by the in-memory queue. `IJobGraphStorageReplica` loads incoming
+continuation links at startup. A provider must implement both interfaces, plus recurring and graph
+support, to use single-server mode.
+
+Starting or disposing the provider more than once must be safe. It must save each claim, recurring
+run and graph change in one operation so workers cannot create duplicates or overwrite each other.
+It must also enforce leases and worker ownership, and return monitoring results in pages.
+
+Run the `JobStorageConformanceSuite` from `Immediate.Jobs.Testing` with the same service
+registration an application would use. Select the tests that match the provider's features. See
+[Testing jobs](/docs/Immediate.Jobs/testing-jobs#test-a-storage-provider) and the contract summary
+in [API reference](/docs/Immediate.Jobs/api-reference#custom-storage-contracts).

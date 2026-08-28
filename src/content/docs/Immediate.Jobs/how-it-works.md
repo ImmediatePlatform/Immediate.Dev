@@ -1,6 +1,6 @@
 ---
 title: How it works
-description: Follow a job from Roslyn discovery through generated code, durable acquisition and scoped execution.
+description: See how Immediate.Jobs finds, saves and runs a job.
 order: 17
 group: Reference
 ---
@@ -9,69 +9,71 @@ group: Reference
 
 The incremental generator discovers classes with `[Job]` and a valid Immediate.Handlers
 `[Handler]`. Analyzers validate names, queues, cron and execution settings, the exact
-`HandleAsync` shape, context extractor contracts, and whether payload/context types can receive
-source-generated JSON metadata.
+`HandleAsync` shape, context extractors and whether generated JSON can represent the payload and
+context types.
 
 For each job it emits `IJ.<Namespace>.<Class>.g.cs` containing:
 
 - a scoped nested `Scheduler` deriving from `JobScheduler<TPayload>`;
-- an internal singleton `Invoker` that deserializes, restores context and enters the generated
-  Immediate.Handlers pipeline;
+- an internal singleton `Invoker` that restores saved data and calls the Immediate.Handlers
+  pipeline;
 - a singleton `JobDefinition` factory with stable name, queue and execution policy;
 - a generated `JsonSerializerContext`/resolver for payload and context types;
 - registrations for the scheduler, invoker, extractors and definition.
 
-At assembly level, `IJ.ServiceCollectionExtensions.g.cs` contains `AddXxxJobs`. It calls the
-runtime registration once, registers queue definitions, and conditionally adds jobs selected by
-tags. The assembly identifier and tags follow the same conventions as the other platform
+At assembly level, `IJ.ServiceCollectionExtensions.g.cs` contains `AddXxxJobs` and the generated
+`RecurringJobs` service. `AddXxxJobs` registers jobs and returns `IImmediateJobsBuilder`.
+`RecurringJobs` can trigger payloadless jobs by name. Both types are placed in the project's
+`RootNamespace`. Calling the registration method again does not duplicate jobs, queues or the
+hosted worker. The assembly identifier and tags follow the same conventions as the other platform
 generators.
 
 ## Enqueue data flow
 
 1. Application code resolves the scoped generated scheduler.
-2. The scheduler captures the current trace link and opted-in context extractors.
-3. It serializes payload/context with generated metadata, generates an ID, and builds a record with
-   stable job/queue names, due time and optional group/batch data.
-4. Storage persists that record (or a batch buffers it until atomic commit).
+2. The scheduler captures the current trace link and any selected context values.
+3. It serializes the payload and context, creates an ID, and builds a record with the job name,
+   queue, due time and optional group or batch data.
+4. Storage saves that record. An open batch holds it in memory until commit.
 5. The scheduler returns a `JobHandle`; it does not wait for execution.
 
 ## Worker data flow
 
-The hosted service initializes storage and recurring definitions, then builds acquisition requests
-from queue priority plus node, queue and job capacity. Storage atomically changes eligible due work
-to `Active`, assigns a worker/lease, increments attempts and creates a retained execution record.
-Distributed providers coordinate this in the shared backend; single-server mode acquires from
-memory and mirrors ownership to its durable replica.
+The hosted service prepares storage and recurring schedules. It asks storage for due jobs based on
+queue priority and the available capacity for the worker, queue and job. Storage marks each
+selected job `Active`, assigns its worker and lease, increments its attempt number and saves an
+execution record. It makes those changes in one operation.
 
-For each acquired record the worker creates a consumer activity and logging scope, starts lease
-renewal and a linked timeout token, then creates a fresh async DI scope. The generated invoker
-deserializes context and payload, restores known slices, assigns `JobDetails` and resolves the
-generated handler. The call enters Immediate.Handlers behaviors and ends at the private job method.
+Distributed mode coordinates workers through shared storage. Single-server mode selects jobs in
+memory and copies each claim to durable storage.
 
-Success atomically closes the execution and records completion plus any buffered mid-execution
-continuations. Failure closes the attempt with its full exception and either schedules a retry or
-leaves a terminal failure. Telemetry, renewal and terminal updates carry the acquired attempt and
-worker ID so stale owners cannot mutate a reacquired or explicitly cancelled job. Settling a graph
-node releases eligible children or marks unselected branches `Skipped`. Release and recursive
-skipping are committed in the same transaction as the parent's terminal transition.
+For each selected job, the worker starts tracing, logging, lease renewal and its timeout. It also
+creates a new dependency injection scope. The generated invoker restores the payload and context,
+sets `JobDetails`, resolves the handler and runs its Immediate.Handlers behaviors.
 
-## Recurring materialization
+On success, Jobs closes the attempt and saves any follow-up jobs that the handler buffered. On
+failure, it saves the full exception and either schedules a retry or leaves the job failed. Every
+update includes the attempt number and worker ID. An old worker therefore cannot overwrite a job
+that another worker acquired or a user cancelled.
 
-Code-defined schedules are reconciled at startup. The recurring loop asks storage for due
-schedules; the provider atomically materializes a uniquely keyed occurrence and advances its next
-run. This keeps multiple distributed nodes from creating the same occurrence. Overlap policy is
-evaluated against active occurrences of the same schedule; `Skip` persists a terminal skipped
-occurrence so monitoring retains the scheduling decision.
+When a batch job finishes, storage starts eligible child jobs and marks other branches `Skipped`.
+It saves these changes together with the parent's result.
+
+## Recurring runs
+
+At startup, Jobs updates the code-defined schedules in storage. It then checks for schedules that
+are due. Storage creates one job for each due time and advances the schedule in the same operation,
+which prevents two workers from creating the same run. If the overlap policy is `Skip`, Jobs still
+saves a skipped run so monitoring shows what happened.
 
 ## Generated JSON, trimming and Native AOT
 
 Schedulers and invokers call `IJobSerializer` overloads that receive generated
-`JsonTypeInfo<T>`. The generated resolver covers the payload graph and every opted-in context
-type, so trimming does not need to preserve reflection-discovered constructors or properties.
-Resolved payload metadata is cached per payload type for subsequent serialize/deserialize calls.
-Unsupported shapes fail at compile time. The Native AOT sample publishes the same generated path;
-custom serializers must honor the metadata overloads to retain this property.
+`JsonTypeInfo<T>`. This generated information describes each supported payload and selected context
+type, so a trimmed application does not need to keep constructors or properties found through
+reflection. Jobs caches the information for later calls. Unsupported types fail at compile time.
+The Native AOT sample uses the same path. Custom serializers must use these overloads too.
 
-The runtime itself does not scan assemblies or use a service locator to discover jobs. Durable
-job names, queue names, extractor keys and serialized contracts are nevertheless versioned data:
-deploy changes compatibly or drain/transform durable records before removing them.
+The runtime does not scan assemblies to find jobs. Stored job names, queue names, context keys and
+serialized data can outlive a deployment. Keep changes compatible, or drain or migrate old records
+before removing their definitions.

@@ -1,6 +1,6 @@
 ---
 title: Batches and continuations
-description: Build atomic job graphs, chains, fan-out/fan-in and dynamically expanded workflows.
+description: Create batches, continuations, parallel branches and workflows that add jobs while running.
 order: 7
 group: Guides
 ---
@@ -9,19 +9,17 @@ group: Guides
 	import { Callout } from '$lib/components/docs';
 </script>
 
-Batches persist jobs and their dependency edges atomically. They require a graph-capable
-provider; Redis exposes queue and recurring capabilities only. Resolve the scoped
-`IJobBatchScheduler` from DI, normally through constructor injection alongside the generated job
-schedulers.
+Batches save jobs and their dependencies in one operation. They require storage with graph
+support, which Redis does not provide. Inject the scoped `IBatchScheduler` alongside the generated
+job schedulers.
 
-## Atomic workflow graph
+## Create a batch
 
-The constructor below makes every receiver explicit: `batches` is the runtime batch scheduler;
-the other parameters are nested scheduler types generated for their corresponding job classes.
+Inject `IBatchScheduler` and the generated scheduler for each job in the workflow:
 
 ```csharp
 public sealed class ImportWorkflow(
-	IJobBatchScheduler batches,
+	IBatchScheduler batches,
 	ImportData.Scheduler import,
 	BuildIndex.Scheduler index,
 	NotifyOwner.Scheduler notify,
@@ -36,43 +34,35 @@ public sealed class ImportWorkflow(
 	{
 		await using var batch = batches.Begin();
 
-		var imported = import.AddToBatch(batch, new(importId));
-		var indexed = await index.ScheduleAfterAsync(
-			imported,
-			new(importId),
-			cancellationToken: cancellationToken
-		);
+		var imported = import.Enqueue(new(importId), batch);
+		var indexed = index.ScheduleAfter(new(importId), imported);
 
-		var notifyOwner = await notify.ScheduleAfterAsync(
-			indexed,
-			new(importId),
-			cancellationToken: cancellationToken
-		);
-		var updateMetrics = await metrics.ScheduleAfterAsync(
-			indexed,
-			new(importId),
-			cancellationToken: cancellationToken
-		);
+		var notifyOwner = notify.ScheduleAfter(new(importId), indexed);
+		var updateMetrics = metrics.ScheduleAfter(new(importId), indexed);
 
-		_ = await finalize.ScheduleAfterAsync(
-			[notifyOwner, updateMetrics],
-			new(importId),
-			cancellationToken: cancellationToken
-		);
+		_ = finalize.ScheduleAfter(new(importId), [notifyOwner, updateMetrics]);
 
 		return await batch.CommitAsync(cancellationToken);
 	}
 }
 ```
 
-Within an open batch, `AddToBatch` and `AddToBatchAt` only buffer records. Continuations built from
-their handles remain in the same buffer. `CommitAsync` performs one atomic graph write and returns
-a `BatchHandle`; nothing becomes visible before commit.
+Within an open batch, `Enqueue`, `Schedule` and `ScheduleAfter` are synchronous because they only
+write to the in-memory buffer. They return `BatchJobHandle`, which keeps each dependency tied to
+its batch. `CommitAsync` saves the jobs and edges in one operation and returns a `BatchHandle`.
+Nothing is visible before the commit.
+
+`BatchJobHandle.JobHandle` returns the durable `JobHandle` after a successful commit. Reading it before
+commit throws `InvalidOperationException`. This keeps in-progress batch handles out of APIs that
+accept already durable jobs and batches.
 
 `Begin()` returns the in-memory buffer shown above. Always dispose it: disposal without commit
 abandons the buffer. A batch can commit only once and cannot be modified after commit. As an
 alternative, `batches.RunAsync(body, cancellationToken)` creates the buffer, runs the body and
 commits only when the body completes successfully.
+
+Keep the builder short-lived and use it from one control flow. `Batch` is not thread-safe, so do
+not add members concurrently with `Task.WhenAll` or share an open batch between requests.
 
 Cancel every non-terminal member of a committed batch through the same batch scheduler:
 
@@ -81,16 +71,15 @@ BatchHandle handle = await workflow.StartAsync(importId, cancellationToken);
 await batches.CancelAsync(handle, cancellationToken);
 ```
 
-This includes scheduled, active and continuation-waiting members, and the aggregate batch becomes
-`Cancelled` after its members settle. Cancelling an active member records cancellation durably but
-does not forcibly stop handler code already running in process; stale worker completion is fenced
-from changing the terminal result.
+This includes scheduled, active and continuation-waiting jobs. The batch becomes `Cancelled` after
+every job reaches a final state. Cancelling an active job saves the cancellation but does not
+forcibly stop handler code that is already running. If that code finishes later, it cannot
+overwrite the cancelled result.
 
-Failures before `CommitAsync` begins write nothing. Once commit begins, however, the batch is
-closed even when the call throws, and a transport failure can leave the durable outcome unknown:
-storage may have committed the graph before the caller lost the response. Do not retry the same
-`JobBatch`; an operation that rebuilds and commits another batch needs application-level
-idempotency or duplicate tracking.
+A failure before `CommitAsync` begins saves nothing. Once the commit begins, the batch closes even
+if the call throws. If the storage connection fails during the commit, the caller may not know
+whether the batch was saved. Do not reuse the same `Batch`. If you create another batch, guard
+against running the work twice.
 
 Batch members can carry the same fair-queue group IDs as ordinary scheduled work:
 
@@ -98,21 +87,50 @@ Batch members can carry the same fair-queue group IDs as ordinary scheduled work
 var tenantId = "tenant-42";
 var runAt = DateTimeOffset.UtcNow.AddMinutes(5);
 
-var grouped = import.AddToBatchInGroup(batch, new(importId), tenantId);
-var groupedAt = import.AddToBatchAt(batch, new(importId), runAt, tenantId);
+var grouped = import.Enqueue(new(importId), batch, tenantId);
+var groupedAt = import.Schedule(new(importId), batch, runAt, tenantId);
 ```
 
-`AddToBatchInGroup` also accepts an optional delay. Whitespace group IDs are normalized to no
-group, the 128-character limit still applies, and the configured provider must support fair
-acquisition for the group to affect dispatch order.
+Use the `Schedule` overload with `TimeSpan` for a delayed batch member. A blank group ID means no
+group, and group IDs cannot exceed 128 characters. The group changes scheduling order only when
+the storage provider supports fair queues.
 
 ## Chains, fan-out and fan-in
 
-`ScheduleAfterAsync(JobHandle, ...)` creates a chain. Pass a `ReadOnlySpan<JobHandle>` to wait for
-all parents (fan-in), or create several children from one parent (fan-out). Duplicate parents and
-handles from unrelated open batches are rejected. `ScheduleAfterAsync(BatchHandle, ...)` waits for
-the entire prior batch. `batches.Begin(previousBatch, trigger)` creates a follow-up batch whose
-root members all depend on it.
+Inside an open batch, `ScheduleAfter(payload, BatchJobHandle, ...)` creates a chain. Pass an
+`IReadOnlyList<BatchJobHandle>` to wait for all parents, or create several children from one parent
+for fan-out. Every parent must belong to the same open batch, and duplicates are rejected.
+
+Outside an open batch, `ScheduleAfterAsync(payload, ContinuationHandle, ...)` accepts either a
+durable `JobHandle` or `BatchHandle`. Its list overload can wait for any mix of durable jobs and
+batches. `batches.Begin(previousBatch, trigger)` creates a follow-up batch whose root members all
+depend on one batch. Pass an `IReadOnlyList<BatchHandle>` to wait for several prior batches.
+
+```csharp
+// These handles came from earlier scheduling calls and batch commits.
+var verified = await verify.ScheduleAfterAsync(
+	new(importId),
+	importedJob,
+	TimeSpan.FromMinutes(5),
+	cancellationToken: cancellationToken
+);
+
+var published = await publish.ScheduleAfterAsync(
+	new(importId),
+	[verified, previousBatch],
+	cancellationToken: cancellationToken
+);
+
+await using var followUp = batches.Begin(
+	[firstBatch, secondBatch],
+	ContinuationTrigger.Complete
+);
+_ = publish.Enqueue(new(importId), followUp);
+_ = await followUp.CommitAsync(cancellationToken);
+```
+
+Continuation overloads with a delay start that delay when every parent reaches the required
+outcome. Time spent waiting for a parent does not consume the delay.
 
 | `ContinuationTrigger` | Condition and unmatched outcome                                                      |
 | --------------------- | ------------------------------------------------------------------------------------ |
@@ -145,17 +163,19 @@ public sealed partial class ProcessOrder(SendEmail.Scheduler sendEmail)
 		var order = await LoadOrderData(command.OrderId, cancellationToken);
 
 		_ = sendEmail.ScheduleAfter(
-			command.JobDetails!,
 			new(order.CustomerEmail, order.Summary),
+			command.JobDetails!,
 			ContinuationOptions.BeforeContinuations
 		);
 	}
 }
 ```
 
-`ScheduleAfter` buffers work and persists it only if the current attempt succeeds. `AddToBatchAsync`
-adds concurrent work immediately to the running batch. `ContinuationOptions` controls how that new
-work relates to the current job's existing continuations:
+`ScheduleAfter` buffers work and persists it only if the current attempt succeeds.
+`EnqueueAsync(payload, JobDetails, ...)` adds concurrent work immediately to the running batch.
+Use `ScheduleAsync` with `JobDetails` to delay that concurrent work or give it an absolute run time.
+`ContinuationOptions` controls how the new work relates to the current job's existing
+continuations:
 
 | Option                          | Batch membership | Effect on existing continuations                                 |
 | ------------------------------- | ---------------- | ---------------------------------------------------------------- |
@@ -163,18 +183,20 @@ work relates to the current job's existing continuations:
 | `BesideContinuations`           | Current batch    | Unchanged; the new job forms a parallel branch.                  |
 | `BeforeContinuations` (default) | Current batch    | They also wait for the new job, creating an additive dependency. |
 
-The `BeforeContinuations` splice keeps each existing dependency on the current job and adds a
-dependency on the new job. Existing continuations therefore wait for both jobs.
+With `BeforeContinuations`, each existing follow-up job waits for both the current job and the new
+job.
 
 <Callout type="warning">
 
 `JobDetails` expansion is valid only during the active attempt. It requires a graph provider and,
 except for detached scheduling, the current job must belong to a batch. `IJOB0015` warns when
-`Detached` is passed to `AddToBatchAsync`.
+`Detached` is passed to `EnqueueAsync` or `ScheduleAsync` with `JobDetails`.
 
 </Callout>
 
-Monitor a graph through `IJobBatchMonitor.GetStatusAsync`, `QueryMembersAsync` and `GetGraphAsync`.
-`BatchStatus` counts succeeded, failed, cancelled and skipped members separately; a batch can
+Use the scoped `JobMonitor` to read a graph. Call `GetBatchAsync`, `QueryBatchMembersAsync`, or
+`GetBatchGraphAsync`. These methods return `null` when storage does not support graphs.
+`BatchStatus` counts succeeded, failed, cancelled and skipped members separately. A batch can
 succeed when every executed member succeeded even if conditional branches were skipped. The
-dashboard exposes the same progress and workflow states alongside batch cancel/delete operations.
+concrete monitor also provides `CancelBatchAsync` for jobs that have not finished and
+`DeleteBatchAsync` for a completed batch. The dashboard offers the same actions.

@@ -1,6 +1,6 @@
 ---
 title: Queues and fairness
-description: Define queues and combine priority, concurrency and fair-group scheduling.
+description: Define queues, limit concurrency, set priority and share capacity across groups.
 order: 6
 group: Guides
 ---
@@ -33,15 +33,14 @@ on one scheduler node; zero is unbounded. Node-wide `MaxParallelJobs` and job-le
 Enable fairness globally and put a tenant/customer key on each scheduled invocation:
 
 ```csharp
-builder.Services.AddMyAppJobs(options =>
-{
-	options.UseFairQueues(fair =>
+builder.Services.AddMyAppJobs()
+	.UseFairQueues(options => options.Configure(fair =>
 	{
 		fair.ConcurrencyShareThreshold = 0.10;
 		fair.MinInflightForNoisy = 30;
 		fair.GroupRoundRobin = true;
-	});
-});
+	}))
+	.ConfigureStorage(storage => storage.UseInMemory());
 
 await welcomeEmail.EnqueueAsync(
 	new(userId, "v2"),
@@ -50,16 +49,25 @@ await welcomeEmail.EnqueueAsync(
 );
 ```
 
-Round-robin interleaves due groups. A group becomes noisy only after it has at least
-`MinInflightForNoisy` active jobs and exceeds `ConcurrencyShareThreshold` of the queue's effective
-capacity; quieter groups are then preferred. Ungrouped jobs remain eligible. Fairness affects
-acquisition order, not durable priority or a job's retry policy.
+The `OptionsBuilder<FairQueueOptions>` callback can also bind an `IConfiguration` section:
 
-| Provider/topology     | Fair groups                                                      |
-| --------------------- | ---------------------------------------------------------------- |
-| In-memory             | Supported                                                        |
-| EF Core / LinqToDB    | Supported                                                        |
-| Redis                 | Not supported; grouped acquisition is rejected                   |
-| Single-server wrapper | Supported when its durable replica has full graph/fair semantics |
+```csharp
+builder.Services.AddMyAppJobs()
+	.UseFairQueues(options => options.Bind(
+		builder.Configuration.GetSection("ImmediateJobs:FairQueues")))
+	.ConfigureStorage(storage => storage.UseInMemory());
+```
+
+Round-robin alternates between groups that have work ready. A group becomes noisy after it reaches
+`MinInflightForNoisy` active jobs and uses more than `ConcurrencyShareThreshold` of the queue's
+capacity. Jobs then favors quieter groups. Jobs without a group remain eligible. Fairness changes
+which ready job runs next; it does not change priority or retry rules.
+
+| Storage and mode   | Fair groups                                                     |
+| ------------------ | --------------------------------------------------------------- |
+| In-memory          | Supported                                                       |
+| EF Core / LinqToDB | Supported                                                       |
+| Redis              | Not supported; enabling fair queues causes an error             |
+| Single-server      | Supported when its durable provider meets the mode requirements |
 
 Queue and group names are persisted. Renaming either does not rename already-persisted work.

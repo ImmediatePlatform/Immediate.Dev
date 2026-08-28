@@ -1,6 +1,6 @@
 ---
 title: Configuring storage providers
-description: Configure in-memory, EF Core, LinqToDB and Redis storage and own their schemas correctly.
+description: Configure built-in storage providers and manage their database schemas.
 order: 11
 group: Guides
 ---
@@ -12,11 +12,12 @@ group: Guides
 ## In-memory
 
 ```csharp
-builder.Services.AddMyAppJobs(options => options.UseInMemory());
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage.UseInMemory());
 ```
 
-This is also the default when no storage is selected. It is non-durable and single-node but
-implements recurring, graph and fair-queue behavior for development and tests.
+Select in-memory storage explicitly. It keeps data in one process and loses it on restart, but it
+supports every job feature. Use it for development and tests.
 
 ## Entity Framework Core
 
@@ -39,8 +40,10 @@ builder.Services.AddDbContextFactory<JobsDbContext>(db =>
 // db.UseSqlite(jobsConnectionString);       // SQLite
 // db.UseSqlServer(jobsConnectionString);    // SQL Server
 
-builder.Services.AddMyAppJobs(options =>
-	options.UseEntityFrameworkCore<JobsDbContext>());
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage
+		.UseEntityFrameworkCore<JobsDbContext>()
+		.UseSingleServer());
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
@@ -90,22 +93,36 @@ dotnet add package Immediate.Jobs.LinqToDB --prerelease
 ```
 
 ```csharp
+using LinqToDB;
+using LinqToDB.Data;
+using LinqToDB.Extensions.DependencyInjection;
+
 var dataOptions = new DataOptions().UsePostgreSQL(connectionString);
 // new DataOptions().UseSQLite(connectionString);
 // new DataOptions().UseSqlServer(connectionString);
 
-await dataOptions.CreateImmediateJobsSchemaAsync(
-	schema: "background", // must be null for SQLite
-	CancellationToken.None
-);
+builder.Services.AddLinqToDBContext<JobsDataConnection>(() => dataOptions);
 
-builder.Services.AddMyAppJobs(options =>
-	options.UseLinqToDB(dataOptions, schema: "background"));
+await using (var connection = new JobsDataConnection(dataOptions))
+{
+	await connection.CreateImmediateJobsSchemaAsync(
+		schema: "background", // must be null for SQLite
+		CancellationToken.None
+	);
+}
+
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage
+		.UseLinqToDB<JobsDataConnection>(schema: "background")
+		.UseSingleServer());
+
+public sealed class JobsDataConnection(DataOptions options) : DataConnection(options);
 ```
 
-The application owns `DataOptions`, the matching ADO.NET driver and schema lifecycle. The helper
-supports SQLite (without a named schema), PostgreSQL and SQL Server and creates the tables and
-indexes for a fresh database.
+Register the `DataConnection` type with dependency injection. Jobs resolves it when storage work
+starts. The application owns `DataOptions`, the matching ADO.NET driver and the database schema.
+The helper supports SQLite (without a named schema), PostgreSQL and SQL Server. It creates the
+tables and indexes for a new database.
 
 ## Redis
 
@@ -113,31 +130,55 @@ indexes for a fresh database.
 dotnet add package Immediate.Jobs.Redis --prerelease
 ```
 
-Pass a configuration string when Jobs should own the connection:
+Register an `IConnectionMultiplexer`, then select Redis storage:
 
 ```csharp
-builder.Services.AddMyAppJobs(options => options.UseRedis(
-	"localhost:6379",
-	redis =>
-	{
-		redis.Database = 1;
-		redis.KeyPrefix = "billing-jobs";
-	}
-));
+using StackExchange.Redis;
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+	ConnectionMultiplexer.Connect("localhost:6379"));
+
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage
+		.UseRedis()
+		.ConfigureRedis(redis =>
+		{
+			redis.Database = 1;
+			redis.KeyPrefix = "billing-jobs";
+		}));
 ```
 
-Or pass an application-owned `IConnectionMultiplexer`; the provider will not dispose it. The
-configuration-string overload owns and disposes its connection. `Database` defaults to `-1`
-(server default), and `KeyPrefix` defaults to `immediate-jobs`. Prefixes cannot contain braces
-because the provider adds its own Redis Cluster hash tag for atomic Lua operations.
+The provider uses the registered connection and does not dispose it. The dependency injection
+container disposes the connection in this example because it creates the singleton. If you
+register an existing instance, its owner must dispose it. `Database` defaults to `-1` (server
+default), and `KeyPrefix` defaults to `immediate-jobs`. The prefix cannot contain `{` or `}` because
+Jobs uses those characters internally. Jobs validates these options at startup.
+
+`ConfigureRedis` also accepts an `OptionsBuilder<RedisJobStorageOptions>` action. Use it to bind an
+`IConfiguration` section:
+
+```csharp
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage
+		.UseRedis()
+		.ConfigureRedis(options => options.Bind(
+			builder.Configuration.GetSection("ImmediateJobs:Redis"))));
+```
+
+You can use `BindConfiguration("ImmediateJobs:Redis")` when the section comes from the
+configuration registered with dependency injection.
 
 Redis always selects distributed mode and supports queue plus recurring capabilities. It does not
 support graph workflows or fair queues.
 
-<Callout type="warning" title="Preview schema ownership">
+Call `ConfigureStorage` exactly once. With EF Core or LinqToDB, choose `UseSingleServer()` for one
+scheduler process or `UseDistributed()` for more than one. Jobs defaults to single-server mode
+when neither is selected. Redis always uses distributed mode.
 
-Storage initialization is idempotent provider startup, not schema creation. Keep every
-Immediate.Jobs provider package at the same preview revision as the core package, and create test
-databases from the current EF model or `CreateImmediateJobsSchemaAsync` helper.
+<Callout type="warning" title="Database setup during preview">
+
+Starting Jobs does not create or update a database schema. Keep every Immediate.Jobs provider
+package at the same preview version as the core package. Create test databases from the current EF
+model or with `CreateImmediateJobsSchemaAsync`.
 
 </Callout>

@@ -11,7 +11,8 @@ arbitrary external side effect with its own completion record.
 
 ## Make fulfillment idempotent
 
-Use `JobDetails.JobId` or a domain key such as `OrderId + "confirmation"` in a unique database row.
+Use `JobDetails.JobHandle.Value` or a domain key such as `OrderId + "confirmation"` in a unique database
+row.
 Perform conditional state transitions (`Paid` → `Reserved`) and pass idempotency keys to payment,
 email and shipping APIs. A retry should observe completed work and return successfully.
 
@@ -66,7 +67,8 @@ Defaults are 24 hours for succeeded jobs and batches; seven days for failed, can
 jobs and for failed or cancelled batches; and one hour between purge passes. Set
 `SucceededRetention`, `FailedRetention`,
 `BatchSucceededRetention`, `BatchFailedRetention` and `PurgeInterval` on
-`ImmediateJobsOptions`. Zero retention is valid; negative retention is rejected.
+`ImmediateJobsOptions`. Set them in a `ConfigureWorkers` callback or bind the options from an
+`IConfiguration` section. Zero retention is valid; negative retention is rejected.
 
 Operators can cancel a non-terminal job through its generated scheduler, provider storage or the
 dashboard. Cancellation records `Cancelled` immediately. An already-running handler is not forcibly
