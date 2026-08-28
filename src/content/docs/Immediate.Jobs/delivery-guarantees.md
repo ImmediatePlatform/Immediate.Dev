@@ -11,7 +11,8 @@ arbitrary external side effect with its own completion record.
 
 ## Make fulfillment idempotent
 
-Use `JobDetails.JobId` or a domain key such as `OrderId + "confirmation"` in a unique database row.
+Use `JobDetails.JobId.JobId` or a domain key such as `OrderId + "confirmation"` in a unique database
+row.
 Perform conditional state transitions (`Paid` → `Reserved`) and pass idempotency keys to payment,
 email and shipping APIs. A retry should observe completed work and return successfully.
 

@@ -90,8 +90,9 @@ public sealed class TenantScheduleManager(TenantCleanupJob.Scheduler tenantClean
 ```
 
 `AddOrUpdateRecurringAsync` saves the schedule and replaces an existing schedule with the same
-name. `TriggerNowAsync` starts a run now without moving the next cron occurrence. The dashboard can
-also trigger, pause and resume schedules.
+name. The scheduler also saves its generated queue name, so every occurrence uses the queue selected
+by `[UsesQueue<TQueue>]`. `TriggerNowAsync` starts a run now without moving the next cron occurrence.
+The dashboard can also trigger, pause and resume schedules.
 
 ## Manage stored schedules
 

@@ -23,7 +23,7 @@ var payload = new SendWelcomeEmail.Payload(userId, "v2");
 
 JobHandle now = await scheduler.EnqueueAsync(payload, cancellationToken);
 JobHandle later = await scheduler.ScheduleAsync(payload, TimeSpan.FromMinutes(10), cancellationToken);
-JobHandle at = await scheduler.ScheduleAtAsync(payload, shipAt, cancellationToken);
+JobHandle at = await scheduler.ScheduleAsync(payload, shipAt, cancellationToken);
 ```
 
 Negative delays throw `ArgumentOutOfRangeException`. Absolute times are `DateTimeOffset`; the
@@ -37,7 +37,7 @@ When fair queues are enabled, pass a stable tenant or customer ID to the overloa
 ```csharp
 await scheduler.EnqueueAsync(payload, groupId: tenantId, cancellationToken);
 await scheduler.ScheduleAsync(payload, TimeSpan.FromMinutes(5), tenantId, cancellationToken);
-await scheduler.ScheduleAtAsync(payload, shipAt, tenantId, cancellationToken);
+await scheduler.ScheduleAsync(payload, shipAt, tenantId, cancellationToken);
 ```
 
 Whitespace is normalized to no group. Group IDs longer than 128 characters are rejected. A
@@ -93,13 +93,20 @@ so separate application instances cannot generate the same value. `IdKind` lets 
 distinguish job runs, including recurring runs, from batches.
 
 Treat the result as opaque even when your generator adds a readable prefix. Applications should
-store and compare `JobHandle.Id` or `BatchHandle.Id`, not parse business meaning from their format.
+store and compare `JobHandle` or `BatchHandle` values, not parse business meaning from their
+string properties.
 
 ## Handles and cancellation
 
-`JobHandle.Id` is the generated invocation identifier. A handle also carries an internal batch
-scope while building a workflow and therefore should not be serialized as a durable business
-contract.
+`JobHandle.JobId` contains the generated invocation identifier. `BatchHandle.BatchId` does the same
+for a committed batch. Both are immutable records and serialize to their string identifier. Use
+`JobHandle.FromString(value)` or `BatchHandle.FromString(value)` at a route, database or message
+boundary that provides a raw string.
+
+Both types derive from `ContinuationHandle`, so one continuation API accepts either a job or a
+batch as its parent. Jobs added to an open batch return `BatchJobHandle` instead. That handle keeps
+the in-memory batch association needed to build dependencies. Its `JobId` becomes available only
+after the batch commits.
 
 Use the same generated scheduler to cancel any non-terminal invocation:
 

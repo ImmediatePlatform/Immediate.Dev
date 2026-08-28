@@ -80,7 +80,7 @@ public sealed class PaymentScheduler(ReconcilePayment.Scheduler reconciliation, 
 	{
 		var expectedSettlement = clock.GetCurrentInstant() + Duration.FromHours(2);
 
-		return reconciliation.ScheduleAtAsync(
+		return reconciliation.ScheduleAsync(
 			new(orderId, expectedSettlement),
 			expectedSettlement,
 			cancellationToken
@@ -95,15 +95,15 @@ application code benefits from a NodaTime clock.
 
 The complete scheduling surface is:
 
-| Operation                                          | NodaTime value | Notes                                                    |
-| -------------------------------------------------- | -------------- | -------------------------------------------------------- |
-| `ScheduleAsync`                                    | `Duration`     | Relative delay, with an optional fair-queue group ID.    |
-| `ScheduleAtAsync`                                  | `Instant`      | Absolute time, with an optional fair-queue group ID.     |
-| `AddToBatch`                                       | `Duration?`    | Delayed atomic-batch member.                             |
-| `AddToBatchAt`                                     | `Instant`      | Atomic-batch member at an absolute time.                 |
-| `ScheduleAfterAsync(JobHandle, ...)`               | `Duration?`    | Delayed continuation after one job.                      |
-| `ScheduleAfterAsync(ReadOnlySpan<JobHandle>, ...)` | `Duration?`    | Delayed fan-in continuation after every supplied parent. |
-| `ScheduleAfterAsync(BatchHandle, ...)`             | `Duration?`    | Delayed continuation after a whole batch.                |
+| Operation                                              | NodaTime value        | Notes                                                                  |
+| ------------------------------------------------------ | --------------------- | ---------------------------------------------------------------------- |
+| `ScheduleAsync(payload, ...)`                          | `Duration`, `Instant` | Delayed or absolute scheduling, including grouped overloads.           |
+| `ScheduleAsync(payload, JobDetails, ...)`              | `Duration`, `Instant` | Delayed or absolute work added while a batch member runs.              |
+| `ScheduleAfterAsync(payload, ContinuationHandle, ...)` | `Duration`            | Delayed continuation after a durable job or batch.                     |
+| `ScheduleAfterAsync(payload, IReadOnlyList<...>, ...)` | `Duration`            | Delayed continuation after every supplied durable job or batch.        |
+| `ScheduleAfter(payload, JobDetails, ...)`              | `Duration`            | Delayed work buffered until the current attempt succeeds.              |
+| `Schedule(payload, Batch, ...)`                        | `Duration`, `Instant` | Delayed or absolute member of an open batch.                           |
+| `ScheduleAfter(payload, BatchJobHandle, ...)`          | `Duration`            | Delayed continuation inside an open batch, including fan-in overloads. |
 
 Batch and continuation overloads otherwise retain the behavior described in
 [Batches and continuations](/docs/Immediate.Jobs/batches-and-continuations), including trigger and

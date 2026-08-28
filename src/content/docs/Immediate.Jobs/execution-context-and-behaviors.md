@@ -15,9 +15,9 @@ restore and handler exceptions share that retry boundary. Each attempt gets a ne
 
 ## Invocation metadata
 
-`JobDetails` contains `JobId`, `JobName`, `QueueName`, one-based `Attempt`, `CreatedAt`,
-`ScheduledAt` and optional `BatchId`. Use it for idempotency keys, diagnostics and workflow
-expansion; do not change its `Buffer` plumbing.
+`JobDetails` contains a typed `JobHandle` in `JobId`, plus `JobName`, `QueueName`, one-based
+`Attempt`, `CreatedAt`, `ScheduledAt` and an optional `BatchHandle` in `BatchId`. Use it for
+idempotency keys, diagnostics and workflow expansion.
 
 ## Capture selected ambient context
 

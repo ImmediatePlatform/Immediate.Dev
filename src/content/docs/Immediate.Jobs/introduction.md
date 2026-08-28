@@ -88,6 +88,6 @@ possible. Immediate.Jobs does not include a transactional outbox.
 	<LinkCard title="Build workflows" description="Batches, dependencies, parallel branches and jobs added at runtime." href="/docs/Immediate.Jobs/batches-and-continuations" />
 	<LinkCard title="Choose storage" description="Durability, worker count and supported features." href="/docs/Immediate.Jobs/choosing-storage" />
 	<LinkCard title="Operate jobs" description="Delivery guarantees, dashboard, telemetry and health checks." href="/docs/Immediate.Jobs/delivery-guarantees" />
-	<LinkCard title="Test jobs" description="Controllable time, captured scheduling calls and assertions." href="/docs/Immediate.Jobs/testing-jobs" />
+	<LinkCard title="Test jobs" description="Controllable time, captured storage writes and assertions." href="/docs/Immediate.Jobs/testing-jobs" />
 	<LinkCard title="API reference" description="Public types, options and companion packages." href="/docs/Immediate.Jobs/api-reference" />
 </CardGrid>

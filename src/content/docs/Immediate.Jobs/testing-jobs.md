@@ -1,6 +1,6 @@
 ---
 title: Testing jobs
-description: Test scheduling and execution with a controllable clock, captured calls and workflow assertions.
+description: Test scheduling and execution with a controllable clock, captured storage writes and workflow assertions.
 order: 15
 group: Guides
 ---
@@ -44,7 +44,7 @@ Assert.Equal(JobState.Succeeded, (await harness.GetJobAsync(handle, cancellation
 `DrainAsync` runs every due job immediately. `AdvanceTimeAndDrainAsync` moves the clock by a
 `TimeSpan` or to a `DateTimeOffset`, then runs due jobs. `QueryJobsAsync` and `GetJobAsync` read saved
 job records. `AssertEnqueuedAsync<TPayload>` checks the state and payload. The harness also exposes
-`Storage`, `TimeProvider`, `Services` and `Batches`.
+`Storage`, `Captures`, `TimeProvider`, `Services`, `Batches` and the production scheduling service.
 
 Register generated jobs in the callback, but do not call `ConfigureStorage`. The harness installs
 its own in-memory provider and fake clock after application registrations.
@@ -54,13 +54,15 @@ For graphs, use `AssertBatchCommittedAtomicallyAsync`,
 Call `RunThroughPipelineAsync<TPayload>` when a test already has a record and payload and needs to
 run the generated handler with its registered behaviors and dependencies.
 
-## Capture scheduling only
+## Inspect captured storage writes
 
-Use `CaptureOnlyJobScheduler<TPayload>` when a test only needs to verify what was scheduled and no
-worker should run:
+`JobTestHarness` puts `CapturingJobStorage` behind the production generated schedulers. It records
+writes while keeping jobs available for queries, cancellation and execution:
 
 ```csharp
-var scheduler = new CaptureOnlyJobScheduler<SendWelcomeEmail.Payload>();
+await using var harness = new JobTestHarness(services => services.AddMyAppJobs());
+await using var scope = harness.Services.CreateAsyncScope();
+var scheduler = scope.ServiceProvider.GetRequiredService<SendWelcomeEmail.Scheduler>();
 var payload = new SendWelcomeEmail.Payload(userId, "v2");
 var handle = await scheduler.EnqueueAsync(
 	payload,
@@ -68,20 +70,23 @@ var handle = await scheduler.EnqueueAsync(
 	cancellationToken: cancellationToken
 );
 
-var capture = scheduler.Last!;
-Assert.Equal(handle.Id, capture.Id);
-Assert.Equal(payload, capture.Payload);
-Assert.Equal("tenant-a", capture.GroupId);
+var captured = harness.Captures.FindJob(handle)!;
+Assert.Equal(handle, captured.JobId);
+Assert.Equal("tenant-a", captured.GroupId);
 
 await scheduler.CancelAsync(handle, cancellationToken);
-Assert.Contains(handle.Id, scheduler.CancelledIds);
+Assert.Equal(JobState.Cancelled, (await harness.GetJobAsync(handle, cancellationToken)).State);
 ```
 
-`Captures` preserves call order, `Last` returns the newest call, and `CancelledIds` records
-cancellations of captured handles. `Clear()` resets both collections. Captures include payload,
-run time, group ID and generated handle. `CaptureOnlyRecurringJobScheduler` records
-add/update/remove/trigger operations for payloadless dynamic schedules. Override the capture
-scheduler's ID creation when stable IDs make assertions clearer.
+Use `Jobs`, `Continuations`, `Batches`, `BatchJobs`, `DynamicContinuations`,
+`RecurringSchedules`, `RecurringOperations` and `RecurringMaterializations` for the complete call
+history. Each property returns a stable snapshot in call order. `FindJob` and `FindBatch` locate one
+captured write by its typed handle. `Clear()` resets the capture log without deleting the jobs held
+by the inner in-memory storage.
+
+Recurring operations distinguish add/update, remove, pause and resume. Materializations record the
+saved schedule, the new job and its next run time. Batch captures include the batch header, jobs and
+dependency edges, including continuation delays.
 
 Failed checks throw `JobTestAssertionException` with details about the job or batch. The helpers
 use the same serialization and execution paths as production while the fake clock avoids delays.

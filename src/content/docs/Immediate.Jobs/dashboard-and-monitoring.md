@@ -33,14 +33,14 @@ builder.Services.AddMyAppJobs()
 		JobTelemetryLinkKind.Logs,
 		context => context.Execution is { } execution
 			? new(logExplorer,
-				$"search?jobId={Uri.EscapeDataString(context.Job.Id)}&attempt={execution.Attempt}")
+				$"search?jobId={Uri.EscapeDataString(context.Job.JobId.JobId)}&attempt={execution.Attempt}")
 			: null
 	)
 	.AddTelemetryLink(
 		"View all retry logs",
 		JobTelemetryLinkKind.Logs,
 		context => context.Execution is null
-			? new(logExplorer, $"search?jobId={Uri.EscapeDataString(context.Job.Id)}")
+			? new(logExplorer, $"search?jobId={Uri.EscapeDataString(context.Job.JobId.JobId)}")
 			: null
 	);
 
@@ -129,7 +129,8 @@ dashboard calls your URL function with a `JobTelemetryLinkContext`.
 For a job link, `context.Execution` is `null` and the execution fields on `context.Job` describe
 the latest attempt. For an attempt link, `context.Execution` and the execution fields on
 `context.Job` both describe the selected attempt. Use `Execution` for links to one attempt. Use
-`Job.Id` when a destination should search across every retry.
+`Job.JobId` when a destination should search across every retry. Its `JobId` property is the raw
+string expected by URL builders.
 
 The URL function may return HTTP(S) or dashboard-relative URLs. Other absolute URI schemes are
 rejected. Return `null` before an execution trace exists or whenever a destination does not apply
@@ -138,6 +139,10 @@ to the current record.
 ## HTTP endpoints
 
 All paths below are relative to the mapped prefix.
+
+Dashboard JSON names job identifiers `jobId` and batch identifiers `batchId`. Their values remain
+opaque strings on the wire even though the .NET monitoring records use `JobHandle` and
+`BatchHandle`.
 
 | Method and path                                                      | Purpose                                                                  |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
@@ -186,6 +191,11 @@ The dashboard uses this same service.
 `IJobMonitor` exposes only the read methods. Use it when code needs no management commands or a test
 needs a simple replacement. Do not use `IJobStorage` for application monitoring or management. It
 is for storage providers and the Jobs runtime.
+
+Monitor methods accept `JobHandle` and `BatchHandle`. Scheduling calls already return those types.
+At an HTTP or database boundary, convert a raw identifier with `JobHandle.FromString` or
+`BatchHandle.FromString`. `QueryExecutionsAsync` takes the job handle separately from its paging
+and attempt filter.
 
 `QueryExecutionsAsync` returns attempts newest first. Execution history remains with its job or
 batch until that record is deleted or purged. Batch reads return `null` when the provider does not
