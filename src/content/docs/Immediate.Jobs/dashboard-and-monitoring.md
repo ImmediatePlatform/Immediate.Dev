@@ -50,8 +50,19 @@ app.MapImmediateJobsDashboard("/jobs");
 
 Chain `AddImmediateJobsDashboard` from the generated jobs registration. Set dashboard options with
 `ConfigureDashboard`; the mapping call only selects the URL path. `ConfigureDashboard` also accepts
-an `OptionsBuilder<ImmediateJobsDashboardOptions>` action for configuration binding. Jobs validates
-the settings when the host starts.
+an `OptionsBuilder<ImmediateJobsDashboardOptions>` action. Use it to bind an `IConfiguration`
+section:
+
+```csharp
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage.UseInMemory())
+	.AddImmediateJobsDashboard()
+	.ConfigureDashboard(options => options.Bind(
+		builder.Configuration.GetSection("ImmediateJobs:Dashboard")));
+```
+
+`BindConfiguration("ImmediateJobs:Dashboard")` binds the same section from the configuration
+registered with dependency injection. Jobs validates the settings when the host starts.
 
 By default, every dashboard endpoint is limited to the `Development` environment and returns 403
 elsewhere. Setting `AuthorizationPolicy` uses that policy instead of the environment check. For a

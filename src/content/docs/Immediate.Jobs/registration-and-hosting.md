@@ -50,13 +50,17 @@ Each job run gets a new scope for its context extractors, behaviors, handler and
 ## Fluent configuration
 
 `ConfigureWorkers` accepts either a direct options action or an
-`OptionsBuilder<ImmediateJobsOptions>` action. Use the second form to bind configuration.
-`UseFairQueues` has the same binding option. Call `ConfigureStorage` exactly once:
+`OptionsBuilder<ImmediateJobsOptions>` action. The second form can bind an `IConfiguration`
+section. `UseFairQueues` has the same binding option. Pass a section to `Bind`, or call
+`BindConfiguration` with its path to use the configuration registered with dependency injection.
+Call `ConfigureStorage` exactly once:
 
 ```csharp
 builder.Services.AddMyAppJobs()
-	.ConfigureWorkers(options => options.BindConfiguration("ImmediateJobs"))
-	.UseFairQueues(options => options.BindConfiguration("ImmediateJobs:FairQueues"))
+	.ConfigureWorkers(options => options.Bind(
+		builder.Configuration.GetSection("ImmediateJobs")))
+	.UseFairQueues(options => options.Bind(
+		builder.Configuration.GetSection("ImmediateJobs:FairQueues")))
 	.ConfigureStorage(storage => storage
 		.UseEntityFrameworkCore<AppDbContext>()
 		.UseDistributed())

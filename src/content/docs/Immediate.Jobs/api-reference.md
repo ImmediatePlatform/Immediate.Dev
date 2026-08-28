@@ -283,8 +283,10 @@ initializing storage or executing jobs. Registration, schedulers and storage rem
 
 `FairQueueOptions` defaults to `Enabled = false`, `ConcurrencyShareThreshold = 0.10`,
 `MinInflightForNoisy = 30`, and `GroupRoundRobin = true`. `UseFairQueues` sets `Enabled` to `true`.
-The `OptionsBuilder<T>` overloads support configuration binding. Jobs validates
-`ImmediateJobsOptions` and `FairQueueOptions` at startup.
+The `OptionsBuilder<T>` overloads support configuration binding. Call `Bind` with an
+`IConfiguration` section, or call `BindConfiguration` with a section path to use the configuration
+registered with dependency injection. Jobs validates `ImmediateJobsOptions` and
+`FairQueueOptions` at startup.
 
 ## Serialization and telemetry
 
@@ -401,7 +403,9 @@ RouteGroupBuilder MapImmediateJobsDashboard(
 
 Chain `AddImmediateJobsDashboard` from the jobs registration before building the application.
 `ConfigureDashboard` sets options. `MapImmediateJobsDashboard` only selects the default or custom
-path. Jobs validates the settings when the host starts.
+path. Its `OptionsBuilder<ImmediateJobsDashboardOptions>` overload can call `Bind` with an
+`IConfiguration` section or `BindConfiguration` with a section path. Jobs validates the settings
+when the host starts.
 
 `ImmediateJobsDashboardOptions.UpdateInterval` defaults to two seconds.
 `RestrictToDevelopmentEnvironment` defaults to `true`, and `AuthorizationPolicy` defaults to
@@ -430,7 +434,9 @@ IImmediateJobsRedisBuilder ConfigureRedis(
 
 `UseLinqToDB<TContext>` requires a registered `DataConnection` type. The schema helper extends that
 connection type. `UseRedis` requires a registered `IConnectionMultiplexer` and selects distributed
-mode. `RedisJobStorageOptions` exposes `Database = -1` and `KeyPrefix = "immediate-jobs"`.
+mode. `RedisJobStorageOptions` exposes `Database = -1` and `KeyPrefix = "immediate-jobs"`. The
+`OptionsBuilder<RedisJobStorageOptions>` overload can bind an `IConfiguration` section with `Bind`
+or resolve a section path with `BindConfiguration`.
 
 ## NodaTime
 

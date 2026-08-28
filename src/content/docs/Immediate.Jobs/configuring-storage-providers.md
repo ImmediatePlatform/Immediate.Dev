@@ -154,8 +154,19 @@ register an existing instance, its owner must dispose it. `Database` defaults to
 default), and `KeyPrefix` defaults to `immediate-jobs`. The prefix cannot contain `{` or `}` because
 Jobs uses those characters internally. Jobs validates these options at startup.
 
-`ConfigureRedis` also accepts an `OptionsBuilder<RedisJobStorageOptions>` action. Use it when you
-need configuration binding.
+`ConfigureRedis` also accepts an `OptionsBuilder<RedisJobStorageOptions>` action. Use it to bind an
+`IConfiguration` section:
+
+```csharp
+builder.Services.AddMyAppJobs()
+	.ConfigureStorage(storage => storage
+		.UseRedis()
+		.ConfigureRedis(options => options.Bind(
+			builder.Configuration.GetSection("ImmediateJobs:Redis"))));
+```
+
+You can use `BindConfiguration("ImmediateJobs:Redis")` when the section comes from the
+configuration registered with dependency injection.
 
 Redis always selects distributed mode and supports queue plus recurring capabilities. It does not
 support graph workflows or fair queues.

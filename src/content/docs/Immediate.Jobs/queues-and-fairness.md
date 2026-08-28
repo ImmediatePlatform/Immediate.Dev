@@ -49,6 +49,15 @@ await welcomeEmail.EnqueueAsync(
 );
 ```
 
+The `OptionsBuilder<FairQueueOptions>` callback can also bind an `IConfiguration` section:
+
+```csharp
+builder.Services.AddMyAppJobs()
+	.UseFairQueues(options => options.Bind(
+		builder.Configuration.GetSection("ImmediateJobs:FairQueues")))
+	.ConfigureStorage(storage => storage.UseInMemory());
+```
+
 Round-robin alternates between groups that have work ready. A group becomes noisy after it reaches
 `MinInflightForNoisy` active jobs and uses more than `ConcurrencyShareThreshold` of the queue's
 capacity. Jobs then favors quieter groups. Jobs without a group remain eligible. Fairness changes
