@@ -53,6 +53,7 @@ Please see our [full cookbook](/docs/cookbook/the-cookbook) for all integration 
 | Cache a query's response in memory                          | [Immediate.Cache](/docs/Immediate.Cache/introduction)                                  |
 | Register ordinary services with DI by attribute             | [Immediate.Injections](/docs/Immediate.Injections/introduction)                        |
 | Run work in the background on a schedule                    | [Immediate.Jobs](/docs/Immediate.Jobs/introduction)                                    |
+| Have an AI coding agent follow these conventions            | [Immediate.Skills](/docs/Immediate.Skills/introduction)                                |
 
 ## The libraries
 
@@ -104,6 +105,13 @@ Please see our [full cookbook](/docs/cookbook/the-cookbook) for all integration 
 - Generates typed schedulers, payload metadata, and dependency-injection registrations at compile time.
 - See the [Immediate.Jobs manual](/docs/Immediate.Jobs/introduction) for scheduling, workflows,
   storage, operations and testing.
+
+### Immediate.Skills
+
+- Agent skills for Claude Code and Codex, one plugin per library.
+- Teach coding agents to create handlers, endpoints, validators, caches, registrations and jobs the
+  way these docs describe.
+- See [Installing the skills](/docs/Immediate.Skills/installation) to add them to your agent.
 
 <Callout type="tip" title="Where to next">
 <a href="/docs/getting-started/installation">Installation</a> covers the packages and how they

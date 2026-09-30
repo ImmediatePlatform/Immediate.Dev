@@ -3,6 +3,7 @@
 	import DarkModeSwitcher from '$lib/components/theme/dark-mode-switcher.svelte';
 	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import BlocksIcon from '@lucide/svelte/icons/blocks';
+	import BotIcon from '@lucide/svelte/icons/bot';
 	import ClockIcon from '@lucide/svelte/icons/clock';
 	import DatabaseIcon from '@lucide/svelte/icons/database';
 	import GaugeIcon from '@lucide/svelte/icons/gauge';
@@ -77,6 +78,12 @@
 			description: 'Reflection-free, durable background jobs built on Immediate.Handlers.',
 			href: '/docs/Immediate.Jobs/introduction',
 			icon: ClockIcon
+		},
+		{
+			name: 'Immediate.Skills',
+			description: 'Agent skills that teach Claude Code and Codex to build with the platform.',
+			href: '/docs/Immediate.Skills/introduction',
+			icon: BotIcon
 		}
 	];
 
