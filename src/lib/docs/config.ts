@@ -68,7 +68,7 @@ export const docsConfig: DocsConfig = {
 			label: 'Immediate.Jobs',
 			icon: ClockIcon,
 			autogenerate: { directory: 'Immediate.Jobs' },
-			groups: packageGroups
+			groups: ['Guides', 'Migration', 'Reference', 'Diagnostics', 'Samples']
 		},
 		{
 			label: 'Cookbook',
