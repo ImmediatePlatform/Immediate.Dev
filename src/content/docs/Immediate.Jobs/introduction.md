@@ -90,4 +90,5 @@ possible. Immediate.Jobs does not include a transactional outbox.
 	<LinkCard title="Operate jobs" description="Delivery guarantees, dashboard, telemetry and health checks." href="/docs/Immediate.Jobs/delivery-guarantees" />
 	<LinkCard title="Test jobs" description="Controllable time, captured storage writes and assertions." href="/docs/Immediate.Jobs/testing-jobs" />
 	<LinkCard title="API reference" description="Public types, options and companion packages." href="/docs/Immediate.Jobs/api-reference" />
+	<LinkCard title="Migrate to Immediate.Jobs" description="Guides and agent prompts for Hangfire, Quartz.NET, Coravel and BackgroundService." href="/docs/Immediate.Jobs/migration/overview" />
 </CardGrid>

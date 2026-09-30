@@ -9,3 +9,4 @@ export { default as Badge } from './badge.svelte';
 export { default as FileTree } from './file-tree.svelte';
 export { default as CodeGroup } from './code-group.svelte';
 export { default as PackageBadges } from './package-badges.svelte';
+export { default as AgentPrompt } from './agent-prompt.svelte';
