@@ -126,6 +126,14 @@ offers **Cancel** with a confirmation step.
     </figcaption>
 </figure>
 
+### Watch scheduler servers
+
+The Servers view shows one card for each live scheduler node with its last heartbeat and how many
+of its workers are busy. Each worker appears as a slot, so a node with many workers stays compact.
+A busy slot links to the job it is running. Below the slots, the card lists each busy worker with
+its job handle, attempt and start time, or shows that all workers are idle. A node drops off the
+page once its heartbeat is older than its `ServerTimeout`.
+
 ## Telemetry links
 
 `AddTelemetryLink` adds application-defined links to job and execution details. For each link, the
