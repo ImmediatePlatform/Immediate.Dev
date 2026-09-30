@@ -47,8 +47,9 @@ attempt and telemetry fields. A best-effort execution derived from the owning jo
 
 ## Leases, timeouts and recovery
 
-Distributed and replicated providers claim work atomically for `LeaseDuration` (30 seconds by
-default), and the worker renews while running. If the process disappears, another worker can
+Distributed and replicated providers claim work atomically for `LeaseDuration` (1 minute by
+default), and a separate lease-renewal loop renews every third of that duration while the job is
+claimed. If the process disappears, another worker can
 recover the expired lease—possibly after the first process performed its side effect. `Timeout`
 cancels the handler token; it is cooperative and does not forcibly stop managed code.
 

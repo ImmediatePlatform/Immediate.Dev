@@ -44,20 +44,53 @@ Assert.Equal(JobState.Succeeded, (await harness.GetJobAsync(handle, cancellation
 `DrainAsync` runs every due job immediately. `AdvanceTimeAndDrainAsync` moves the clock by a
 `TimeSpan` or to a `DateTimeOffset`, then runs due jobs. `QueryJobsAsync` and `GetJobAsync` read saved
 job records. `AssertEnqueuedAsync<TPayload>` checks the state and payload. The harness also exposes
-`Storage`, `Captures`, `TimeProvider`, `Services`, `Batches` and the production scheduling service.
+`Storage`, `TimeProvider`, `Services`, `Batches` and the production scheduling service.
 
 Register generated jobs in the callback, but do not call `ConfigureStorage`. The harness installs
-its own in-memory provider and fake clock after application registrations.
+its own in-memory provider and fake clock after application registrations. It runs one worker by
+default; pass an `Action<ImmediateJobsOptions>` as the last constructor argument to change worker
+options.
 
 For graphs, use `AssertBatchCommittedAtomicallyAsync`,
 `AssertContinuationReleasedAfterAsync` and `AssertCascadeSkippedAsync`.
 Call `RunThroughPipelineAsync<TPayload>` when a test already has a record and payload and needs to
 run the generated handler with its registered behaviors and dependencies.
 
+## Simulate a restart
+
+`ResetScheduler()` rebuilds `Services`, `Batches` and `Scheduler` as if the application restarted,
+while keeping `Storage` and `TimeProvider`. Use it to test what happens to saved work and recurring
+schedules across deployments and downtime:
+
+```csharp
+await using var harness = new JobTestHarness(services =>
+{
+	services.AddMyAppHandlers();
+	services.AddMyAppJobs();
+});
+
+await harness.DrainAsync(cancellationToken);
+
+// The application is down while three five-minute occurrences pass.
+harness.TimeProvider.Advance(TimeSpan.FromMinutes(17));
+harness.ResetScheduler();
+
+await harness.DrainAsync(cancellationToken);
+Assert.Single(
+	harness.Storage.RecurringMaterializations,
+	m => m.Schedule.Name == "cleanup-sessions" && m.Job.State == JobState.Pending
+);
+```
+
+`CleanupSessionsJob` from [Recurring jobs](/docs/Immediate.Jobs/recurring-jobs) uses the default
+`EnqueueOne` mode, so it gets a single catch-up run for the missed occurrences. The first drain
+after a reset merges code-defined recurring schedules again and applies each job's
+`MisfireHandlingMode` to occurrences missed while the clock moved.
+
 ## Inspect captured storage writes
 
-`JobTestHarness` puts `CapturingJobStorage` behind the production generated schedulers. It records
-writes while keeping jobs available for queries, cancellation and execution:
+`JobTestHarness.Storage` is a `CapturingJobStorage` behind the production generated schedulers. It
+records writes while keeping jobs available for queries, cancellation and execution:
 
 ```csharp
 await using var harness = new JobTestHarness(services => services.AddMyAppJobs());
@@ -70,7 +103,7 @@ var handle = await scheduler.EnqueueAsync(
 	cancellationToken: cancellationToken
 );
 
-var captured = harness.Captures.FindJob(handle)!;
+var captured = harness.Storage.FindJob(handle)!;
 Assert.Equal(handle, captured.JobHandle);
 Assert.Equal("tenant-a", captured.GroupId);
 
@@ -79,13 +112,20 @@ Assert.Equal(JobState.Cancelled, (await harness.GetJobAsync(handle, cancellation
 ```
 
 Use `Jobs`, `Continuations`, `Batches`, `BatchJobs`, `DynamicContinuations`,
-`RecurringSchedules`, `RecurringOperations` and `RecurringMaterializations` for the complete call
-history. Each property returns a stable snapshot in call order. `FindJob` and `FindBatch` locate one
+`RecurringOperations` and `RecurringMaterializations` for the complete call history. Each property
+returns a stable snapshot in call order. `RecurringSchedules` returns the currently saved schedules
+keyed by schedule name. `FindJob` and `FindBatch` locate one
 captured write by its typed handle. `Clear()` resets the capture log without deleting the jobs held
 by the inner in-memory storage.
 
 Recurring operations distinguish add/update, remove, pause and resume. Materializations record the
-saved schedule, the new job and its next run time. Batch captures include the batch header, jobs and
+saved schedule, the new job, any continuation dependencies created by `OverlapPolicy.Queue` and the
+next run time.
+
+`CapturingJobStorage` is not sealed, and every storage method is `virtual`. Derive from it to make a
+storage call fail or wait in a test, then pass your instance where the test needs it. Call
+`LoadPersistedJobState` to seed jobs, batches, continuation edges and recurring schedules before
+the test starts. Batch captures include the batch header, jobs and
 dependency edges, including continuation delays.
 
 Failed checks throw `JobTestAssertionException` with details about the job or batch. The helpers
@@ -122,7 +162,19 @@ For each case:
 
 - create a fresh service provider that resolves exactly one `IJobStorage`;
 - register `FakeTimeProvider` as `TimeProvider`;
-- use separate data, such as a unique database, schema or key prefix.
+- use separate data, such as a unique database, schema or key prefix;
+- store the case's `PersistedJobState` before calling `RunAsync`.
+
+`PersistedJobState` holds the `Jobs`, `Batches`, `Edges` and `RecurringSchedules` that a case
+expects to find in storage, for example to check that a provider restores an existing batch graph.
+Most cases have empty lists. The built-in providers expose a `LoadPersistedJobState` method for
+this; a custom provider fixture can insert the rows directly:
+
+```csharp
+await using var fixture = await AcmeStorageFixture.CreateAsync();
+await fixture.SeedAsync(testCase.PersistedJobState);
+await testCase.RunAsync(fixture.Services);
+```
 
 `FakeTimeProvider` comes from `Microsoft.Extensions.Time.Testing` in the
 `Microsoft.Extensions.TimeProvider.Testing` package. `GetCases` always includes queue tests. It

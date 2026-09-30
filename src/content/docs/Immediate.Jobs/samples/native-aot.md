@@ -16,5 +16,5 @@ custom job context, and drains the scheduler before the application exits.
 <LinkCard
 	title="View the Native AOT sample on GitHub"
 	description="Browse the complete Immediate.Jobs Native AOT sample source."
-	href="https://github.com/ImmediatePlatform/Immediate.Jobs/tree/master/samples/NativeAot"
+	href="https://github.com/ImmediatePlatform/Immediate.Jobs/tree/main/samples/NativeAot"
 />

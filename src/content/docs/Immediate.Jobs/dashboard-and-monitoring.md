@@ -168,7 +168,7 @@ opaque strings on the wire even though the .NET monitoring records use `JobHandl
 | `GET /api/recurring`                                                     | Recurring schedules.                                                     |
 | `POST /api/recurring/{name}/trigger`                                     | Start one run now.                                                       |
 | `POST /api/recurring/{name}/pause` / `resume`                            | Change schedule state.                                                   |
-| `GET /api/servers`                                                       | Recently active workers.                                                 |
+| `GET /api/servers`                                                       | Live scheduler nodes with per-worker and loop status.                    |
 | `GET /api/batches`                                                       | Filter by `state`, `skip`, `take` 1–500 (default 100).                   |
 | `GET /api/batches/{batchHandle}`                                         | Batch status.                                                            |
 | `GET /api/batches/{batchHandle}/members`                                 | Filter and page through jobs in a batch.                                 |
@@ -194,7 +194,7 @@ event log, so clients should reload after reconnecting.
 
 ## Use JobMonitor in code
 
-Inject the scoped `JobMonitor` for custom status pages and administrative endpoints. It reads
+Inject the singleton `JobMonitor` for custom status pages and administrative endpoints. It reads
 snapshots, jobs, saved attempts, batches, batch members and workflow graphs. It can also cancel or
 retry jobs, cancel or delete batches, and pause, resume or trigger recurring schedules.
 The dashboard uses this same service.
@@ -212,7 +212,9 @@ and attempt filter.
 batch until that record is deleted or purged. Batch reads return `null` when the provider does not
 support graphs, so non-batch monitoring still works with Redis and other queue-only providers.
 
-Monitoring snapshots include only scheduler servers whose last heartbeat is at most two minutes
-old. SQL providers remove stale server rows on later heartbeats, while Redis expires them. Apply
+Monitoring snapshots include only scheduler servers whose last heartbeat is within that server's
+own `ServerTimeout` (10 seconds by default). Each server reports its `ServerTimeout`, what each
+worker is running, and the status of its acquisition and lease-renewal loops. SQL providers remove
+stale server rows on later heartbeats, while Redis expires them. Apply
 paging and authorization to custom endpoints because payload and failure data can contain
 business-sensitive values.

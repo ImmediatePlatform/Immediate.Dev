@@ -122,7 +122,8 @@ public sealed class JobsDataConnection(DataOptions options) : DataConnection(opt
 Register the `DataConnection` type with dependency injection. Jobs resolves it when storage work
 starts. The application owns `DataOptions`, the matching ADO.NET driver and the database schema.
 The helper supports SQLite (without a named schema), PostgreSQL and SQL Server. It creates the
-tables and indexes for a new database.
+tables and indexes for a new database. Timestamps are stored in native date-and-time columns
+rather than integer ticks.
 
 ## Redis
 
@@ -180,5 +181,10 @@ when neither is selected. Redis always uses distributed mode.
 Starting Jobs does not create or update a database schema. Keep every Immediate.Jobs provider
 package at the same preview version as the core package. Create test databases from the current EF
 model or with `CreateImmediateJobsSchemaAsync`.
+
+Recent previews changed the schema. The EF Core server table gained required `ExpiresAt` and
+`Details` columns and is indexed by `ExpiresAt`, so add a new migration after upgrading. The
+LinqToDB timestamp columns changed from 64-bit integers to date-and-time types; recreate LinqToDB
+databases created by an earlier preview.
 
 </Callout>

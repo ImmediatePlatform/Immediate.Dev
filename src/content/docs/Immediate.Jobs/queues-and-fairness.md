@@ -25,8 +25,8 @@ converted to kebab case (`TransactionalEmailQueue` becomes `transactional-email-
 concurrency cannot be negative.
 
 Higher `Priority` queues are considered first. `Concurrency` limits in-flight work for that queue
-on one scheduler node; zero is unbounded. Node-wide `MaxParallelJobs` and job-level
-`MaxConcurrency` still apply, so priority never bypasses capacity.
+on one scheduler node; zero is unbounded. The node-wide `WorkerCount` and `MaxAcquisitionCount` and
+job-level `MaxConcurrency` still apply, so priority never bypasses capacity.
 
 ## Fair groups
 

@@ -18,8 +18,8 @@ public base contracts, although application code normally calls `YourJob.Schedul
 | `Immediate.Jobs.Shared.Storage`    | Contracts for custom storage providers.                           |
 
 Storage-provider extensions use `Immediate.Jobs.EntityFrameworkCore`, `Immediate.Jobs.LinqToDB`,
-and `Immediate.Jobs.Redis`. The generated `AddXxxJobs` and `RecurringJobs` types are placed in the
-application project's `RootNamespace`.
+and `Immediate.Jobs.Redis`. The generated `AddXxxJobs` method is placed in the application project's
+`RootNamespace`.
 
 ## Declaration attributes and enums
 
@@ -33,11 +33,13 @@ sealed class JobAttribute : Attribute
 	string? Timeout { get; init; }
 	int MaxConcurrency { get; init; }              // 0 = unbounded
 	OverlapPolicy OverlapPolicy { get; init; }     // Skip
+	MisfireHandlingMode MisfireHandlingMode { get; init; } // EnqueueOne
 	BackoffStrategy Backoff { get; init; }         // ExponentialJitter
 	string BackoffBase { get; init; }              // "00:00:05"
 }
 
 enum OverlapPolicy { Skip, Queue, Concurrent }
+enum MisfireHandlingMode { EnqueueAll, EnqueueOne, EnqueueNone }
 enum BackoffStrategy { Fixed, Exponential, ExponentialJitter }
 enum JobState
 {
@@ -206,12 +208,6 @@ interface IRecurringJobScheduler : IRecurringJobTrigger
 	ValueTask RemoveRecurringAsync(string name, CancellationToken token = default);
 }
 
-// Generated in the application's root namespace for all payloadless jobs.
-sealed class RecurringJobs
-{
-	ValueTask TriggerNowAsync(string jobName, CancellationToken token = default);
-}
-
 sealed class Batch : IAsyncDisposable
 {
 	bool IsCommitted { get; }
@@ -232,8 +228,9 @@ interface IBatchScheduler
 }
 ```
 
-Each `RecurringJobSchedule` stores the generated job's `QueueName`. `BatchState` is `Executing`,
-`Succeeded`, `Failed`, or `Cancelled`.
+`cron` accepts a five- or six-field cron expression, a cron macro, or an RFC 5545 recurrence rule
+without `COUNT` or `UNTIL`. Each `RecurringJobSchedule` stores the generated job's `QueueName`.
+`BatchState` is `Executing`, `Succeeded`, `Failed`, or `Cancelled`.
 
 ## Runtime configuration
 
@@ -263,10 +260,12 @@ IImmediateJobsBuilder AddHealthCheck(
 | `ImmediateJobsOptions` member                    |                                             Default |
 | ------------------------------------------------ | --------------------------------------------------: |
 | `IsJobSchedulingServiceEnabled`                  |                                              `true` |
-| `MaxParallelJobs`                                | `Math.Clamp(Environment.ProcessorCount * 4, 8, 32)` |
+| `WorkerCount`                                    | `Math.Clamp(Environment.ProcessorCount * 4, 8, 32)` |
+| `MaxAcquisitionCount`                            | `Math.Clamp(Environment.ProcessorCount * 4, 8, 32)` |
 | `AcquisitionBatchSize`                           |                                                `32` |
 | `PollingInterval`                                |                                            1 second |
-| `LeaseDuration`                                  |                                          30 seconds |
+| `ServerTimeout`                                  |                                          10 seconds |
+| `LeaseDuration`                                  |                                            1 minute |
 | `ShutdownTimeout`                                |                                          30 seconds |
 | `SucceededRetention` / `BatchSucceededRetention` |                                            24 hours |
 | `FailedRetention` / `BatchFailedRetention`       |                                              7 days |
@@ -278,8 +277,21 @@ and `UseDistributed(factory)`. Call `ConfigureStorage` exactly once and select a
 durable provider uses single-server mode unless you select a mode explicitly. Redis always uses
 distributed mode. Provider extensions can use `Services` to add their dependencies.
 
-`DisableWorkers()` sets `IsJobSchedulingServiceEnabled` to `false`. The hosted worker exits without
-initializing storage or executing jobs. Registration, schedulers and storage remain available.
+`WorkerCount` is the number of workers, and therefore the maximum number of jobs running at once on
+the node. `MaxAcquisitionCount` caps the jobs a node holds, both running and claimed but waiting
+for a worker; when it is lower than `WorkerCount`, it is the effective parallel limit.
+`AcquisitionBatchSize` caps the jobs claimed in one storage round trip. `ServerTimeout` is how long
+a node may go without a heartbeat before monitoring and the service health check consider it dead;
+heartbeats are sent every third of that interval. Leases are renewed every third of
+`LeaseDuration`.
+
+`DisableWorkers()` sets `IsJobSchedulingServiceEnabled` to `false`. The hosted service still
+initializes storage and merges code-defined recurring schedules, but it does not start the
+acquisition, heartbeat or lease-renewal loops or execute jobs. Registration, schedulers and storage
+remain available.
+
+`AddHealthCheck` registers `{name}-storage` for storage connectivity and `{name}-service` for worker
+liveness. Both use the supplied failure status and tags.
 
 `FairQueueOptions` defaults to `Enabled = false`, `ConcurrencyShareThreshold = 0.10`,
 `MinInflightForNoisy = 30`, and `GroupRoundRobin = true`. `UseFairQueues` sets `Enabled` to `true`.
@@ -297,9 +309,9 @@ jobs use the overloads with generated JSON metadata. The activity source and met
 
 ## Monitoring and management
 
-`JobMonitor` is the scoped service for reading status and managing stored jobs, batches and
-recurring schedules. `IJobMonitor` contains only the read methods and resolves to the same scoped
-instance. Use the interface when a component does not need management commands or when a test
+`JobMonitor` is the singleton service for reading status and managing stored jobs, batches and
+recurring schedules. `IJobMonitor` contains only the read methods and resolves to the same
+singleton instance. Use the interface when a component does not need management commands or when a test
 needs a simple replacement.
 
 ```csharp
@@ -365,14 +377,53 @@ Query objects enforce these rules:
 - IDs and text filters cannot be blank.
 - `Skip` must be zero or greater. `Take` must be from 1 through 1,000 and defaults to 100.
 
-`JobStatus`, `BatchStatus`, `BatchMemberStatus`, `BatchGraph`, `BatchGraphNode` and
-`BatchGraphEdge` are read-only monitoring records. `FractionSettled` counts every finished result,
-including `Skipped`. `BatchGraphEdge.Delay` records how long the child waits after its parent
-condition is met. `QueryExecutionsAsync` returns saved attempts newest first unless
+`JobStatus`, `BatchStatus`, `BatchMemberStatus`, `BatchGraph` and `BatchGraphNode` are read-only
+monitoring records. `BatchGraph.Edges` and `JobStatus.DependsOn` return `JobContinuationEdge`, the
+same record storage providers use. Each edge has a `ChildJobHandle`, either a `ParentJobHandle` or a
+`ParentBatchHandle`, a `Delay` and a `Trigger` that defaults to `Success`. `FractionSettled` counts
+every finished result, including `Skipped`. `Delay` records how long the child waits after its
+parent condition is met. `QueryExecutionsAsync` returns saved attempts newest first unless
 `JobExecutionQuery.Attempt` selects one. `IsSynthetic` is `true` when Jobs rebuilt execution data
 from the owning `JobRecord` because no separate execution record was available.
 
-`GetSnapshotAsync` reports the features supported by the current storage provider. `GetJobAsync`
+```csharp
+sealed record JobServerSnapshot
+{
+	string WorkerId { get; init; }
+	DateTimeOffset LastHeartbeat { get; init; }
+	int ActiveWorkers { get; init; }
+	int MaxWorkers { get; init; }
+	TimeSpan ServerTimeout { get; init; }
+	IReadOnlyList<JobWorkerSnapshot> Workers { get; init; }
+	JobLoopSnapshot Acquisition { get; init; }
+	JobLoopSnapshot LeaseRenewal { get; init; }
+}
+
+sealed record JobWorkerSnapshot
+{
+	int WorkerId { get; init; }           // zero-based within the node
+	JobHandle? JobHandle { get; init; }   // null when idle
+	int? Attempt { get; init; }
+	DateTimeOffset? StartedAt { get; init; }
+}
+
+sealed record JobLoopSnapshot
+{
+	bool IsRunning { get; init; }
+	DateTimeOffset? LastAttemptedAt { get; init; }
+	DateTimeOffset? LastSucceededAt { get; init; }
+	DateTimeOffset? LastFailedAt { get; init; }
+	int ConsecutiveFailures { get; init; }
+	int ItemsSucceeded { get; init; }
+	int ItemsFailed { get; init; }
+}
+```
+
+`GetSnapshotAsync` reports the features supported by the current storage provider. Its `Servers`
+list includes each scheduler node whose heartbeat is within that node's own `ServerTimeout`.
+`Workers` shows what each worker on the node is running. `Acquisition` and `LeaseRenewal` show
+the health of those loops as of the node's last heartbeat; a rising `ConsecutiveFailures` points to
+a storage problem. `GetJobAsync`
 includes the current job definition's `MaxAttempts`; the value is zero when that definition is not
 registered in the current process. Batch reads return `null` when storage does not support graphs.
 `GetBatchAsync` and `GetBatchGraphAsync` also return `null` when the batch does not exist.
@@ -450,22 +501,28 @@ for registration and examples.
 
 ## Testing
 
-`JobTestHarness` constructors accept optional service configuration and optional fake-time start;
-it exposes `Services`, `Storage`, `Captures`, `TimeProvider`, `Batches`, and `Scheduler`. Operations
-are `DrainAsync`, both `AdvanceTimeAndDrainAsync` overloads, `QueryJobsAsync`, both `GetJobAsync`
-overloads, both `AssertEnqueuedAsync<T>` overloads, `AssertBatchCommittedAtomicallyAsync`,
+`JobTestHarness` constructors accept optional service configuration, an optional fake-time start
+and an optional `Action<ImmediateJobsOptions>` for worker options; the harness uses one worker by
+default. It exposes `Services`, `Storage` (a `CapturingJobStorage`), `TimeProvider`, `Batches`, and
+`Scheduler`. Operations are `ResetScheduler`, `DrainAsync`, both `AdvanceTimeAndDrainAsync`
+overloads, `QueryJobsAsync`, both `GetJobAsync` overloads, both `AssertEnqueuedAsync<T>` overloads, `AssertBatchCommittedAtomicallyAsync`,
 `AssertContinuationReleasedAfterAsync`, `AssertCascadeSkippedAsync`,
 `AssertCascadeCancelledAsync`, and `RunThroughPipelineAsync<T>`.
 
 `CapturingJobStorage` wraps the harness's in-memory graph storage. `Jobs`, `Continuations`,
-`Batches`, `BatchJobs`, `DynamicContinuations`, `RecurringSchedules`, `RecurringOperations` and
-`RecurringMaterializations` return capture snapshots. `FindJob(JobHandle)` and
-`FindBatch(BatchHandle)` locate one item. `Clear()` clears captures without deleting durable state.
+`Batches`, `BatchJobs`, `DynamicContinuations`, `RecurringOperations` and
+`RecurringMaterializations` return capture snapshots in call order. `RecurringSchedules` returns
+the saved schedules keyed by schedule name. `FindJob(JobHandle)` and `FindBatch(BatchHandle)`
+locate one item. `Clear()` clears captures without deleting durable state.
+`LoadPersistedJobState(jobs, batches, edges, recurringSchedules)` seeds stored data before a test
+runs. The class is not sealed and its storage methods are `virtual`, so a test can derive from it to
+inject failures or delays.
 
 `JobStorageConformanceSuite.GetCases(StorageCapabilities)` returns an independent
 `JobStorageConformanceTestCase` for each selected storage behavior. The suite works with any test
-framework. Each case exposes `Name`, `RequiredCapabilities`, and
-`RunAsync(IServiceProvider, CancellationToken)`. It checks the storage registration and reported
+framework. Each case exposes `Name`, `RequiredCapabilities`, `PersistedJobState`, and
+`RunAsync(IServiceProvider, CancellationToken)`. `PersistedJobState` lists the `Jobs`, `Batches`,
+`Edges` and `RecurringSchedules` that must be stored before the case runs. It checks the storage registration and reported
 features before running. Tests that depend on time require a `FakeTimeProvider` registered as
 `TimeProvider`. `JobStorageConformanceSuite.AllCasesByName` is a case-insensitive map of every known
 case by name.
@@ -475,7 +532,7 @@ case by name.
 | Interface                 | Purpose                                                                                            |
 | ------------------------- | -------------------------------------------------------------------------------------------------- |
 | `IJobStorage`             | Store, claim, renew, finish, retry, cancel, delete and query jobs; report worker health.           |
-| `IRecurringJobStorage`    | Store schedules, find due runs, create each run once and remove obsolete code-defined schedules.   |
+| `IRecurringJobStorage`    | Merge code-defined schedules, store dynamic schedules, find due runs and create each run once.     |
 | `IJobGraphStorage`        | Store and update batches and continuations; add jobs while a batch runs; query and manage batches. |
 | `IFairQueueStorage`       | Share available work fairly across groups.                                                         |
 | `IJobStorageReplica`      | Claim the exact job IDs selected by the single-server in-memory queue.                             |
@@ -500,5 +557,16 @@ job ID and execution number.
 
 Custom providers must implement
 `QueryJobExecutionsAsync(JobHandle, JobExecutionQuery, ...)` and keep execution records until the
-owning job or batch is deleted or purged. `JobContinuationEdge` and `JobContinuationAddition`
+owning job or batch is deleted or purged. `QueryNonCompletedJobsAsync(jobName, ...)` returns every
+job with that name that is not in a final state; the scheduler uses it for recurring overlap
+policies.
+
+`IRecurringJobStorage.MergeRecurringSchedulesListAsync` receives the complete list of code-defined
+schedules once per start, after `InitializeAsync`. In one operation it must add new schedules,
+keep `NextRunAt`, `LastRunAt` and the paused state when the cron expression and time zone are
+unchanged, keep `LastRunAt` and the paused state when they changed, turn a dynamic schedule with a
+matching name into a code-defined one and remove code-defined schedules missing from the list.
+`MaterializeRecurringAsync` takes optional `dependencies`; with `OverlapPolicy.Queue`, the new run
+is stored as `AwaitingContinuation` with an edge to the earlier unfinished run, so a provider must
+save those edges with the run. `JobContinuationEdge` and `JobContinuationAddition`
 include a required `Delay`; apply it when the parent condition is satisfied.
