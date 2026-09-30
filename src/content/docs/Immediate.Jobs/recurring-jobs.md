@@ -22,9 +22,11 @@ The `Cron` value accepts either a cron expression or an RFC 5545 recurrence rule
 - six-field cron with seconds first, such as `0 */5 * * * *`;
 - the case-insensitive macros `@yearly`/`@annually`, `@monthly`, `@weekly`, `@daily`/`@midnight` and
   `@hourly`;
-- an RFC 5545 `RRULE` body, such as `FREQ=WEEKLY;BYDAY=MO;BYHOUR=6;BYMINUTE=0`.
+- an RFC 5545 `RRULE` body, such as `FREQ=WEEKLY;BYDAY=MO;BYHOUR=6;BYMINUTE=0;BYSECOND=0`.
 
-A recurrence rule must repeat forever, so rules with `COUNT` or `UNTIL` are rejected. Time zones are
+A recurrence rule must repeat forever, so rules with `COUNT` or `UNTIL` are rejected. Set
+`BYHOUR`, `BYMINUTE` and `BYSECOND` explicitly: a part you leave out, and the start of an
+`INTERVAL`, is taken from the time the schedule is saved. Time zones are
 IANA identifiers and default to `UTC`. Code-defined schedules are an analyzer error when they cannot
 be parsed, and every schedule is checked again when it is saved. A schedule with no future
 occurrence throws `ImmediateJobException`.
