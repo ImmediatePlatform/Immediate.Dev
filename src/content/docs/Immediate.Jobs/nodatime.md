@@ -143,8 +143,8 @@ public sealed class PaymentScheduleSetup(PaymentReconciliation.Scheduler reconci
 ```
 
 This overload is available on `IRecurringJobScheduler`, including the generated scheduler for a
-payloadless job without a code-defined cron expression. Cron parsing, reconciliation, overlap and
-manual-trigger behavior are covered in [Recurring jobs](/docs/Immediate.Jobs/recurring-jobs).
+payloadless job without a code-defined cron expression. Cron and recurrence-rule parsing, reconciliation, missed runs, overlap
+and manual-trigger behavior are covered in [Recurring jobs](/docs/Immediate.Jobs/recurring-jobs).
 
 ## Serialize NodaTime values
 

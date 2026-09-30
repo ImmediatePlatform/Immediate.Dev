@@ -16,5 +16,5 @@ the jobs dashboard, and registers a health check.
 <LinkCard
 	title="View the Basic sample on GitHub"
 	description="Browse the complete Immediate.Jobs sample source."
-	href="https://github.com/ImmediatePlatform/Immediate.Jobs/tree/master/samples/Basic"
+	href="https://github.com/ImmediatePlatform/Immediate.Jobs/tree/main/samples/Basic"
 />

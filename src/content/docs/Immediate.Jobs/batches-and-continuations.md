@@ -10,7 +10,7 @@ group: Guides
 </script>
 
 Batches save jobs and their dependencies in one operation. They require storage with graph
-support, which Redis does not provide. Inject the scoped `IBatchScheduler` alongside the generated
+support, which Redis does not provide. Inject the singleton `IBatchScheduler` alongside the generated
 job schedulers.
 
 ## Create a batch
@@ -194,7 +194,7 @@ except for detached scheduling, the current job must belong to a batch. `IJOB001
 
 </Callout>
 
-Use the scoped `JobMonitor` to read a graph. Call `GetBatchAsync`, `QueryBatchMembersAsync`, or
+Use the singleton `JobMonitor` to read a graph. Call `GetBatchAsync`, `QueryBatchMembersAsync`, or
 `GetBatchGraphAsync`. These methods return `null` when storage does not support graphs.
 `BatchStatus` counts succeeded, failed, cancelled and skipped members separately. A batch can
 succeed when every executed member succeeded even if conditional branches were skipped. The

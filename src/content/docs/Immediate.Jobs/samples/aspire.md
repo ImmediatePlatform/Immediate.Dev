@@ -16,5 +16,5 @@ capture, fair queues, and multi-step batch workflows alongside the Immediate.Job
 <LinkCard
 	title="View the .NET Aspire sample on GitHub"
 	description="Browse the AppHost, API, service defaults, and run instructions."
-	href="https://github.com/ImmediatePlatform/Immediate.Jobs/tree/master/samples/Aspire"
+	href="https://github.com/ImmediatePlatform/Immediate.Jobs/tree/main/samples/Aspire"
 />

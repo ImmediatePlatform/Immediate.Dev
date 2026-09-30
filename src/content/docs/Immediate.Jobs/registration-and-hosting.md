@@ -14,7 +14,7 @@ builder.Services.AddMyAppHandlers();
 builder.Services.AddMyAppJobs()
 	.ConfigureWorkers(options =>
 	{
-		options.MaxParallelJobs = 16;
+		options.WorkerCount = 16;
 		options.PollingInterval = TimeSpan.FromSeconds(1);
 	})
 	.ConfigureStorage(storage => storage
@@ -31,8 +31,9 @@ The generated method lives in the project's `RootNamespace`, matching Immediate.
 that namespace (for example, `using MyApp;`) when startup code is outside it, including a top-level
 `Program.cs`.
 
-Registration adds the selected jobs, every queue definition and the generated `RecurringJobs`
-service. Calling the method again does not duplicate jobs or add another worker.
+Registration adds the selected jobs. Each generated job definition carries its queue definition,
+so the worker only polls queues used by registered jobs. Calling the method again does not
+duplicate jobs or add another worker.
 
 `AddMyAppJobs` does **not** register the generated Immediate.Handlers handlers; without
 `AddMyAppHandlers`, enqueue succeeds but execution fails when the worker cannot resolve the handler
@@ -40,10 +41,10 @@ or its behaviors.
 
 The main service lifetimes are:
 
-| Lifetime  | Services                                                                                                               |
-| --------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Scoped    | Generated job schedulers, `IBatchScheduler`, `JobMonitor` and its read-only `IJobMonitor` interface.                   |
-| Singleton | Job and queue definitions, generated invokers, `RecurringJobs`, storage, serializer, ID generator, options and worker. |
+| Lifetime  | Services                                                                                                                                       |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scoped    | Generated job schedulers and context extractors.                                                                                               |
+| Singleton | Job definitions, generated invokers, `IBatchScheduler`, `JobMonitor` and `IJobMonitor`, storage, serializer, ID generator, options and worker. |
 
 Each job run gets a new scope for its context extractors, behaviors, handler and dependencies.
 
@@ -84,14 +85,28 @@ builder.Services.AddMyAppJobs(tags: ["fulfillment"])
 
 With no tags, all jobs are registered. With tags, an untagged job is always included and a tagged
 job is included when any requested tag matches. Pass the same tags to `AddMyAppHandlers` so every
-selected job has its generated handler. Queue definitions are registered for the whole assembly,
-regardless of the selected job tags.
+selected job has its generated handler. Only the queues used by the selected jobs are polled.
 
 ## Worker startup and shutdown
 
-The worker starts with the host. It prepares storage, restores saved work, starts jobs when they
-are due, renews their leases, reports its health and removes old history. At shutdown, it stops
-taking new work, cancels active jobs and waits up to `ShutdownTimeout` (30 seconds by default).
+The worker starts with the host. It prepares storage, merges code-defined recurring schedules and
+then runs independent loops:
+
+- the acquisition loop creates due recurring runs, claims due jobs every `PollingInterval` and
+  removes old history;
+- `WorkerCount` workers execute the claimed jobs;
+- the lease-renewal loop renews each running job's lease every third of `LeaseDuration`;
+- the heartbeat loop reports the node to storage every third of `ServerTimeout`.
+
+A failed iteration of one loop is logged and does not stop the others. At shutdown, the worker
+stops taking new work, lets claimed jobs drain and waits up to `ShutdownTimeout` (30 seconds by
+default) before cancelling jobs that are still running.
+
+`WorkerCount` sets how many jobs run at once on the node. `MaxAcquisitionCount` limits how many jobs
+the node holds at once, counting both running jobs and claimed jobs waiting for a free worker. Set
+it above `WorkerCount` when a longer `PollingInterval` should still keep workers busy between polls.
+When it is lower than `WorkerCount`, it becomes the effective limit on parallel jobs. Claimed jobs
+keep their leases while they wait.
 
 The storage provider starts with the worker, but the application still creates and updates its
 database schema as described in
@@ -100,5 +115,6 @@ entire `IHost` in console and worker-service applications; merely building the s
 does not run jobs.
 
 Call `DisableWorkers()` when an application should enqueue or display jobs but a separate process
-will execute them. Job registration and storage remain available, but the hosted worker exits
-without preparing storage or starting jobs. The application must still call `ConfigureStorage`.
+will execute them. Job registration and storage remain available. The hosted service still
+prepares storage and merges code-defined recurring schedules, then exits without starting any
+loops or jobs. The application must still call `ConfigureStorage`.

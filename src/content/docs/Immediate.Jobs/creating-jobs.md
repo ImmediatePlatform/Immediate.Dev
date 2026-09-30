@@ -53,8 +53,9 @@ public sealed partial class CleanupSessionsJob(AppDbContext db)
 }
 ```
 
-Only payloadless jobs can have a cron schedule. Payloadless jobs without `Cron` instead receive a
-dynamic recurring scheduler.
+Only payloadless jobs can have a cron schedule. `Cron` also accepts an RFC 5545 recurrence rule;
+see [Recurring jobs](/docs/Immediate.Jobs/recurring-jobs) for the supported formats. Payloadless
+jobs without `Cron` instead receive a dynamic recurring scheduler.
 
 ## Stable persisted names
 
@@ -78,17 +79,18 @@ part of the contract too.
 )]
 ```
 
-| Setting          |             Default | Meaning                                                            |
-| ---------------- | ------------------: | ------------------------------------------------------------------ |
-| `MaxAttempts`    |                 `3` | Total attempts including the first; must be at least one.          |
-| `Timeout`        |              `null` | Per-attempt timeout as an invariant `TimeSpan`; `null` means none. |
-| `MaxConcurrency` |                 `0` | Maximum simultaneous executions per node; zero is unbounded.       |
-| `Backoff`        | `ExponentialJitter` | `Fixed`, `Exponential`, or bounded `ExponentialJitter`.            |
-| `BackoffBase`    |          `00:00:05` | Positive base retry delay.                                         |
-| `OverlapPolicy`  |              `Skip` | Recurring-only: `Skip`, `Queue`, or `Concurrent`.                  |
+| Setting               |             Default | Meaning                                                            |
+| --------------------- | ------------------: | ------------------------------------------------------------------ |
+| `MaxAttempts`         |                 `3` | Total attempts including the first; must be at least one.          |
+| `Timeout`             |              `null` | Per-attempt timeout as an invariant `TimeSpan`; `null` means none. |
+| `MaxConcurrency`      |                 `0` | Maximum simultaneous executions per node; zero is unbounded.       |
+| `Backoff`             | `ExponentialJitter` | `Fixed`, `Exponential`, or bounded `ExponentialJitter`.            |
+| `BackoffBase`         |          `00:00:05` | Positive base retry delay.                                         |
+| `OverlapPolicy`       |              `Skip` | Recurring-only: `Skip`, `Queue`, or `Concurrent`.                  |
+| `MisfireHandlingMode` |        `EnqueueOne` | Recurring-only: `EnqueueOne`, `EnqueueAll`, or `EnqueueNone`.      |
 
-Queue concurrency, job concurrency and node-wide `MaxParallelJobs` all apply. The effective
-capacity is whichever limit is reached first.
+Queue concurrency, job concurrency and the node-wide `WorkerCount` and `MaxAcquisitionCount` all
+apply. The effective capacity is whichever limit is reached first.
 
 <Callout type="note">
 
