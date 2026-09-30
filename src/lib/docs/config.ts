@@ -1,6 +1,7 @@
 import RocketIcon from '@lucide/svelte/icons/rocket';
 import BookOpenIcon from '@lucide/svelte/icons/book-open';
 import BlocksIcon from '@lucide/svelte/icons/blocks';
+import BotIcon from '@lucide/svelte/icons/bot';
 import ClockIcon from '@lucide/svelte/icons/clock';
 import DatabaseIcon from '@lucide/svelte/icons/database';
 import GaugeIcon from '@lucide/svelte/icons/gauge';
@@ -69,6 +70,11 @@ export const docsConfig: DocsConfig = {
 			icon: ClockIcon,
 			autogenerate: { directory: 'Immediate.Jobs' },
 			groups: ['Guides', 'Migration', 'Reference', 'Diagnostics', 'Samples']
+		},
+		{
+			label: 'Immediate.Skills',
+			icon: BotIcon,
+			autogenerate: { directory: 'Immediate.Skills' }
 		},
 		{
 			label: 'Cookbook',
