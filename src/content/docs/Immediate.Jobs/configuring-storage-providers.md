@@ -22,7 +22,7 @@ supports every job feature. Use it for development and tests.
 ## Entity Framework Core
 
 ```bash
-dotnet add package Immediate.Jobs.EntityFrameworkCore --prerelease
+dotnet add package Immediate.Jobs.EntityFrameworkCore
 ```
 
 Prefer a dedicated, application-owned `JobsDbContext` so the jobs schema stays separate from your
@@ -89,7 +89,7 @@ The generated migration creates the seven Immediate.Jobs tables, indexes and con
 ## LinqToDB
 
 ```bash
-dotnet add package Immediate.Jobs.LinqToDB --prerelease
+dotnet add package Immediate.Jobs.LinqToDB
 ```
 
 ```csharp
@@ -128,7 +128,7 @@ rather than integer ticks.
 ## Redis
 
 ```bash
-dotnet add package Immediate.Jobs.Redis --prerelease
+dotnet add package Immediate.Jobs.Redis
 ```
 
 Register an `IConnectionMultiplexer`, then select Redis storage:
@@ -176,15 +176,15 @@ Call `ConfigureStorage` exactly once. With EF Core or LinqToDB, choose `UseSingl
 scheduler process or `UseDistributed()` for more than one. Jobs defaults to single-server mode
 when neither is selected. Redis always uses distributed mode.
 
-<Callout type="warning" title="Database setup during preview">
+<Callout type="warning" title="Database setup before 1.0">
 
 Starting Jobs does not create or update a database schema. Keep every Immediate.Jobs provider
-package at the same preview version as the core package. Create test databases from the current EF
+package at the same version as the core package. Create test databases from the current EF
 model or with `CreateImmediateJobsSchemaAsync`.
 
-Recent previews changed the schema. The EF Core server table gained required `ExpiresAt` and
+Recent 0.x releases changed the schema. The EF Core server table gained required `ExpiresAt` and
 `Details` columns and is indexed by `ExpiresAt`, so add a new migration after upgrading. The
 LinqToDB timestamp columns changed from 64-bit integers to date-and-time types; recreate LinqToDB
-databases created by an earlier preview.
+databases created by an earlier release.
 
 </Callout>

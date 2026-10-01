@@ -99,7 +99,7 @@ Please see our [full cookbook](/docs/cookbook/the-cookbook) for all integration 
 
 ### Immediate.Jobs
 
-<PackageBadges name="Immediate.Jobs" nuget={false} release={false} license={false} />
+<PackageBadges name="Immediate.Jobs" />
 
 - Reflection-free background job scheduler for .NET built on Immediate.Handlers.
 - Generates typed schedulers, payload metadata, and dependency-injection registrations at compile time.

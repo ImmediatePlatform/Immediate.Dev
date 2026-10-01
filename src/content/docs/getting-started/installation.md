@@ -22,8 +22,8 @@ dotnet add package Immediate.Validations
 dotnet add package Immediate.Apis
 dotnet add package Immediate.Cache
 
-# Preview: available when the first Immediate.Jobs packages are published.
-dotnet add package Immediate.Jobs --prerelease
+# Pre-1.0: minor versions can include breaking changes.
+dotnet add package Immediate.Jobs
 
 # Independent of the above:
 dotnet add package Immediate.Injections
@@ -35,7 +35,7 @@ dotnet add package Immediate.Injections
                     Immediate.Handlers
                   ▲       ▲       ▲       ▲
                   │       │       │       │
-   Immediate.Validations  │  Immediate.Cache  Immediate.Jobs (preview)
+   Immediate.Validations  │  Immediate.Cache  Immediate.Jobs (0.x)
                           │
                     Immediate.Apis
 
@@ -64,7 +64,7 @@ builder.Services.AddMyAppHandlers();   // Immediate.Handlers
 builder.Services.AddMemoryCache();     // required by Immediate.Cache
 builder.Services.AddMyAppCaches();     // Immediate.Cache
 builder.Services.AddMyAppServices();   // Immediate.Injections
-builder.Services.AddMyAppJobs();       // Immediate.Jobs (preview)
+builder.Services.AddMyAppJobs();       // Immediate.Jobs (0.x)
 
 var app = builder.Build();
 
@@ -80,20 +80,20 @@ registration method of its own; you add its `ValidationBehavior<,>` to your asse
 
 ## Supported target frameworks
 
-The released packages multi-target **net8.0, net9.0 and net10.0**. The Immediate.Jobs preview
-tracks current `main` and targets **net8.0 through net11.0**.
+The released packages multi-target **net8.0, net9.0 and net10.0**. Immediate.Jobs targets
+**net8.0, net10.0 and net11.0**.
 
 ## Immediate.Jobs companion packages
 
-These commands become usable with the first preview publication:
+Keep companion packages on the same version as `Immediate.Jobs`:
 
 ```bash
-dotnet add package Immediate.Jobs.EntityFrameworkCore --prerelease
-dotnet add package Immediate.Jobs.LinqToDB --prerelease
-dotnet add package Immediate.Jobs.Redis --prerelease
-dotnet add package Immediate.Jobs.Dashboard --prerelease
-dotnet add package Immediate.Jobs.NodaTime --prerelease
-dotnet add package Immediate.Jobs.Testing --prerelease
+dotnet add package Immediate.Jobs.EntityFrameworkCore
+dotnet add package Immediate.Jobs.LinqToDB
+dotnet add package Immediate.Jobs.Redis
+dotnet add package Immediate.Jobs.Dashboard
+dotnet add package Immediate.Jobs.NodaTime
+dotnet add package Immediate.Jobs.Testing
 ```
 
 EF Core and LinqToDB provide full SQL-backed workflows; Redis provides distributed queues and

@@ -6,7 +6,7 @@ group: Guides
 ---
 
 ```bash
-dotnet add package Immediate.Jobs.Testing --prerelease
+dotnet add package Immediate.Jobs.Testing
 ```
 
 ## Execute with fake time
