@@ -17,7 +17,7 @@ order: 5
 | [Immediate.Apis](/docs/Immediate.Apis/introduction)               | Immediate.Handlers, ASP.NET Core   | net8.0 – net10.0  | 6.x           |
 | [Immediate.Cache](/docs/Immediate.Cache/introduction)             | Immediate.Handlers, `IMemoryCache` | net8.0 – net10.0  | 2.x           |
 | [Immediate.Injections](/docs/Immediate.Injections/introduction)   | —                                  | net8.0 – net10.0  | 1.x           |
-| [Immediate.Jobs](/docs/Immediate.Jobs/introduction)               | Immediate.Handlers, hosted service | net8.0 – net11.0  | preview       |
+| [Immediate.Jobs](/docs/Immediate.Jobs/introduction)               | Immediate.Handlers, hosted service | net8.0 – net11.0  | 0.x           |
 
 Immediate.Handlers is the core. Validations, Apis and Cache each take a package reference on it
 and are meaningless without it — they extend handlers rather than standing alone. You do not
@@ -39,8 +39,8 @@ ASP.NET Core controllers instead of Immediate.Apis. The
 
 ## Target frameworks
 
-The released packages multi-target **net8.0, net9.0 and net10.0**. Immediate.Jobs currently tracks
-`main` and additionally targets **net11.0**.
+The released packages multi-target **net8.0, net9.0 and net10.0**. Immediate.Jobs targets
+**net8.0, net10.0 and net11.0**.
 
 ## C# language version
 
@@ -59,11 +59,10 @@ the relevant page, and removed diagnostic IDs are kept in the diagnostics tables
 searching for one still lands somewhere useful.
 </Callout>
 
-<Callout type="warning" title="Immediate.Jobs preview exception">
-Immediate.Jobs has no published preview yet. Its manual intentionally documents the checked-out
-<code>main</code> implementation instead of a latest release, including APIs and storage schemas
-that may change before stability. Package commands use <code>--prerelease</code> and become usable
-when the first preview is published.
+<Callout type="warning" title="Immediate.Jobs exception">
+Immediate.Jobs is published as 0.x releases, and minor versions can change APIs and storage schemas
+until 1.0. Its manual documents the <code>main</code> implementation instead of the latest release,
+so a feature described there may land in the next release.
 </Callout>
 
 The packages version independently. A major bump in one does not imply a bump in the

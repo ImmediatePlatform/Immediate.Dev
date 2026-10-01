@@ -6,7 +6,7 @@ group: Guides
 ---
 
 ```bash
-dotnet add package Immediate.Jobs.Dashboard --prerelease
+dotnet add package Immediate.Jobs.Dashboard
 ```
 
 Configure and register the dashboard before building the application. Then map its UI and API:

@@ -8,7 +8,7 @@ order: 1
 	import { Callout, CardGrid, LinkCard, PackageBadges } from '$lib/components/docs';
 </script>
 
-<PackageBadges name="Immediate.Jobs" nuget={false} release={false} />
+<PackageBadges name="Immediate.Jobs" />
 
 Immediate.Jobs is a reflection-free background job scheduler built on
 [Immediate.Handlers](/docs/Immediate.Handlers/introduction). A job is an ordinary handler marked
@@ -16,22 +16,22 @@ with `[Job]`; source generation adds a typed scheduler, JSON metadata, an execut
 registration. The runtime supplies delayed and recurring work, queues, retries, workflows,
 monitoring and durable storage providers.
 
-<Callout type="warning" title="Preview documentation">
+<Callout type="warning" title="Pre-1.0 releases">
 
-Immediate.Jobs has not published its first preview packages. These pages intentionally document
-the checked-out `main` implementation and are the one exception to this site's latest-release
-policy. The `--prerelease` commands below become usable when those packages are published. Preview
-APIs and storage schemas can change before a stable release.
+Immediate.Jobs is published on NuGet as 0.x releases. Until 1.0, minor versions can change APIs and
+storage schemas, so keep every Immediate.Jobs package on the same version. These pages track `main`
+and are the one exception to this site's latest-release policy; a feature described here may land
+in the next release.
 
 </Callout>
 
 ## Prerequisites and installation
 
-Jobs target `net8.0`, `net9.0`, `net10.0` and `net11.0` and require Immediate.Handlers. Install the
+Jobs target `net8.0`, `net10.0` and `net11.0` and require Immediate.Handlers. Install the
 main package in the project that declares the handlers:
 
 ```bash
-dotnet add package Immediate.Jobs --prerelease
+dotnet add package Immediate.Jobs
 ```
 
 Select storage during registration. Use in-memory storage for development and tests. Choose a

@@ -15,7 +15,7 @@ NodaTime values in payloads and propagated context.
 ## Install and register
 
 ```bash
-dotnet add package Immediate.Jobs.NodaTime --prerelease
+dotnet add package Immediate.Jobs.NodaTime
 ```
 
 Register the integration with Jobs:

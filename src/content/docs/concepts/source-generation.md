@@ -70,14 +70,13 @@ NuGet picks the right one from the target framework, so there is nothing to conf
 consequence worth knowing is that generator behavior can differ slightly across target
 frameworks in a multi-targeted project, because two different generator builds are running.
 
-Immediate.Jobs is the preview exception and currently ships framework-specific analyzer builds:
+Immediate.Jobs is the exception and ships framework-specific analyzer builds:
 
 | Jobs target | Roslyn |
 | ----------- | ------ |
-| net8.0      | 4.11   |
-| net9.0      | 4.12   |
+| net8.0      | 4.8    |
 | net10.0     | 5.0    |
-| net11.0     | 5.3    |
+| net11.0     | 5.9    |
 
 Its per-job `IJ` output includes the typed scheduler, direct invoker and generated JSON metadata;
 the assembly output adds `AddXxxJobs()`.
